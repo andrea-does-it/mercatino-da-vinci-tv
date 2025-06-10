@@ -1,0 +1,6 @@
+ErrorDocument 403 /__tmp/topweb.shtml
+AddHandler php8.3-script .php
+RewriteEngine On
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301,NE]
