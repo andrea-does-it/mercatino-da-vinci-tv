@@ -914,6 +914,15 @@ class CartManager extends DBManager {
 
     public function addToCart($productId, $cartId) {
 
+      // Check if product is available for purchase (not marked as out of stock)
+      $prodMgr = new ProductManager();
+      $product = $prodMgr->get($productId);
+      
+      if (!$product || $product->fl_esaurimento == 1) {
+        // Product is marked as out of stock/unavailable, cannot add to cart
+        return false;
+      }
+
       $quantityInCart = $this->quantityInCart($productId, $cartId);
 
       if ($quantityInCart > 0){
@@ -923,8 +932,9 @@ class CartManager extends DBManager {
         $this->createItem($productId, $cartId);
       }
       $this->_updateCartLastInteraction($cartId);
-      $prodMgr = new ProductManager();
       $prodMgr->decreaseQuantity($productId);
+      
+      return true;
     }
 
     public function removeFromCart($productId, $cartId) {

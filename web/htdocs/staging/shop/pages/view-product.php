@@ -14,9 +14,31 @@
   $pm = new ProductManager();
   $product = $pm->GetProductWithImages($id);
   $lineThrough = $product->disc_price ? 'text-muted line-through' : '';
+  $isOutOfStock = ($product->fl_esaurimento == 1);
   
   if ($product->id == 0) {
     echo "<script>location.href='".ROOT_URL."shop/?page=products-list&msg=not_found';</script>";
+    exit;
+  }
+
+  // Handle add to cart form submission
+  if (isset($_POST['add_to_cart'])) {
+    if ($isOutOfStock) {
+      $alertMsg = 'product_unavailable';
+      echo "<script>location.href='".ROOT_URL."shop/?page=view-product&id=".$id."&msg=$alertMsg';</script>";
+      exit;
+    }
+
+    $cm = new CartManager();
+    $cartId = $cm->getCurrentCartId();
+    $success = $cm->addToCart($id, $cartId);
+
+    if ($success) {
+      $alertMsg = 'add_to_cart';
+    } else {
+      $alertMsg = 'product_unavailable';
+    }
+    echo "<script>location.href='".ROOT_URL."shop/?page=view-product&id=".$id."&msg=$alertMsg';</script>";
     exit;
   }
 ?>
@@ -24,9 +46,29 @@
 
 <div class="jumbotron">
   <h1 class="display-5"><?php echo esc_html($product->name); ?></h1>
+  
+  <?php if (!empty($product->autori)) : ?>
+    <p class="lead">
+      <strong>Autori:</strong> <?php echo esc_html($product->autori); ?>
+    </p>
+  <?php endif; ?>
+  
+  <?php if (!empty($product->editore)) : ?>
+    <p class="lead">
+      <strong>Editore:</strong> <?php echo esc_html($product->editore); ?>
+    </p>
+  <?php endif; ?>
+
+  <?php if (!empty($product->nota_volumi)) : ?>
+    <p class="lead">
+      <strong>Volumi:</strong> <?php echo esc_html($product->nota_volumi); ?>
+    </p>
+  <?php endif; ?>
+
   <p class="lead <?php echo $lineThrough ?>">
     Prezzo: <?php echo esc_html($product->price); ?> €
   </p>
+  
   <?php if ($product->disc_price): ?>
   <span class="lead badge-pill badge-warning">
     Prezzo Scontato: <?php echo esc_html($product->disc_price); ?> €
@@ -34,6 +76,13 @@
   <br>
   <span data-inizio-sconto="<?php echo esc_html($product->data_inizio_sconto); ?>" data-fine-sconto="<?php echo esc_html($product->data_fine_sconto); ?>" class="countdown badge-pill badge-warning"></span>
   <?php endif; ?>
+
+  <?php if ($isOutOfStock) : ?>
+    <div class="alert alert-warning bg-warning text-dark p-3 mt-3">
+      <strong>Libro non caricabile</strong> - Questo prodotto non è attualmente disponibile per l'aggiunta al carrello.
+    </div>
+  <?php endif; ?>
+
   <hr class="my-4">
 
 <?php if ($product->images ) : ?>
@@ -62,17 +111,18 @@
     </a>
   </div>
   <hr class="my-4">
+<?php endif ?>
 
-  <?php endif ?>
-
-  <p class="lead <?php echo $lineThrough ?>"> Codice ISBN: <?php echo esc_html($product->ISBN); ?></p>
-  <p class="lead <?php echo $lineThrough ?>"> Autori: <?php echo esc_html($product->autori); ?></p>
-  <p class="lead <?php echo $lineThrough ?>"> Editore: <?php echo esc_html($product->editore); ?></p>
   <p class="lead p-3">
-    <form method="post" action="<?php echo ROOT_URL; ?>shop/?page=products-list">
-      <input type="hidden" name="id" value="<?php echo esc_html($product->id); ?>">
-      <input data-id="<?php echo esc_html($product->id); ?>" name="add_to_cart" type="submit" class="btn btn-primary right" value="Aggiungi Libro da Vendere">
-    </form>   
+    <?php if (!$isOutOfStock) : ?>
+      <form method="post">
+        <input data-id="<?php echo esc_html($product->id); ?>" name="add_to_cart" type="submit" class="btn btn-primary btn-lg" value="Aggiungi Libro da Vendere">
+      </form>
+    <?php else : ?>
+      <button class="btn btn-secondary btn-lg" disabled>
+        Non Disponibile
+      </button>
+    <?php endif; ?>
   </p>
 </div>
 
