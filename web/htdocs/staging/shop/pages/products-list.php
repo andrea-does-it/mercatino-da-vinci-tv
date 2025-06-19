@@ -18,6 +18,16 @@
       die('productId must be numeric...'); // prevent sql injection
     }
 
+    // Check if product is marked as out of stock before adding to cart
+    $pm = new ProductManager();
+    $product = $pm->get($productId);
+    
+    if ($product->fl_esaurimento == 1) {
+      $alertMsg = 'product_unavailable';
+      echo "<script>location.href='".ROOT_URL."shop/?page=products-list&msg=$alertMsg';</script>";
+      exit;
+    }
+
     $cartId = $cm->getCurrentCartId();
     $cm->addToCart($productId, $cartId);
 
@@ -59,9 +69,11 @@
   <?php foreach($products as $product) : ?>
     <?php 
     $proimg = $pm->GetProductWithImages($product->id); 
+    $isOutOfStock = ($product->fl_esaurimento == 1);
+    $cardClass = $isOutOfStock ? 'border-warning' : '';
     ?>
     <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
-      <div class="card h-100 product-card">
+      <div class="card h-100 product-card <?php echo $cardClass; ?>">
         <div class="card-header d-flex justify-content-between">
           <span class="badge badge-pill badge-info"><?php echo $product->ISBN; ?></span>
           <span class="badge badge-pill badge-danger"><?php echo esc_html($product->price); ?> €</span>
@@ -98,16 +110,31 @@
           <p class="card-text mt-2">
             <strong>Autori:</strong> <?php echo esc_html($product->autori); ?><br>
             <strong>Editore:</strong> <?php echo esc_html($product->editore); ?>
+            <?php if (!empty($product->nota_volumi)) : ?>
+              <br><strong>Volumi:</strong> <?php echo esc_html($product->nota_volumi); ?>
+            <?php endif; ?>
           </p>
+
+          <?php if ($isOutOfStock) : ?>
+            <div class="alert alert-warning bg-warning text-dark p-2 mt-2 mb-2">
+              <strong>Libro non caricabile</strong>
+            </div>
+          <?php endif; ?>
         </div>
         
         <div class="card-footer">
           <div class="btn-group d-flex" role="group">
             <button class="btn btn-secondary btn-sm rounded-0" onclick="location.href='<?php echo $product->url; ?>'">Vedi</button>
-            <form method="post" class="flex-grow-1">
-              <input type="hidden" name="id" value="<?php echo esc_html($product->id); ?>">
-              <input data-id="<?php echo esc_html($product->id); ?>" name="add_to_cart" type="submit" class="btn btn-primary btn-sm btn-block rounded-0" value="Aggiungi Libro da Vendere">
-            </form>
+            <?php if (!$isOutOfStock) : ?>
+              <form method="post" class="flex-grow-1">
+                <input type="hidden" name="id" value="<?php echo esc_html($product->id); ?>">
+                <input data-id="<?php echo esc_html($product->id); ?>" name="add_to_cart" type="submit" class="btn btn-primary btn-sm btn-block rounded-0" value="Aggiungi Libro da Vendere">
+              </form>
+            <?php else : ?>
+              <button class="btn btn-secondary btn-sm btn-block rounded-0 flex-grow-1" disabled>
+                Non Disponibile
+              </button>
+            <?php endif; ?>
           </div>
         </div>
       </div>

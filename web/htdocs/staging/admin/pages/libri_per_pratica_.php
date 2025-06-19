@@ -38,7 +38,6 @@
         <th>Venditore</th>
         <th>Link</th>
         <th class="text-center">PDF</th>
-        <th class="text-center">Etichetta</th>
       </tr>
     </thead>
     <tbody>
@@ -53,11 +52,6 @@
           </td>
           <td class="text-center">
             <a target="_blank" href="<?php echo ROOT_URL . 'shop/invoices/print-invoice.php?orderId=' . esc_html($order['order_id']); ?>" title="stampa PDF" class="btn btn-lg btn-link p-0"><i class="fas fa-file-pdf"></i></a>
-          </td>
-          <td class="text-center">
-            <a target="_blank" href="<?php echo ROOT_URL . 'admin/print-label.php?pratica=' . esc_html($order['pratica']); ?>" title="Stampa Etichetta con Barcode" class="btn btn-sm btn-success" onclick="return confirm('Vuoi stampare l\'etichetta per la Pratica n. <?php echo esc_html($order['pratica']); ?>?');">
-              <i class="fas fa-barcode"></i> Etichetta
-            </a>
           </td>
         </tr>
       <?php endforeach; $count=0; ?>

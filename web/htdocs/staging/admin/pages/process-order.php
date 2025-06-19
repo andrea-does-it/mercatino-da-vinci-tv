@@ -46,21 +46,18 @@
 
   if (isset($_POST['vendere'])) {
     $id = trim($_POST['item_id']);
-    $itemStatus = 'vendere';  
-    $orderMgr->updateStatusItem($id, $itemStatus);
+    $status = 'vendere';
+    $orderMgr->updateStatusItem($id, $status);
     
-    // Get fresh data after the update
-    $refreshedOrderItems = $orderMgr->getOrderItems($orderId);
-    $orderStatus = $refreshedOrderItems[0]['order_status'];
-    
-    // Debug output to see what's happening
-    // error_log("Order status: $orderStatus");
+    // Check if all items are now accepted (vendere, venduto, or eliminato)
+    $orderItems = $orderMgr->getOrderItems($orderId);
+    $orderStatus = $orderItems[0]['order_status'];
     
     // Check if all items are now in acceptable statuses
     $allItemsAccepted = true;
-    foreach ($refreshedOrderItems as $item) {
+    foreach ($orderItems as $item) {
         $itemStatus = $item['order_item_status'];
-        // error_log("Item ID: ".$item['order_item_id']." Status: ".$itemStatus);
+        // error_log("Checking item ".$item['order_item_id']." with status: ".$itemStatus);
         
         if ($itemStatus != 'vendere' && $itemStatus != 'venduto' && $itemStatus != 'eliminato') {
             $allItemsAccepted = false;
@@ -102,9 +99,9 @@
             $updatedOrderTotal
         );
         
-        // Redirect to orders list
-        // error_log("Redirecting to orders list");
-        echo "<script>location.href='".ROOT_URL."admin?page=orders-list';</script>";
+        // Redirect to print-label page with pratica number and auto-print
+        // error_log("Redirecting to print-label with pratica: ".$updatedPratica);
+        echo "<script>window.open('".ROOT_URL."admin/print-label.php?pratica=".$updatedPratica."&autoprint=1', '_blank'); location.href='".ROOT_URL."admin?page=orders-list&msg=order_accepted';</script>";
         exit;
     } else {
         // error_log("Not all conditions met for order update. AllItemsAccepted: ".($allItemsAccepted ? "true" : "false").", OrderStatus: $orderStatus");

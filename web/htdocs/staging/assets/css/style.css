@@ -359,3 +359,37 @@ ol.carousel-indicators li {
   flex-wrap: nowrap;
   align-items: center;
 }
+
+/* 20250619: libri non caricabili */
+.product-card.border-warning {
+  border-width: 2px !important;
+}
+
+.alert.bg-warning {
+  background-color: #fff3cd !important;
+  border: 1px solid #ffeaa7 !important;
+  color: #856404 !important;
+  font-weight: bold;
+  text-align: center;
+}
+
+.btn:disabled, .btn.disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Additional styling for volume information */
+.card-text strong {
+  color: #495057;
+}
+
+/* Ensure proper spacing for the warning message */
+.card-body .alert {
+  margin-bottom: 0;
+}
+
+/* Style for cards with warning border */
+.card.border-warning .card-header {
+  background-color: #fff3cd;
+  border-bottom: 1px solid #ffeaa7;
+}
