@@ -89,9 +89,9 @@ try {
             line-height: 1;
         }
         
-        .date-text {
-            font-size: 7px;
-            font-weight: normal;
+        .pratica-date-text {
+            font-size: 14px;
+            font-weight: bold;
             margin: 0;
             text-align: center;
             line-height: 1;
@@ -169,9 +169,9 @@ try {
     </div>
 
     <div class="label">
-        <div class="header-text">Mercatino Liceo Da Vinci Treviso: num. pratica <?php echo $pratica; ?></div>
+        <div class="header-text">Mercatino Liceo Da Vinci Treviso</div>
         
-        <div class="date-text">Data: <?php echo $currentDate; ?></div>
+        <div class="pratica-date-text">Pratica <?php echo $pratica; ?> del <?php echo $currentDate; ?></div>
         
         <div class="barcode-container">
             <?php echo $barcode; ?>

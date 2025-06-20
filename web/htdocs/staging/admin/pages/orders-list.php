@@ -126,7 +126,7 @@
 <?php if (count($inviataOrders) > 0) : ?>
   <!--<h4 class="mb-3">Ordini Pagamento Postumo</h4>-->
   <h4 class="mb-3 font-weight-bold text-info">Pratiche da Accettare</h4>
-  <h4 class="mb-3 font-weight-bold text-danger">ATTENZIONE: cercare il nome dell'utente su "Search"; cliccare su "Vedi" per visualizzare la lista dei libri inseriti</h4>
+  <h4 class="mb-3 font-weight-bold text-danger">ATTENZIONE: cercare il nome dell'utente su "Search"; cliccare su "Vedi" per visualizzare la lista dei libri inseriti e procedere alla accettazione.</h4>
   <table class="table table-bordered">
     <thead>
       <tr>
@@ -136,7 +136,6 @@
         <th>Venditore</th>
         <th>Link</th>
         <th class="text-center">PDF</th>
-        <th class="text-center">Azioni</th>
       </tr>
     </thead>
     <tbody>
@@ -152,14 +151,6 @@
           <td class="text-center">
             <a target="_blank" href="<?php echo ROOT_URL . 'shop/invoices/print-invoice.php?orderId=' . esc_html($order['order_id']); ?>" title="stampa PDF" class="btn btn-lg btn-link p-0"><i class="fas fa-file-pdf"></i></a>
           </td>
-          <td>
-            <form method="post" action="<?php echo ROOT_URL . 'admin/?page=process-order&id=' . esc_html($order['order_id']); ?>&accettata_order=1" class="inline right">
-            <input onclick="return confirm('Confermi che la Richiesta con invio n. <?php echo esc_html($order['order_id']); ?> deve essere accettata?');" name="accettata_order" type="submit" class="btn btn-sm btn-info m-0" value="Accetta la Richiesta &raquo;">
-           </form>  
-          <!--<form method="post" action="<?php echo ROOT_URL . 'admin/?page=process-order&id=' . esc_html($order['order_id']); ?>&annullata_order=1" class="inline left">
-            <input onclick="return confirm('Confermi che la Richiesta con invio n. <?php echo esc_html($order['order_id']); ?> deve essere annullata?');" name="annullata_order" type="submit" class="btn btn-sm btn-danger m-0" value="Elimina &raquo;">
-            </form>--> 
-          </td>
         </tr>
       <?php endforeach; $count=0; ?>
     </tbody>
@@ -167,7 +158,6 @@
 <?php else: ?>
   <p class='text-danger font-weight-bold'>Non ci sono Pratiche da Accettare.</p>
 <?php endif; ?>
-
 
 <!--<hr>
 
