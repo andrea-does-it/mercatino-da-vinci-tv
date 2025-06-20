@@ -159,10 +159,15 @@ try {
 <body>
     <div class="controls no-print">
         <button onclick="window.print()" class="btn">Stampa Etichetta</button>
-        <a href="<?php echo ROOT_URL; ?>admin/?page=orders-list" class="btn btn-secondary">Torna alle Pratiche</a>
-        <a href="javascript:window.close()" class="btn btn-secondary">Chiudi Finestra</a>
+        <?php 
+        $source = isset($_GET['source']) ? $_GET['source'] : 'default';
+        if ($source == 'libri_per_pratica') : ?>
+            <a href="<?php echo ROOT_URL; ?>admin/?page=libri_per_pratica" class="btn btn-secondary">Torna ai Libri per Pratica</a>
+        <?php else : ?>
+            <a href="<?php echo ROOT_URL; ?>admin/?page=orders-list" class="btn btn-secondary">Torna alle Pratiche</a>
+        <?php endif; ?>
     </div>
-    
+
     <div class="label">
         <div class="header-text">Mercatino Liceo Da Vinci Treviso: num. pratica <?php echo $pratica; ?></div>
         

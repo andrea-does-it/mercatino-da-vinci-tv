@@ -100,8 +100,11 @@
         );
         
         // Redirect to print-label page with pratica number and auto-print
-        // error_log("Redirecting to print-label with pratica: ".$updatedPratica);
-        echo "<script>window.open('".ROOT_URL."admin/print-label.php?pratica=".$updatedPratica."&autoprint=1', '_blank'); location.href='".ROOT_URL."admin?page=orders-list&msg=order_accepted';</script>";
+        // error_log("Redirecting to print-label with pratica: ".$updatedPratica);        
+        // echo "<script>location.href='".ROOT_URL."admin/print-label.php?pratica=".$updatedPratica."&autoprint=1';</script>";      
+        echo "<script>location.href='".ROOT_URL."admin/print-label.php?pratica=".$updatedPratica."&autoprint=1&source=acceptance';</script>";
+        
+
         exit;
     } else {
         // error_log("Not all conditions met for order update. AllItemsAccepted: ".($allItemsAccepted ? "true" : "false").", OrderStatus: $orderStatus");
