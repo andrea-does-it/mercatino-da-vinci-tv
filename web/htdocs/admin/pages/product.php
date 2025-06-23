@@ -41,12 +41,14 @@ if (isset($_POST['add'])) {
   $data_fine_sconto = trim($_POST['data_fine_sconto']);
   $ISBN = trim($_POST['ISBN']);
   $qta = trim($_POST['qta']);
+  $nota_volumi = esc(trim($_POST['nota_volumi']));
+  $fl_esaurimento = isset($_POST['fl_esaurimento']) ? 1 : 0;
   $tmpDir = isset($_POST['tmpDir']) ? $_POST['tmpDir'] : NULL;
   
 
   if ($name != '' && $category_id != '' && $category_id != '0' && $price != '') {
 
-    $product = new Product($id, $name, $price, $category_id, $sconto, $data_inizio_sconto, $data_fine_sconto, $qta, $ISBN, $autori, $editore);
+    $product = new Product($id, $name, $price, $category_id, $sconto, $data_inizio_sconto, $data_fine_sconto, $qta, $ISBN, $autori, $editore, $nota_volumi, $fl_esaurimento);
     //var_dump($product);die;
     $id = $mgr->create($product);
     //var_dump($id);die;
@@ -74,6 +76,8 @@ if (isset($_POST['update'])) {
   $qta = trim($_POST['qta']);
   $autori = esc(trim($_POST['autori']));
   $editore = esc(trim($_POST['editore']));
+  $nota_volumi = esc(trim($_POST['nota_volumi']));
+  $fl_esaurimento = isset($_POST['fl_esaurimento']) ? 1 : 0;
 
   if(isset($_POST['data_inizio_sconto']) && $_POST['data_inizio_sconto'] != ""){$data_inizio_sconto= $_POST['data_inizio_sconto'];}else{$data_inizio_sconto= "NULL";}
   if(isset($_POST['data_fine_sconto']) && $_POST['data_fine_sconto'] != ""){$data_fine_sconto= $_POST['data_fine_sconto'];}else{$data_fine_sconto= "NULL";}
@@ -81,7 +85,7 @@ if (isset($_POST['update'])) {
 
   if ($id != '' && $id != '0' && $name != '' && $category_id != '' && $category_id != '0' && $price != '') {
 
-    $product = new Product($id, $name, $price, $category_id,  $sconto, $data_inizio_sconto, $data_fine_sconto, $qta, $ISBN, $autori, $editore);
+    $product = new Product($id, $name, $price, $category_id,  $sconto, $data_inizio_sconto, $data_fine_sconto, $qta, $ISBN, $autori, $editore, $nota_volumi, $fl_esaurimento);
     $numUpdated = $mgr->update($product, $id);
 
     if ($numUpdated < 0) {
@@ -127,9 +131,9 @@ $productSubcats = $mgr->GetProductSubcategories($id);
   </div>
 
   <div class="row">
-  <div class="col-md-6">
+    <div class="col-md-6">
       <div class="form-group">
-        <label for="description"><strong>Autori</strong></label>
+        <label for="autori"><strong>Autori</strong></label>
         <div class="input-group mb-3">
           <input type="text" class="form-control" name="autori" id="autori" value="<?php echo esc_html($product->autori); ?>" >
         </div>
@@ -137,13 +141,13 @@ $productSubcats = $mgr->GetProductSubcategories($id);
     </div>
     <div class="col-md-6">
       <div class="form-group">
-        <label for="description"><strong>Editore</strong></label>
+        <label for="editore"><strong>Editore</strong></label>
         <div class="input-group mb-3">
           <input type="text" class="form-control" name="editore" id="editore" value="<?php echo esc_html($product->editore); ?>" >
         </div>
       </div>
     </div>
-    </div>
+  </div>
 
   <div class="form-group">
     <label for="category_id"><strong>Materia</strong></label>
@@ -163,33 +167,31 @@ $productSubcats = $mgr->GetProductSubcategories($id);
     $selectedIds = "";
     ?>
     <div id="subcatWrapper">
-
-    <?php if ($productSubcats): ?>
-      <div class="row pt-3">
-        <div class="col-12">
-          <label><strong>Sottocategorie</strong></label>
-        </div>
-        <?php
-        $i = 1;
-        $children = $productSubcats['children'];        
-        ?>
-        <?php foreach ($children as $subcat): ?>
-        <div class="col-md-3 col-sm-4 col-6">
-          <div class="form-check">
-            <input <?php echo $subcat->is_selected  ? 'checked' : '' ?> class="form-check-input" type="checkbox" value="<?php echo $subcat->id; ?>" name="subcat-<?php echo $i; ?>" id="subcat-<?php echo $i; ?>">
-            <label class="form-check-label" for="subcat-<?php echo $i; ?>">
-              <?php echo $subcat->name; ?>
-            </label>
+      <?php if ($productSubcats): ?>
+        <div class="row pt-3">
+          <div class="col-12">
+            <label><strong>Sottocategorie</strong></label>
           </div>
+          <?php
+          $i = 1;
+          $children = $productSubcats['children'];        
+          ?>
+          <?php foreach ($children as $subcat): ?>
+          <div class="col-md-3 col-sm-4 col-6">
+            <div class="form-check">
+              <input <?php echo $subcat->is_selected ? 'checked' : '' ?> class="form-check-input" type="checkbox" value="<?php echo $subcat->id; ?>" name="subcat-<?php echo $i; ?>" id="subcat-<?php echo $i; ?>">
+              <label class="form-check-label" for="subcat-<?php echo $i; ?>">
+                <?php echo $subcat->name; ?>
+              </label>
+            </div>
+          </div>
+          <?php
+          $selectedIds .= ($subcat->is_selected) ? $subcat->id . ',' : '';
+          $i++;
+          ?>
+          <?php endforeach; ?>        
         </div>
-        <?php
-        $selectedIds .= ($subcat->is_selected) ? $subcat->id . ',' : '';
-        $i++;
-        ?>
-        <?php endforeach; ?>        
-      </div>
-    <?php endif; ?>
-
+      <?php endif; ?>
     </div>
     <input type="hidden" id="selectedSubcatIds" value="<?php echo $selectedIds ?>">
 
@@ -204,7 +206,7 @@ $productSubcats = $mgr->GetProductSubcategories($id);
   <div class="row">
     <div class="col-md-4">
       <div class="form-group">
-        <label for="description"><strong>Prezzo</strong></label>
+        <label for="price"><strong>Prezzo</strong></label>
         <div class="input-group mb-3">
           <div class="input-group-prepend">
             <span class="input-group-text">€</span>
@@ -215,7 +217,7 @@ $productSubcats = $mgr->GetProductSubcategories($id);
     </div>
     <div class="col-md-4">
       <div class="form-group">
-        <label for="description"><strong>ISBN</strong></label>
+        <label for="ISBN"><strong>ISBN</strong></label>
         <div class="input-group mb-3">
           <div class="input-group-prepend">
             <span class="input-group-text">Cod.</span>
@@ -223,21 +225,45 @@ $productSubcats = $mgr->GetProductSubcategories($id);
           <input type="text" class="form-control" name="ISBN" id="ISBN" value="<?php echo esc_html($product->ISBN); ?>" >
         </div>
       </div>
-    </div>
-    <div class="col-md-4">    
+    </div>    
+    <div class="col-md-4">
       <div class="form-group">
-        <label for="description"><strong>Quantità</strong></label>
+        <label for="qta"><strong>Quantità</strong></label>
         <div class="input-group mb-3">
-
-          <input type="text" class="form-control" name="qta" id="qta" value="<?php echo esc_html($product->qta); ?>" >
+          <div class="input-group-prepend">
+            <span class="input-group-text">Pz</span>
+          </div>
+          <input type="number" class="form-control" name="qta" id="qta" min="1" step="1" value="<?php echo esc_html($product->qta); ?>" >
         </div>
       </div>
     </div>
   </div>
+
+  <!-- NEW FIELDS SECTION -->
+  <div class="row">
+    <div class="col-md-6">
+      <div class="form-group">
+        <label for="nota_volumi"><strong>Volumi (U = Unico, 2, 3, ...)</strong></label>
+        <input type="text" class="form-control form-control-sm" name="nota_volumi" id="nota_volumi" maxlength="50" value="<?php echo esc_html($product->nota_volumi); ?>" >
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="form-group">
+        <div class="form-check" style="margin-top: 2rem;">
+          <input class="form-check-input" type="checkbox" name="fl_esaurimento" id="fl_esaurimento" value="1" <?php echo ($product->fl_esaurimento == 1) ? 'checked' : ''; ?>>
+          <label class="form-check-label" for="fl_esaurimento">
+            <strong>Ad esaurimento</strong>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- END NEW FIELDS SECTION -->
+
   <div class="row">
     <div class="col-md-4">
       <div class="form-group">
-        <label for="description"><strong>Sconto</strong></label>
+        <label for="sconto"><strong>Sconto</strong></label>
         <div class="input-group mb-3">
           <div class="input-group-prepend">
             <span class="input-group-text">%</span>
@@ -248,7 +274,7 @@ $productSubcats = $mgr->GetProductSubcategories($id);
     </div>
     <div class="col-md-4">
       <div class="form-group">
-        <label for="description"><strong>Data Inizio</strong></label>
+        <label for="data_inizio_sconto"><strong>Data Inizio</strong></label>
         <div class="input-group mb-3">
           <input type="date" class="form-control" id="data_inizio_sconto" name="data_inizio_sconto" value="<?php echo esc_html($product->data_inizio_sconto); ?>">
       
@@ -257,9 +283,9 @@ $productSubcats = $mgr->GetProductSubcategories($id);
     </div>
     <div class="col-md-4">
       <div class="form-group">
-        <label for="description"><strong>Data Fine</strong></label>
+        <label for="data_fine_sconto"><strong>Data Fine</strong></label>
         <div class="input-group mb-3">
-        <input type="date" class="form-control" id="data_fine_sconto" name="data_fine_sconto" value="<?php echo esc_html($product->data_fine_sconto); ?>">
+          <input type="date" class="form-control" id="data_fine_sconto" name="data_fine_sconto" value="<?php echo esc_html($product->data_fine_sconto); ?>">
         </div>
       </div>
     </div>
@@ -283,11 +309,11 @@ $productSubcats = $mgr->GetProductSubcategories($id);
         <div class="product-image col-md-3 col-sm-4 col-6">
           <span data-id="<?php echo $image->id ?>" title="Modifica" class="edit-img badge badge-info p-2 rounded-circle"><i class="fas fa-edit"></i></span>
           <span data-id="<?php echo $image->id ?>" title="Elimina" class="delete-img badge badge-danger p-2 rounded-circle">&times;</span>
-          <img title="<?php echo $image->title ?>" data-order="<?php echo $image->order_number ?>" alt="<?php echo $image->alt ?>" data-id="<?php echo $image->id ?>" class="img-thumbnail" src="<?php echo ROOT_URL . '/images/' . $product->id . '/' . $image->id . '_thumbnail.' . $image->image_extension ?>" />
+          <img title="<?php echo $image->title ?>" data-order="<?php echo $image->order_number ?>" alt="<?php echo $image->alt ?>" data-id="<?php echo $image->id ?>" class="img-thumbnail" src="<?php echo ROOT_URL . '/images/' . $product->id . '/' . $image->id . '_thumbnail.' . $image->image_extension; ?>">
         </div>
-        <?php endforeach ?>
+        <?php endforeach; ?>
       </div>
-      <?php endif ?>
+      <?php endif; ?>
     </div>
 
   </div>

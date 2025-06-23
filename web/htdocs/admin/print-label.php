@@ -1,6 +1,9 @@
 <?php
 // File: web/htdocs/admin/print-label.php
 
+// Include the system initialization
+require_once '../inc/init.php';
+
 // Prevent from direct access
 if (!defined('ROOT_URL')) {
     // If accessed directly, define ROOT_URL for standalone access
@@ -86,9 +89,9 @@ try {
             line-height: 1;
         }
         
-        .date-text {
-            font-size: 7px;
-            font-weight: normal;
+        .pratica-date-text {
+            font-size: 14px;
+            font-weight: bold;
             margin: 0;
             text-align: center;
             line-height: 1;
@@ -156,13 +159,19 @@ try {
 <body>
     <div class="controls no-print">
         <button onclick="window.print()" class="btn">Stampa Etichetta</button>
-        <a href="javascript:history.back()" class="btn btn-secondary">Torna Indietro</a>
+        <?php 
+        $source = isset($_GET['source']) ? $_GET['source'] : 'default';
+        if ($source == 'libri_per_pratica') : ?>
+            <a href="<?php echo ROOT_URL; ?>admin/?page=libri_per_pratica" class="btn btn-secondary">Torna ai Libri per Pratica</a>
+        <?php else : ?>
+            <a href="<?php echo ROOT_URL; ?>admin/?page=orders-list" class="btn btn-secondary">Torna alle Pratiche</a>
+        <?php endif; ?>
     </div>
-    
+
     <div class="label">
-        <div class="header-text">Mercatino Liceo Da Vinci Treviso: num. pratica <?php echo $pratica; ?></div>
+        <div class="header-text">Mercatino Liceo Da Vinci Treviso</div>
         
-        <div class="date-text">Data: <?php echo $currentDate; ?></div>
+        <div class="pratica-date-text">Pratica <?php echo $pratica; ?> del <?php echo $currentDate; ?></div>
         
         <div class="barcode-container">
             <?php echo $barcode; ?>
@@ -176,6 +185,16 @@ try {
                 setTimeout(function() {
                     window.print();
                 }, 500);
+            }
+        });
+        
+        // Handle print completion and window management
+        window.addEventListener('afterprint', function() {
+            if (window.location.search.includes('autoprint=1')) {
+                // Optional: close window after printing (uncomment if desired)
+                // setTimeout(function() {
+                //     window.close();
+                // }, 1000);
             }
         });
     </script>

@@ -23,6 +23,12 @@ if ($alertMsg != '') {
       $msgBody = 'Ordine inviato correttamente';
       break;
 
+    case 'order_accepted':
+      $cssClass = 'alert-success';
+      $msgHeading = 'Pratica Accettata';
+      $msgBody = 'La pratica è stata accettata e l\'etichetta è pronta per la stampa';
+      break;
+
     case 'registered':
       $cssClass = 'alert-success';
       $msgHeading = 'Registrazione avvenuta';
@@ -70,7 +76,6 @@ if ($alertMsg != '') {
       $msgHeading = 'ERRORE';
       $msgBody = 'Indirizzo di spedizione non presente. Correggere anagrafica';
       break;
-
 
     case 'login_err':
       $cssClass = 'alert-danger';
@@ -142,6 +147,12 @@ if ($alertMsg != '') {
       $cssClass = 'alert-warning';
       $msgHeading = 'Attenzione';
       $msgBody = 'Essendo trascorsi oltre 30 minuti di inattività, il carrello è stato svuotato.';
+      break;
+
+    case 'product_unavailable':
+      $cssClass = 'alert-warning';
+      $msgHeading = 'Attenzione';
+      $msgBody = 'Questo libro non può essere aggiunto al carrello.';
       break;
 
     case 'order_quantity_resored':
