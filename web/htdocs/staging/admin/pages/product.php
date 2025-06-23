@@ -42,7 +42,8 @@ if (isset($_POST['add'])) {
   $ISBN = trim($_POST['ISBN']);
   $qta = trim($_POST['qta']);
   $nota_volumi = esc(trim($_POST['nota_volumi']));
-  $fl_esaurimento = isset($_POST['fl_esaurimento']) ? 1 : 0;
+  // $fl_esaurimento = isset($_POST['fl_esaurimento']) ? 1 : 0;
+  $fl_esaurimento = (int)$_POST['fl_esaurimento'];
   $tmpDir = isset($_POST['tmpDir']) ? $_POST['tmpDir'] : NULL;
   
 
@@ -77,7 +78,8 @@ if (isset($_POST['update'])) {
   $autori = esc(trim($_POST['autori']));
   $editore = esc(trim($_POST['editore']));
   $nota_volumi = esc(trim($_POST['nota_volumi']));
-  $fl_esaurimento = isset($_POST['fl_esaurimento']) ? 1 : 0;
+  // $fl_esaurimento = isset($_POST['fl_esaurimento']) ? 1 : 0;
+  $fl_esaurimento = (int)$_POST['fl_esaurimento'];
 
   if(isset($_POST['data_inizio_sconto']) && $_POST['data_inizio_sconto'] != ""){$data_inizio_sconto= $_POST['data_inizio_sconto'];}else{$data_inizio_sconto= "NULL";}
   if(isset($_POST['data_fine_sconto']) && $_POST['data_fine_sconto'] != ""){$data_fine_sconto= $_POST['data_fine_sconto'];}else{$data_fine_sconto= "NULL";}
