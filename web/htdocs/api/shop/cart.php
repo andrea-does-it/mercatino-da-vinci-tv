@@ -37,12 +37,13 @@ function incrementOrDecrement() {
   $cart_id = esc($_POST['cart_id']);
   $product_id = esc($_POST['product_id']);
   $pm = new ProductManager();
-  $product=$pm->get($product_id);
+  $product = $pm->get($product_id);
       
   if (isset($_POST['minus'])){
     $cm->removeFromCart($product_id, $cart_id);
   }
-  else if (isset($_POST['plus']) && $product->qta > 1){
+  else if (isset($_POST['plus']) && $product->qta > 1 && $product->fl_esaurimento != 1){
+    // Only add to cart if product quantity > 1 AND not marked as out of stock
     $cm->addToCart($product_id, $cart_id);
   }
 

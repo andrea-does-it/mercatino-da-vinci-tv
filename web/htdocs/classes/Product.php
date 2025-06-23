@@ -62,8 +62,10 @@ class Product {
   public $ISBN;
   public $sconto;
   public $editore;
+  public $nota_volumi;
+  public $fl_esaurimento;
 
-  public function __construct($id, $name, $price, $category_id, $sconto = 0, $data_inizio_sconto = NULL, $data_fine_sconto = NULL, $qta = 1, $ISBN, $autori, $editore){
+  public function __construct($id, $name, $price, $category_id, $sconto = 0, $data_inizio_sconto = NULL, $data_fine_sconto = NULL, $qta = 1, $ISBN, $autori, $editore, $nota_volumi = '', $fl_esaurimento = 0){
     $this->id = (int)$id;
     $this->name = $name;
     $this->price = (float)$price;
@@ -71,6 +73,8 @@ class Product {
     $this->sconto = (int)$sconto;
     $this->autori = $autori;
     $this->editore = $editore;
+    $this->nota_volumi = $nota_volumi;
+    $this->fl_esaurimento = (int)$fl_esaurimento;
     
     if($this->sconto>0){
       $this->data_inizio_sconto = $data_inizio_sconto == NULL ? '1900-01-01' : $data_inizio_sconto;
@@ -86,7 +90,7 @@ class Product {
   }
 
   public static function CreateEmpty() {
-    return new Product(0, "", 0, 0, 0, NULL, NULL, 0, "", "", "");
+    return new Product(0, "", 0, 0, 0, NULL, NULL, 0, "", "", "", "", 0);
   }
 
 }
@@ -95,7 +99,7 @@ class ProductManager extends DBManager {
 
   public function __construct(){
     parent::__construct();
-    $this->columns = array( 'id', 'name', 'price', 'category_id', 'sconto', 'data_inizio_sconto', 'data_fine_sconto', 'qta', 'ISBN', 'autori', 'editore' );
+    $this->columns = array( 'id', 'name', 'price', 'category_id', 'sconto', 'data_inizio_sconto', 'data_fine_sconto', 'qta', 'ISBN', 'autori', 'editore', 'nota_volumi', 'fl_esaurimento' );
     $this->tableName = 'product';
   }
   

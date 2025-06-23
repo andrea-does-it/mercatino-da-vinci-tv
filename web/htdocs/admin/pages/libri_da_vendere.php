@@ -42,9 +42,10 @@
       <th scope="col">Venditore</th>      
       <th scope="col">Titolo</th>
       <th scope="col">Quantità</th>
-      <th scope="col">Cod. ISBN</th>      
-      <th scope="col" >Prezzo Vendita</th>
-      <th scope="col" >Azioni</th>
+      <th scope="col">Cod. ISBN</th>
+      <th scope="col">Volumi</th>      
+      <th scope="col">Prezzo Vendita</th>
+      <th scope="col">Azioni</th>
 
     </tr>
   </thead>
@@ -56,12 +57,12 @@
     <td name="titolo"><?php echo esc_html($item['product_name']); ?></td>
     <td name="quantità"><?php echo esc_html($item['quantity']); ?></td>
     <td name="ISBN"><?php echo esc_html($item['product_ISBN']); ?></td>
+    <td name="volumi"><?php echo esc_html($item['product_nota_volumi']); ?></td>
     <td name="prezzo"><?php echo esc_html($item['total_price']+2); ?> €</td>
     <td>
     <form method="post" class="left">
-
     <input type="hidden" name="item_id" value="<?php echo esc_html($item['order_item_id']); ?>">
-            <input name="venduto" onclick="return confirm('Procedere con la vendita del libro?') ReloadLocation();" type="submit" class="btn btn-outline-info btn-sm" value="Venduto">
+            <input name="venduto" onclick="return confirm('Procedere con la vendita del libro?');" type="submit" class="btn btn-outline-info btn-sm" value="Vendi libro">
           </form>
       <?php //endif; ?>
      
@@ -81,4 +82,3 @@
     });
 } );
 </script>
-

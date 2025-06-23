@@ -13,7 +13,17 @@
 
     $id = trim($_POST['item_id']);
     $status = 'vendere';
+    
+    // Get the product_id from the order_item before updating status
+    $orderItemDetails = $orderMgr->getOrderItemById($id);
+    $product_id = $orderItemDetails['product_id'];
+    
+    // Update the status to 'vendere'
     $orderMgr->updateStatusItem2($id, $status);
+    
+    // Remove the first row from order_item1 with this product_id
+    $orderMgr->removeFirstOrderItem1($product_id);
+    
     $alertMsg = 'deleted';
   }
 
@@ -45,9 +55,11 @@
       <th scope="col">Venditore</th>      
       <th scope="col">Titolo</th>
       <th scope="col">Quantità</th>
-      <th scope="col">Cod. ISBN</th>      
-      <th scope="col" >Prezzo Vendita</th>
-      <th scope="col" >Azioni</th>
+      <th scope="col">Cod. ISBN</th>
+      <th scope="col">Volumi</th>      
+      <th scope="col">Prezzo Vendita</th>
+      <th scope="col">Data vendita</th>
+      <th scope="col">Azioni</th>
 
     </tr>
   </thead>
@@ -59,12 +71,13 @@
     <td><?php echo esc_html($item['product_name']); ?></td>
     <td><?php echo esc_html($item['quantity']); ?></td>
     <td><?php echo esc_html($item['product_ISBN']); ?></td>
+    <td><?php echo esc_html($item['product_nota_volumi']); ?></td>
     <td><?php echo esc_html($item['total_price']+2); ?> €</td>
+    <td><?php echo esc_html($item['data_vendita']); ?></td>
     <td>
     <form method="post" class="left">
-
     <input type="hidden" name="item_id" value="<?php echo esc_html($item['order_item_id']); ?>">
-            <input name="vendere" onclick="return confirm('Procedere con la vendita del libro?') ReloadLocation();" type="submit" class="btn btn-outline-info btn-sm" value="Vendere">
+            <input name="vendere" onclick="return confirm('Ripristinare il libro allo stato da vendere?');" type="submit" class="btn btn-outline-info btn-sm" value="Rimetti in vendita">
           </form>
       <?php //endif; ?>
      
@@ -84,4 +97,3 @@
     });
 } );
 </script>
-

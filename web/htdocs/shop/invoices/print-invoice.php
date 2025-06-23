@@ -29,5 +29,13 @@ $last_name = $orderMgr->getEmailAndName($orderId)['last_name'];
 $status = $orderItems[0]['order_status'];
 $pratica1 = $orderItems[0]['pratica'];
 
-$data = $orderItems;
-$pdf->printOrderInvoice($orderId, $orderItems, $orderTotal, $first_name, $email, $last_name, $pratica1);
+// Filter out eliminated items for printing
+$printableItems = array();
+foreach($orderItems as $item) {
+  if ($item['order_item_status'] != 'eliminato') {
+    $printableItems[] = $item;
+  }
+}
+
+$data = $printableItems;
+$pdf->printOrderInvoice($orderId, $printableItems, $orderTotal, $first_name, $email, $last_name, $pratica1);

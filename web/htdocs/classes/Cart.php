@@ -386,6 +386,9 @@ class OrderManager extends DBManager {
           , p.name as product_name
           , p.id as product_id
           , p.ISBN as product_ISBN
+          , p.nota_volumi as product_nota_volumi
+          , u.last_name as last_name
+          , u.first_name as first_name
           , ifnull(oi.quantity, 0) as quantity
           , ifnull(oi.single_price, 0) as single_price
           , ifnull(oi.quantity, 0) * ifnull(oi.single_price, 0) as total_price
@@ -395,13 +398,15 @@ class OrderManager extends DBManager {
             ON o.id = oi.order_id
           INNER JOIN product as p
             ON p.id = oi.product_id
+          INNER JOIN user as u
+          ON u.id = o.user_id
         WHERE
-          ifnull($orderId, 0) = 0
-          OR $orderId = o.id;
+          (ifnull($orderId, 0) = 0
+          OR $orderId = o.id);
       ");
-      //var_dump($result); die;
       return $result;
     }
+
 
     public function getOrderItems1(){
       $result = $this->db->query("
@@ -414,6 +419,7 @@ class OrderManager extends DBManager {
           , p.name as product_name
           , p.id as product_id
           , p.ISBN as product_ISBN
+          , p.nota_volumi as product_nota_volumi
           , u.last_name as last_name
           , u.first_name as first_name
           , ifnull(oi.quantity, 0) as quantity
@@ -426,11 +432,10 @@ class OrderManager extends DBManager {
           INNER JOIN product as p
             ON p.id = oi.product_id
           INNER JOIN user as u
-           ON u.id = o.user_id
+          ON u.id = o.user_id
         WHERE
         oi.status = 'vendere';
       ");
-      //var_dump($result); die;
       return $result;
     }
 
@@ -442,9 +447,11 @@ class OrderManager extends DBManager {
           , o.numPratica as pratica
           , oi.id as order_item_id
           , oi.status as order_item_status
+          , oi.updated_at as data_vendita
           , p.name as product_name
           , p.id as product_id
           , p.ISBN as product_ISBN
+          , p.nota_volumi as product_nota_volumi
           , u.last_name as last_name
           , u.first_name as first_name
           , ifnull(oi.quantity, 0) as quantity
@@ -457,11 +464,10 @@ class OrderManager extends DBManager {
           INNER JOIN product as p
             ON p.id = oi.product_id
           INNER JOIN user as u
-           ON u.id = o.user_id
+          ON u.id = o.user_id
         WHERE
         oi.status = 'venduto';
       ");
-      //var_dump($result); die;
       return $result;
     }
 
@@ -528,6 +534,7 @@ class OrderManager extends DBManager {
           , p.name as product_name
           , p.id as product_id
           , p.ISBN as product_ISBN
+          , p.nota_volumi as product_nota_volumi
           , ifnull(oi.quantity, 0) as quantity
           , ifnull(oi.single_price, 0) as single_price
           , ifnull(oi.quantity, 0) * ifnull(oi.single_price, 0) as total_price
@@ -541,7 +548,6 @@ class OrderManager extends DBManager {
           (ifnull($orderId, 0) = 0
           OR $orderId = o.id) AND o.status = 'inviata' AND oi.status = 'accettare';
       ");
-      //var_dump($result); die;
       return $result;
     }
 
@@ -583,6 +589,7 @@ class OrderManager extends DBManager {
           , p.name as product_name
           , p.id as product_id
           , p.ISBN as product_ISBN
+          , p.nota_volumi as product_nota_volumi
           , ifnull(oi.quantity, 0) as quantity
           , ifnull(oi.single_price, 0) as single_price
           , ifnull(oi.quantity, 0) * ifnull(oi.single_price, 0) as total_price
@@ -593,10 +600,9 @@ class OrderManager extends DBManager {
           INNER JOIN product as p
             ON p.id = oi.product_id
         WHERE
-         (ifnull($orderId, 0) = 0
-          OR $orderId = o.id) AND o.status = 'accettata' AND oi.status = 'vendere';
+        (ifnull($orderId, 0) = 0
+          OR $orderId = o.id) AND oi.status = 'vendere';
       ");
-      //var_dump($result); die;
       return $result;
     }
 
@@ -610,6 +616,7 @@ class OrderManager extends DBManager {
           , p.name as product_name
           , p.id as product_id
           , p.ISBN as product_ISBN
+          , p.nota_volumi as product_nota_volumi
           , ifnull(oi.quantity, 0) as quantity
           , ifnull(oi.single_price, 0) as single_price
           , ifnull(oi.quantity, 0) * ifnull(oi.single_price, 0) as total_price
@@ -623,10 +630,8 @@ class OrderManager extends DBManager {
           (ifnull($orderId, 0) = 0
           OR $orderId = o.id) AND o.status = 'accettata' AND oi.status = 'venduto';
       ");
-      //var_dump($result); die;
       return $result;
     }
-
 
     public function getUserAddress($userId){
       $result = $this->db->query("SELECT street, city, cap FROM address WHERE user_id = $userId");
@@ -753,13 +758,25 @@ class OrderManager extends DBManager {
       $br = "<br>";
       $message .= $br . "<h3>Riepilogo Pratica:</h3>";
   
-      $mailBody = "<table $style><tr><th $style>Titolo</th><th $style >Prezzo Unitario</th><th $style >N. Pezzi</th><th $style >Importo</th></tr>";
+      // $mailBody = "<table $style><tr><th $style>Titolo</th><th $style >Prezzo Unitario</th><th $style >N. Pezzi</th><th $style >Importo</th></tr>";
+      // foreach($orderItems as $item) {
+      //     $mailBody .= "<tr><td $style>".$item['product_name']."</td><td $style>".$item['single_price']."</td><td $style>".$item['quantity']."</td><td $style>".$item['total_price']."</td></tr>";
+      // }
+      // $mailBody .= "<tr><td $style colspan='4'>Totale €". (number_format((float)($orderTotal['total'] + $orderTotal['shipment_price']), 2, '.', '')) . "</td></tr>";
+      // $mailBody .= "</table>";
+      
+      $acceptedTotal = 0;
       foreach($orderItems as $item) {
-          $mailBody .= "<tr><td $style>".$item['product_name']."</td><td $style>".$item['single_price']."</td><td $style>".$item['quantity']."</td><td $style>".$item['total_price']."</td></tr>";
+          // Only include accepted items (vendere status) in the email
+          if ($item['order_item_status'] == 'vendere') {
+              $mailBody .= "<tr><td $style>".$item['product_name']."</td><td $style>".$item['single_price']."</td><td $style>".$item['quantity']."</td><td $style>".$item['total_price']."</td></tr>";
+              $acceptedTotal += $item['total_price'];
+          }
       }
-      $mailBody .= "<tr><td $style colspan='4'>Totale €". (number_format((float)($orderTotal['total'] + $orderTotal['shipment_price']), 2, '.', '')) . "</td></tr>";
-      $mailBody .= "</table>";
-  
+      $mailBody .= "<tr><td $style colspan='4'>Totale €". number_format((float)$acceptedTotal, 2, '.', '') . "</td></tr>";
+      $mailBody .= "</table>"; 
+      
+      
       $message .= $mailBody . $br;
       $parameters = "-f mercatino@comitatogenitoridavtv.it";
   
@@ -771,6 +788,70 @@ class OrderManager extends DBManager {
       $this->update($order, $orderId);
       
       return $result;
+    }    
+
+    public function getOrderItemsEliminato($orderId){
+      $result = $this->db->query("
+        SELECT 
+          o.id as order_id
+          , o.status as order_status
+          , oi.id as order_item_id
+          , oi.status as order_item_status
+          , p.name as product_name
+          , p.id as product_id
+          , p.ISBN as product_ISBN
+          , p.nota_volumi as product_nota_volumi
+          , ifnull(oi.quantity, 0) as quantity
+          , ifnull(oi.single_price, 0) as single_price
+          , ifnull(oi.quantity, 0) * ifnull(oi.single_price, 0) as total_price
+        FROM
+          orders as o
+          INNER JOIN order_item as oi
+            ON o.id = oi.order_id
+          INNER JOIN product as p
+            ON p.id = oi.product_id
+        WHERE
+          (ifnull($orderId, 0) = 0
+          OR $orderId = o.id) AND oi.status = 'eliminato';
+      ");
+      return $result;
+    }
+
+    public function getOrderItemById($order_item_id) {
+        $result = $this->db->query("
+            SELECT oi.*, p.id as product_id
+            FROM order_item as oi
+            INNER JOIN product as p ON p.id = oi.product_id
+            WHERE oi.id = $order_item_id
+            LIMIT 1
+        ");
+        
+        if ($result && count($result) > 0) {
+            return $result[0];
+        }
+        
+        return null;
+    }   
+    
+    public function removeFirstOrderItem1($product_id) {
+        // Get the first row from order_item1 with the specified product_id
+        $result = $this->db->query("
+            SELECT id 
+            FROM order_item1 
+            WHERE product_id = $product_id 
+            ORDER BY id ASC 
+            LIMIT 1
+        ");
+        
+        if ($result && count($result) > 0) {
+            $firstItemId = $result[0]['id'];
+            
+            // Remove the first row found
+            $deleteQuery = "DELETE FROM order_item1 WHERE id = $firstItemId";
+            return $this->db->query($deleteQuery);
+        }
+        
+        return false;
     }    
 
 }
@@ -914,6 +995,15 @@ class CartManager extends DBManager {
 
     public function addToCart($productId, $cartId) {
 
+      // Check if product is available for purchase (not marked as out of stock)
+      $prodMgr = new ProductManager();
+      $product = $prodMgr->get($productId);
+      
+      if (!$product || $product->fl_esaurimento == 1) {
+        // Product is marked as out of stock/unavailable, cannot add to cart
+        return false;
+      }
+
       $quantityInCart = $this->quantityInCart($productId, $cartId);
 
       if ($quantityInCart > 0){
@@ -923,8 +1013,9 @@ class CartManager extends DBManager {
         $this->createItem($productId, $cartId);
       }
       $this->_updateCartLastInteraction($cartId);
-      $prodMgr = new ProductManager();
       $prodMgr->decreaseQuantity($productId);
+      
+      return true;
     }
 
     public function removeFromCart($productId, $cartId) {

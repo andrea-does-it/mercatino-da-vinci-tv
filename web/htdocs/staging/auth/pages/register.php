@@ -5,7 +5,6 @@ $cognome = '';
 $email = '';
 $password = '';
 $confirm_password = '';
-$profile_id = '';
 $street = '';
 $city = '';
 $cap = '';
@@ -21,7 +20,6 @@ if (isset($_POST['register'])) {
   $email = esc($_POST['email']);
   $password = esc($_POST['password']);
   $confirm_password = esc($_POST['confirm_password']);
-  $profile_id = esc($_POST['profile_id']);
 
   $street = esc($_POST['street']);
   $city = esc($_POST['city']);
@@ -95,11 +93,6 @@ if (isset($_POST['register'])) {
     <input name="confirm_password" id="confirm_password" type="password" class="form-control" value="<?php echo esc_html($confirm_password); ?>">
   </div>
 
-  <div class="form-group">
-    <label for="profile_id">Profilo</label>
-    <input name="profile_id" id="profile_id" type="text" class="form-control" value="1">
-  </div>
-
   <hr class=mb-4>
 
   <h5  class="mb-3 mt-3">Indirizzo del mercatino</h5>
@@ -124,4 +117,3 @@ if (isset($_POST['register'])) {
   <input class="btn btn-primary right mt-3" type="submit" value="registrati" name="register">
   
 </form>
-

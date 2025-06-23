@@ -419,6 +419,7 @@ class OrderManager extends DBManager {
           , p.name as product_name
           , p.id as product_id
           , p.ISBN as product_ISBN
+          , p.nota_volumi as product_nota_volumi
           , u.last_name as last_name
           , u.first_name as first_name
           , ifnull(oi.quantity, 0) as quantity
@@ -431,11 +432,10 @@ class OrderManager extends DBManager {
           INNER JOIN product as p
             ON p.id = oi.product_id
           INNER JOIN user as u
-           ON u.id = o.user_id
+          ON u.id = o.user_id
         WHERE
         oi.status = 'vendere';
       ");
-      //var_dump($result); die;
       return $result;
     }
 
@@ -447,9 +447,11 @@ class OrderManager extends DBManager {
           , o.numPratica as pratica
           , oi.id as order_item_id
           , oi.status as order_item_status
+          , oi.updated_at as data_vendita
           , p.name as product_name
           , p.id as product_id
           , p.ISBN as product_ISBN
+          , p.nota_volumi as product_nota_volumi
           , u.last_name as last_name
           , u.first_name as first_name
           , ifnull(oi.quantity, 0) as quantity
@@ -462,11 +464,10 @@ class OrderManager extends DBManager {
           INNER JOIN product as p
             ON p.id = oi.product_id
           INNER JOIN user as u
-           ON u.id = o.user_id
+          ON u.id = o.user_id
         WHERE
         oi.status = 'venduto';
       ");
-      //var_dump($result); die;
       return $result;
     }
 
@@ -815,6 +816,43 @@ class OrderManager extends DBManager {
       ");
       return $result;
     }
+
+    public function getOrderItemById($order_item_id) {
+        $result = $this->db->query("
+            SELECT oi.*, p.id as product_id
+            FROM order_item as oi
+            INNER JOIN product as p ON p.id = oi.product_id
+            WHERE oi.id = $order_item_id
+            LIMIT 1
+        ");
+        
+        if ($result && count($result) > 0) {
+            return $result[0];
+        }
+        
+        return null;
+    }   
+    
+    public function removeFirstOrderItem1($product_id) {
+        // Get the first row from order_item1 with the specified product_id
+        $result = $this->db->query("
+            SELECT id 
+            FROM order_item1 
+            WHERE product_id = $product_id 
+            ORDER BY id ASC 
+            LIMIT 1
+        ");
+        
+        if ($result && count($result) > 0) {
+            $firstItemId = $result[0]['id'];
+            
+            // Remove the first row found
+            $deleteQuery = "DELETE FROM order_item1 WHERE id = $firstItemId";
+            return $this->db->query($deleteQuery);
+        }
+        
+        return false;
+    }    
 
 }
 
