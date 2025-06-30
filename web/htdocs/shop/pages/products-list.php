@@ -61,8 +61,8 @@
 <?php if ($totalProducts > 0) : ?>
 <p class="lead">Di seguito la lista dei libri adottati dal Liceo Scientifico Da Vinci - Treviso</p>
 <p class="lead">Vecchie Edizioni accettate dai Dipartimenti <a class="underline" href="<?php echo ROOT_URL . 'public?page=libri_vecchi_accettati'; ?>">Clicca qui &raquo;</a></p>
-<p class="lead text-danger font-weight-bold">Ricerca se il libro che vuoi vendere è tra quelli adottati dal Liceo. La ricerca può essere effettuata per TITOLO o per CODICE ISBN nel 
-  campo "cerca un libro...". </p>
+<p class="lead text-danger font-weight-bold">ATTENZIONE:<br>  i prezzi indicati in questa pagina sono calcolati applicando il 50% del prezzo di copertina ATTUALE decurtati di 1€ (<a class="underline">prezzo che incasserà il VENDITORE)</a>.</p>
+<p class="lead text-danger font-weight-bold">Nella pagina al link:  <a class="lead text-info font-weight-bold" href="<?php echo ROOT_URL . 'public?page=libri_da_vendere'; ?>"> Mercatino -> Libri disponibili per acquisto</a>, si trovano i libri messi in vendita e ATTUALMENTE presenti presso i locali della scuola; i prezzi mostrati sono stati calcolati applicando il 50% del prezzo di copertina ATTUALE aumentati di 1€ (<a class="underline">prezzo che pagherà l' ACQUIRENTE)</a>.</p>
 <p class="lead text-info font-weight-bold">Puoi filtrare i libri disponibili selezionando la materia di riferimento nell'elenco a sinistra.</p>
 
 <div class="row" id="products-container">

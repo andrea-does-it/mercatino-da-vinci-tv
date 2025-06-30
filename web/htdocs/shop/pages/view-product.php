@@ -47,6 +47,12 @@
 <div class="jumbotron">
   <h1 class="display-5"><?php echo esc_html($product->name); ?></h1>
   
+  <?php if (!empty($product->ISBN)) : ?>
+    <p class="lead">
+      <strong>Cod. ISBN:</strong> <?php echo esc_html($product->ISBN); ?>
+    </p>
+  <?php endif; ?>
+  
   <?php if (!empty($product->autori)) : ?>
     <p class="lead">
       <strong>Autori:</strong> <?php echo esc_html($product->autori); ?>
