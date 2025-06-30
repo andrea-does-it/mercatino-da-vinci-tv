@@ -18,10 +18,22 @@
       <th class="col-md-3">Note</th>
     </tr>
     <tr>
-      <td>Colori della Matematica. Geometria+Algebra</td>
+      <td>Colori della Matematica. Geometria+Algebra 1</td>
       <td>geom+algebra</td>
       <td>9 €</td>
       <td>Sono stati accorpati Colori della Matematica-Algebra 1 e Colori della Matematica-Geometria</td>
+    </tr>
+    <tr>
+      <td>Colori della Matematica. Algebra. Quaderno Algebra. Vol. 2</td>
+      <td>9788849421644</td>
+      <td>15 €</td>
+      <td>Questo volume viene venduto a quelli del secondo anno, che hanno acquistato il primo anno Colori della Matematica. Geometria+Algebra 1 cod. ISBN: geom+algebra </td>
+    </tr>
+    <tr>
+      <td>Manuale Blu 2.0 di matematica. Vol. 3</td>
+      <td>9788808388810</td>
+      <td>19 €</td>
+      <td></td>
     </tr>
   </table>
 <h4 class="mb-3 font-weight-bold text-info">Inglese</h4>
@@ -71,7 +83,18 @@
       <td>21 €</td>
       <td></td>
     </tr>
-    </table>
+    <tr>
+      <td>Il Campbell. Primo biennio.</td>
+      <td>9788891916884</td>
+      <td>13 €</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Il Campbell. Secondo biennio.</td>
+      <td>9788891920430</td>
+      <td>18 €</td>
+      <td></td>
+    </tr>    </table>
 <h4 class="mb-3 font-weight-bold text-info">Italiano</h4>
   <table class="table table-bordered">
     <tr>
@@ -79,12 +102,6 @@
       <th class="col-md-2">Cod. ISBN</th>
       <th class="col-md-2">Prezzo</th>
       <th class="col-md-3">Note</th>
-    </tr>
-    <tr>
-      <td>Il Palazzo di Atlante. Vol. 1</td>
-      <td>palazzo_atl_1</td>
-      <td>17 €</td>
-      <td>Sono stati accorpati Il Palazzo di Atlante Vol. 1A e Il Palazzo di Atlante Vol. 1B</td>
     </tr>
     <tr>
       <td>Divina Commedia (completa)</td>
@@ -111,10 +128,10 @@
       <td>Qualsiasi Edizione</td>
     </tr>
     <tr>
-      <td>Promessi Sposi</td>
-      <td>promessi_sposi</td>
-      <td>14 €</td>
-      <td>Qualsiasi Edizione</td>
+      <td>Dizionario Latino Italiano - Italiano Latino</td>
+      <td>dizionario_latino</td>
+      <td>44 €</td>
+      <td></td>
     </tr>
 
   </table>
