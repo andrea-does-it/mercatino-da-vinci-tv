@@ -79,9 +79,21 @@ if ($alertMsg != '') {
 
     case 'login_err':
       $cssClass = 'alert-danger';
-      $msgHeading = 'ERRORE';
-      $msgBody = 'Login Fallito';
+      $msgHeading = 'ERRORE DI ACCESSO';
+      $msgBody = 'Email o password non corrette. Verifica i tuoi dati e riprova.';
+      break;      
+
+    case 'user_not_found':
+      $cssClass = 'alert-danger';
+      $msgHeading = 'UTENTE NON TROVATO';
+      $msgBody = 'L\'email inserita non è registrata nel sistema.';
       break;
+
+    case 'invalid_credentials':
+      $cssClass = 'alert-danger';
+      $msgHeading = 'CREDENZIALI NON VALIDE';
+      $msgBody = 'La password inserita non è corretta.';
+      break;      
 
     case 'forbidden':
       $cssClass = 'alert-danger';
@@ -127,8 +139,8 @@ if ($alertMsg != '') {
 
     case 'user_already_exists':
       $cssClass = 'alert-danger';
-      $msgHeading = 'ERRORE';
-      $msgBody = 'Mail già presente a sistema';
+      $msgHeading = 'EMAIL GIÀ REGISTRATA';
+      $msgBody = 'Questa email è già presente nel sistema. Se hai già un account, <a href="'.ROOT_URL.'auth?page=login" class="alert-link">effettua il login</a> o <a href="'.ROOT_URL.'auth?page=forgot-password" class="alert-link">recupera la password</a>.';
       break;
 
     case 'cart_empty':

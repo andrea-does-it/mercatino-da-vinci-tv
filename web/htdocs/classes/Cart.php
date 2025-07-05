@@ -407,7 +407,7 @@ class OrderManager extends DBManager {
       return $result;
     }
 
-
+    //Usato in "Libri da vendere"
     public function getOrderItems1(){
       $result = $this->db->query("
         SELECT 
@@ -434,7 +434,8 @@ class OrderManager extends DBManager {
           INNER JOIN user as u
           ON u.id = o.user_id
         WHERE
-        oi.status = 'vendere';
+        oi.status = 'vendere'
+        AND o.numPratica > 0;
       ");
       return $result;
     }
@@ -949,22 +950,26 @@ class CartManager extends DBManager {
 
     public function mergeCarts(){
 
+      // Initialize result to prevent "Undefined variable" warning
+      $result = true;
+      
       $oldUserCart = $this->db->query("SELECT id FROM cart where user_id = $this->userId");
       $oldClientCart = $this->db->query("SELECT id FROM cart where client_id = '$this->clientId'");
       //var_dump($oldUserCart, $oldClientCart, $this->userId, $this->clientId); die;
+      
       if (count($oldClientCart) > 0 AND count($oldUserCart) == 0){
+        // Case 1: User has no cart, but client has cart - transfer client cart to user
         $result = $this->db->query("UPDATE cart SET user_id = $this->userId, client_id = '' WHERE client_id = '$this->clientId'");
       }
-
       else if (count($oldClientCart) > 0 AND count($oldUserCart) > 0 ) {
-
+        // Case 2: Both user and client have carts - merge them
+        
         $userCartId = $oldUserCart[0]['id'];
         $userCartItems = $this->getCartItems($userCartId);
 
         $clientCartId = $oldClientCart[0]['id'];
         $clientCartItems = $this->getCartItems($clientCartId);
         
-
         foreach($clientCartItems as $clientItem){
           
           $isAlreadyInCart = false;
@@ -987,6 +992,8 @@ class CartManager extends DBManager {
 
         $result = $this->db->query("DELETE FROM cart WHERE id = $clientCartId");
       }
+      // Case 3: No action needed (user has cart but client doesn't, or neither has cart)
+      // $result remains true (initialized at the beginning)
 
       unset($_SESSION['client_id']);
       return $result;
