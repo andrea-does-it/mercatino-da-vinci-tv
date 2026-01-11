@@ -32,20 +32,18 @@ class ProductImageManager extends DBManager {
   }
 
   public function getImages($productId) {
-    // $images = parent::getAll();
-    $imgsArr = $this->db->query("
-      SELECT *
-      FROM product_images
-      WHERE product_id = $productId;
-    ");
+      $imgsArr = $this->db->prepare(
+          "SELECT * FROM product_images WHERE product_id = ?",
+          [(int)$productId]
+      );
 
-    $images = [];
-    if ($imgsArr) {
-      foreach($imgsArr as $img){
-        array_push($images, (object) $img);
+      $images = [];
+      if ($imgsArr) {
+          foreach ($imgsArr as $img) {
+              $images[] = (object)$img;
+          }
       }
-    }
-    return $images;
+      return $images;
   }
 }
 
@@ -115,19 +113,25 @@ class ProductManager extends DBManager {
   }
 
   public function MoveTempImages($tmpDir, $productId) {
-    $imgMgr = new ProductImageManager();
-    $imgPath = $imgMgr->GetImagesPath();
-    rename("$imgPath/$tmpDir", "$imgPath/$productId");
+      $imgMgr = new ProductImageManager();
+      $imgPath = $imgMgr->GetImagesPath();
+      // Sanitize directory names to prevent path traversal
+      $tmpDir = basename($tmpDir);
+      $productId = (int)$productId;
 
-    $files = scandir("$imgPath/$productId");
+      rename("$imgPath/$tmpDir", "$imgPath/$productId");
 
-    foreach($files as $file) {
-      if (strpos($file, '.jpg') != false) {
-        $imgId = str_replace(".jpg", "", $file);
-        $query="UPDATE product_images SET product_id = '$productId' WHERE id = '$imgId'"; 
-        $this->db->exec($query);
+      $files = scandir("$imgPath/$productId");
+
+      foreach ($files as $file) {
+          if (strpos($file, '.jpg') !== false) {
+              $imgId = (int)str_replace(".jpg", "", $file);
+              $this->db->execute(
+                  "UPDATE product_images SET product_id = ? WHERE id = ?",
+                  [$productId, $imgId]
+              );
+          }
       }
-    }
   }
 
   public function GetProductWithImages($productId) {
@@ -197,14 +201,11 @@ class ProductManager extends DBManager {
     $this->_deleteImagesFromFileSystem($tmpDir);
   }
 
-  public function AddQuantity($productId, $quantity){
-    $query = "
-      UPDATE product
-      SET qta = qta + $quantity
-      WHERE id = $productId;
-    ";
-    
-    $this->db->query($query);
+  public function AddQuantity($productId, $quantity) {
+      $this->db->execute(
+          "UPDATE product SET qta = qta + ? WHERE id = ?",
+          [(int)$quantity, (int)$productId]
+      );
   }
 
   public function SearchProducts($search) {
@@ -244,51 +245,57 @@ class ProductManager extends DBManager {
     if(is_dir($dirname))rmdir($dirname);
   }
 
-  private function _deleteImagesFromDB($productId){
-    $this->db->query("DELETE FROM product_images WHERE product_id = $productId");
+  private function _deleteImagesFromDB($productId) {
+      $this->db->execute(
+          "DELETE FROM product_images WHERE product_id = ?",
+          [(int)$productId]
+      );
   }
 
   private function _getProductsQuery($categoryId = 0, $productId = 0, $search = '', $limit = '') {
+      $params = [];
+      $conditions = [];
 
-    if ($limit != '') {
-      $limit = "LIMIT $limit";
-    }
-
-    if ($search != '') {
-      $search = "
-        AND
-        (
-          p.name like '%$search%'
-          OR
-          c.name like '%$search%'
-        )
-      ";
-    }
-
-    $query = "
-      SELECT 
-        p.*
-        , c.name as category
-      FROM 
-        product p
-        INNER JOIN category c
-          ON p.category_id = c.id
-      WHERE  
-        ($categoryId = 0 OR p.category_id = $categoryId)
-        AND
-        ($productId = 0 OR p.id = $productId)
-      $search
-      $limit;
-    ";
-
-    $productsObjArr = [];
-    $products = $this->db->query($query);
-    if ($products){
-      foreach($products as $product){
-        array_push($productsObjArr, (object) $product);
+      if ($categoryId > 0) {
+          $conditions[] = "p.category_id = ?";
+          $params[] = (int)$categoryId;
       }
-    }
-    return $productsObjArr;
+
+      if ($productId > 0) {
+          $conditions[] = "p.id = ?";
+          $params[] = (int)$productId;
+      }
+
+      if ($search !== '') {
+          $conditions[] = "(p.name LIKE ? OR c.name LIKE ?)";
+          $searchTerm = '%' . $search . '%';
+          $params[] = $searchTerm;
+          $params[] = $searchTerm;
+      }
+
+      $whereClause = count($conditions) > 0 ? 'WHERE ' . implode(' AND ', $conditions) : '';
+
+      $limitClause = '';
+      if ($limit !== '' && is_numeric($limit)) {
+          $limitClause = "LIMIT " . (int)$limit;
+      }
+
+      $query = "
+          SELECT p.*, c.name as category
+          FROM product p
+          INNER JOIN category c ON p.category_id = c.id
+          $whereClause
+          $limitClause
+      ";
+
+      $productsObjArr = [];
+      $products = $this->db->prepare($query, $params);
+      if ($products) {
+          foreach ($products as $product) {
+              $productsObjArr[] = (object)$product;
+          }
+      }
+      return $productsObjArr;
   } 
 
 
@@ -296,80 +303,91 @@ class ProductManager extends DBManager {
 
   /**
    * Get the total count of products in a specific category
-   * 
+   *
    * @param int $categoryId The category ID to filter by (0 for all)
    * @return int Total count of products
    */
   public function GetProductsCount($categoryId = 0) {
-    $whereClause = ($categoryId > 0) ? "WHERE p.category_id = $categoryId" : "";
-    
-    $query = "
-      SELECT COUNT(*) as total
-      FROM product p
-      INNER JOIN category c ON p.category_id = c.id
-      $whereClause;
-    ";
-    
-    $result = $this->db->query($query);
-    return isset($result[0]['total']) ? (int)$result[0]['total'] : 0;
+      $params = [];
+      $whereClause = "";
+
+      if ($categoryId > 0) {
+          $whereClause = "WHERE p.category_id = ?";
+          $params[] = (int)$categoryId;
+      }
+
+      $query = "
+          SELECT COUNT(*) as total
+          FROM product p
+          INNER JOIN category c ON p.category_id = c.id
+          $whereClause
+      ";
+
+      $result = $this->db->prepare($query, $params);
+      return isset($result[0]['total']) ? (int)$result[0]['total'] : 0;
   }
 
   /**
    * Get paginated products
-   * 
+   *
    * @param int $categoryId The category ID to filter by (0 for all)
    * @param int $offset Starting position for the query
    * @param int $limit Maximum number of records to return
    * @return array Array of product objects
    */
   public function GetProductsPaginated($categoryId = 0, $offset = 0, $limit = 12) {
-    $whereClause = ($categoryId > 0) ? "WHERE p.category_id = $categoryId" : "";
-    
-    $query = "
-      SELECT 
-        p.*
-        , c.name as category
-      FROM 
-        product p
-        INNER JOIN category c ON p.category_id = c.id
-      $whereClause
-      ORDER BY p.name
-      LIMIT $offset, $limit;
-    ";
-    
-    $productsObjArr = [];
-    $products = $this->db->query($query);
-    
-    if ($products) {
-      foreach($products as $product) {
-        $productObj = (object) $product;
-        
-        // Add URL and check for discounts
-        $urlUtilities = new UrlUtilities('shop');
-        $productObj->url = $urlUtilities->product($productObj->id, $productObj->name);
-        
-        $productObj->disc_price = NULL;
-        if ($productObj->sconto != "0" && $productObj->data_inizio_sconto <= date('Y-m-d') && $productObj->data_fine_sconto >= date('Y-m-d')) {
-          $productObj->disc_price = $productObj->price - (($productObj->price * $productObj->sconto)/100.0);
-        }
-        
-        array_push($productsObjArr, $productObj);
+      $params = [];
+      $whereClause = "";
+
+      if ($categoryId > 0) {
+          $whereClause = "WHERE p.category_id = ?";
+          $params[] = (int)$categoryId;
       }
-    }
-    
-    // Apply user discount if applicable
-    $pm = new ProfileManager();
-    $userDiscount = $pm->GetUserDiscount();
-    if ($userDiscount > 0) {
-      foreach($productsObjArr as $product) {
-        $product->price = number_format(($product->price - (($product->price * $userDiscount)/100)), 2, '.', '');
-        if ($product->disc_price != NULL) {
-          $product->disc_price = number_format(($product->disc_price - (($product->disc_price * $userDiscount)/100)), 2, '.', '');
-        }
+
+      $params[] = (int)$offset;
+      $params[] = (int)$limit;
+
+      $query = "
+          SELECT p.*, c.name as category
+          FROM product p
+          INNER JOIN category c ON p.category_id = c.id
+          $whereClause
+          ORDER BY p.name
+          LIMIT ?, ?
+      ";
+
+      $productsObjArr = [];
+      $products = $this->db->prepare($query, $params);
+
+      if ($products) {
+          $urlUtilities = new UrlUtilities('shop');
+          foreach ($products as $product) {
+              $productObj = (object)$product;
+
+              // Add URL and check for discounts
+              $productObj->url = $urlUtilities->product($productObj->id, $productObj->name);
+
+              $productObj->disc_price = null;
+              if ($productObj->sconto != "0" && $productObj->data_inizio_sconto <= date('Y-m-d') && $productObj->data_fine_sconto >= date('Y-m-d')) {
+                  $productObj->disc_price = $productObj->price - (($productObj->price * $productObj->sconto) / 100.0);
+              }
+
+              $productsObjArr[] = $productObj;
+          }
       }
-    }
-    
-    return $productsObjArr;
-  }  
- 
- }
+
+      // Apply user discount if applicable
+      $pm = new ProfileManager();
+      $userDiscount = $pm->GetUserDiscount();
+      if ($userDiscount > 0) {
+          foreach ($productsObjArr as $product) {
+              $product->price = number_format(($product->price - (($product->price * $userDiscount) / 100)), 2, '.', '');
+              if ($product->disc_price !== null) {
+                  $product->disc_price = number_format(($product->disc_price - (($product->disc_price * $userDiscount) / 100)), 2, '.', '');
+              }
+          }
+      }
+
+      return $productsObjArr;
+  }
+}

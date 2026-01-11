@@ -33,13 +33,13 @@ class Email {
 
     public function getCustomers(){
 
-      $customersArr = $this->db->query("
+      $customersArr = $this->db->prepare("
         SELECT
-          u.id AS id  
+          u.id AS id
           , CONCAT(u.first_name, ' ', u.last_name) AS name
           , u.email AS email
-        FROM user u;
-      ");
+        FROM user u
+      ", []);
 
       $customers = [];
 
@@ -53,38 +53,43 @@ class Email {
 
     public function saveRecipients($id, $recipients) {
 
-      $to = "'" . str_replace(';', "','", $recipients) . "'";
-
-      $this->db->query("
+      // Delete existing recipients using prepared statement
+      $this->db->execute("
         DELETE FROM email_recipients
-        WHERE email_id = $id;
-      ");
+        WHERE email_id = ?
+      ", [(int)$id]);
 
-      $this->db->query("
-        INSERT INTO email_recipients
-        (email_id, recipient_id)
-        SELECT
-          $id
-          , u.id
+      // Parse recipients and insert each safely
+      $emailList = array_filter(array_map('trim', explode(';', $recipients)));
+
+      if (empty($emailList)) return;
+
+      // Build placeholders for IN clause
+      $placeholders = implode(',', array_fill(0, count($emailList), '?'));
+      $params = array_merge([(int)$id], $emailList);
+
+      $this->db->execute("
+        INSERT INTO email_recipients (email_id, recipient_id)
+        SELECT ?, u.id
         FROM user u
-        WHERE email IN ($to);
-      ");
+        WHERE email IN ($placeholders)
+      ", $params);
     }
 
     private function _getEmailRecipients($emailId){
 
-      $recipientsArr = $this->db->query("
+      $recipientsArr = $this->db->prepare("
         SELECT
-          u.id AS id  
+          u.id AS id
           , CONCAT(u.first_name, ' ', u.last_name) AS name
           , u.email AS email
-        FROM 
+        FROM
           user u
           INNER JOIN email_recipients r
             ON u.id = r.recipient_id
         WHERE
-          r.email_id = $emailId;
-      ");
+          r.email_id = ?
+      ", [(int)$emailId]);
 
       $recipients = [];
 

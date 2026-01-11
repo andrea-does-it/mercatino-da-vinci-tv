@@ -2,161 +2,184 @@
 
 class DB {
 
-  private $conn;
-  public $pdo;
+    private $conn;
+    public $pdo;
 
-  public function __construct() {
-    
-    global $conn;
-    $this->conn = $conn;    
-    if (mysqli_connect_errno()) {
-      echo 'Failed to connect to MySql ' . mysqli_connect_errno();
+    public function __construct() {
+        global $conn;
+        $this->conn = $conn;
+        if (mysqli_connect_errno()) {
+            throw new Exception('Failed to connect to MySQL: ' . mysqli_connect_errno());
+        }
+        $this->pdo = new PDO(
+            'mysql:dbname=' . DB_NAME . ';host=' . DB_HOST . ';charset=utf8mb4',
+            DB_USER,
+            DB_PASS,
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false
+            ]
+        );
     }
-    $this->pdo = new PDO('mysql:dbname='. DB_NAME .';host=' . DB_HOST, DB_USER, DB_PASS);
-  }
 
-  public function query($sql) {
-    try
-    {
-      $q = $this->pdo->query($sql);
-      if (!$q){
-        throw new Exception("Error executing query...");
-        return;
-      }
-      $data = $q->fetchAll(); 
-      return $data;
+    /**
+     * Execute a query with prepared statements (SECURE)
+     * @param string $sql SQL query with ? placeholders
+     * @param array $params Parameters to bind
+     * @return array Query results
+     */
+    public function prepare($sql, $params = []) {
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            throw $e;
+        }
     }
-    catch(Exception $e)
-    {
-      throw $e;
+
+    /**
+     * Execute an INSERT/UPDATE/DELETE with prepared statements (SECURE)
+     * @param string $sql SQL query with ? placeholders
+     * @param array $params Parameters to bind
+     * @return int|bool Last insert ID for INSERT, affected rows for UPDATE/DELETE
+     */
+    public function execute($sql, $params = []) {
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+
+            // Return last insert ID for INSERT statements
+            if (stripos(trim($sql), 'INSERT') === 0) {
+                return $this->pdo->lastInsertId();
+            }
+            // Return affected rows for UPDATE/DELETE
+            return $stmt->rowCount();
+        } catch (PDOException $e) {
+            throw $e;
+        }
     }
-    
-  }
 
-  public function exec($sql) {
-    // $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, 1);
-    $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    try {
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute();
+    /**
+     * @deprecated Use prepare() with parameterized queries instead
+     * Legacy query method - DO NOT USE for user input
+     */
+    public function query($sql) {
+        try {
+            $q = $this->pdo->query($sql);
+            if (!$q) {
+                throw new Exception("Error executing query...");
+            }
+            return $q->fetchAll();
+        } catch (Exception $e) {
+            throw $e;
+        }
     }
-    catch (Exception $e)
-    {
-        $message = $e->getMessage();
-        //var_dump($e); die;
-        //var_dump($message); die;
 
-        return ['result' => false, 'message' => $message ];
+    /**
+     * @deprecated Use execute() with parameterized queries instead
+     */
+    public function exec($sql) {
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+        } catch (Exception $e) {
+            return ['result' => false, 'message' => $e->getMessage()];
+        }
+        return ['result' => true, 'message' => 'OK'];
     }
-    return ['result' => true, 'message' => 'OK' ];
-  }
 
- public function select_all($tableName, $columns = array()) {
+    /**
+     * Select all rows from a table (SECURE - uses prepared statements)
+     */
+    public function select_all($tableName, $columns = []) {
+        // Whitelist column names (no user input allowed)
+        $allowedColumns = array_map(function($col) {
+            return preg_replace('/[^a-zA-Z0-9_]/', '', $col);
+        }, $columns);
 
-    $query = 'SELECT ';
+        $strCol = implode(', ', $allowedColumns);
+        $tableName = preg_replace('/[^a-zA-Z0-9_]/', '', $tableName);
 
-    $strCol = '';
-    //var_dump($columns); die;
-    foreach($columns as $colName) {
-      $strCol .= ' '. esc($colName) . ',';
+        $query = "SELECT $strCol FROM $tableName";
+        return $this->prepare($query);
     }
-    $strCol = substr($strCol, 0, -1);
 
-    $query .= $strCol . ' FROM ' . $tableName;
+    /**
+     * Select one row by ID (SECURE - uses prepared statements)
+     */
+    public function select_one($tableName, $columns = [], $id) {
+        // Whitelist column names
+        $allowedColumns = array_map(function($col) {
+            return preg_replace('/[^a-zA-Z0-9_]/', '', $col);
+        }, $columns);
 
-    $result = mysqli_query($this->conn, $query);
-    $resultArray = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $strCol = implode(', ', $allowedColumns);
+        $tableName = preg_replace('/[^a-zA-Z0-9_]/', '', $tableName);
 
-    mysqli_free_result($result);
+        $query = "SELECT $strCol FROM $tableName WHERE id = ?";
+        $result = $this->prepare($query, [(int)$id]);
 
-    return $resultArray;
-  }
-
- public function select_one($tableName, $columns = array(), $id) {
-
-    $strCol = '';
-    foreach($columns as $colName) {
-      $colName = esc($colName);
-      $strCol .= ' ' . $colName . ',';
+        return $result ? $result[0] : null;
     }
-    $strCol = substr($strCol, 0, -1);
-    $id = esc($id);
-    $query = "SELECT $strCol FROM $tableName WHERE id = $id";
 
-    $result = mysqli_query($this->conn, $query);
-    $resultArray = mysqli_fetch_assoc($result);
-
-    mysqli_free_result($result);
-
-    return $resultArray;
-  }
-
- public function delete_one($tableName, $id) {
-
-    $id = esc($id);
-    $query = "DELETE FROM $tableName WHERE id = $id";
-
-    if (mysqli_query($this->conn, $query)) {
-      $rowsAffected = mysqli_affected_rows($this->conn);
-
-      return $rowsAffected;
-    } else {
-
-      return -1;
+    /**
+     * Delete one row by ID (SECURE - uses prepared statements)
+     */
+    public function delete_one($tableName, $id) {
+        $tableName = preg_replace('/[^a-zA-Z0-9_]/', '', $tableName);
+        $query = "DELETE FROM $tableName WHERE id = ?";
+        return $this->execute($query, [(int)$id]);
     }
-  }
 
-  public function update_one($tableName, $columns = array(), $id) {
-  
-    $id = esc($id);
-    $strCol = '';
-    foreach($columns as $colName => $colValue) {
-        $colName = esc($colName);
-        // Escape the value properly to handle quotes
-        $colValue = $this->conn->real_escape_string($colValue);
-        $strCol .= " " . $colName . " = '$colValue' ,";
+    /**
+     * Update one row by ID (SECURE - uses prepared statements)
+     */
+    public function update_one($tableName, $columns = [], $id) {
+        $tableName = preg_replace('/[^a-zA-Z0-9_]/', '', $tableName);
+
+        $setParts = [];
+        $params = [];
+
+        foreach ($columns as $colName => $colValue) {
+            $colName = preg_replace('/[^a-zA-Z0-9_]/', '', $colName);
+            if ($colValue === 'NULL' || $colValue === null) {
+                $setParts[] = "$colName = NULL";
+            } else {
+                $setParts[] = "$colName = ?";
+                $params[] = $colValue;
+            }
+        }
+
+        $params[] = (int)$id;
+        $query = "UPDATE $tableName SET " . implode(', ', $setParts) . " WHERE id = ?";
+
+        return $this->execute($query, $params);
     }
-    $strCol = substr($strCol, 0, -1);
 
-    $query = "UPDATE $tableName SET $strCol WHERE id = $id";
-    $query = str_replace("'NULL'", "NULL", $query);
-    
-    if (mysqli_query($this->conn, $query)) {
-        $rowsAffected = mysqli_affected_rows($this->conn);
-        return $rowsAffected;
-    } else {
-        return -1;
+    /**
+     * Insert one row (SECURE - uses prepared statements)
+     */
+    public function insert_one($tableName, $columns = []) {
+        $tableName = preg_replace('/[^a-zA-Z0-9_]/', '', $tableName);
+
+        $colNames = [];
+        $placeholders = [];
+        $params = [];
+
+        foreach ($columns as $colName => $colValue) {
+            $colName = preg_replace('/[^a-zA-Z0-9_]/', '', $colName);
+            $colNames[] = $colName;
+            $placeholders[] = '?';
+            $params[] = $colValue;
+        }
+
+        $query = "INSERT INTO $tableName (" . implode(', ', $colNames) . ") VALUES (" . implode(', ', $placeholders) . ")";
+
+        return $this->execute($query, $params);
     }
-}
-
- public function insert_one ($tableName, $columns = array()) {
-
-    $strCol = '';
-    foreach($columns as $colName => $colValue) {
-      $colName = esc($colName);
-      $strCol .= ' ' . $colName . ',';
-    }
-    $strCol = substr($strCol, 0, -1);
-
-    $strColValues = '';
-    foreach($columns as $colName => $colValue) {
-      $colValue = esc($colValue);
-      $strColValues .= " '" . $colValue . "' ,";
-    }
-    $strColValues = substr($strColValues, 0, -1);
-
-    $query = "INSERT INTO $tableName ($strCol) VALUES ($strColValues)";
-    //var_dump($query); die;
-    if (mysqli_query($this->conn, $query)) {
-      $lastId = mysqli_insert_id($this->conn);
-
-      return $lastId;
-    } else {
-
-      return -1;
-    }
-  }
 }
 
 class DBManager {

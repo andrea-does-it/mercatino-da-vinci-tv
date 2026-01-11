@@ -18,8 +18,9 @@
       $this->profile_id = $profile_id;
     }
 
-    public static function generatePassword(){
-      return "password";
+    public static function generatePassword() {
+        // Generate a secure random password
+        return bin2hex(random_bytes(8));
     }
   }
   
@@ -32,33 +33,30 @@
     }
 
     public function guidExists($guid) {
-      $result = $this->db->query("
-        SELECT id AS userId
-        FROM user
-        WHERE reset_link = '$guid';
-      ");
-      if ($result){
-        return $result[0]['userId'];
-      }
-      return false;
+        $result = $this->db->prepare(
+            "SELECT id AS userId FROM user WHERE reset_link = ?",
+            [$guid]
+        );
+        if ($result) {
+            return $result[0]['userId'];
+        }
+        return false;
     }
 
-    public function invalidateGuid($guid){
-      $this->db->query("
-        UPDATE user
-        SET reset_link = NULL
-        WHERE reset_link = '$guid';
-      ");
+    public function invalidateGuid($guid) {
+        $this->db->execute(
+            "UPDATE user SET reset_link = NULL WHERE reset_link = ?",
+            [$guid]
+        );
     }
 
-    public function createResetLink($userId){
-      $guid = Utilities::guidv4();
-      $this->db->query("
-        UPDATE user
-        SET reset_link = '$guid'
-        WHERE id = '$userId';
-      ");
-      return ROOT_URL . "auth?page=reset-password&guid=$guid";
+    public function createResetLink($userId) {
+        $guid = Utilities::guidv4();
+        $this->db->execute(
+            "UPDATE user SET reset_link = ? WHERE id = ?",
+            [$guid, (int)$userId]
+        );
+        return ROOT_URL . "auth?page=reset-password&guid=" . urlencode($guid);
     }
     
     public function register($first_name, $last_name, $email, $password, $profile_id){
@@ -95,36 +93,51 @@
       return $pwd1 == $pwd2;
     }
     
-    public function userExists($email){
-      $result = $this->db->query("SELECT count(id) as count FROM user WHERE email = '$email'");
-      return $result[0]['count'] > 0;
+    public function userExists($email) {
+        $result = $this->db->prepare(
+            "SELECT count(id) as count FROM user WHERE email = ?",
+            [$email]
+        );
+        return $result[0]['count'] > 0;
     }
 
-    public function updatePassword($userId, $password){
-      $pwd = $password ? $password : User::generatePassword();
-      $pwd = password_hash($pwd, PASSWORD_DEFAULT);
-      $query = "UPDATE $this->tableName SET password = '$pwd' where id = $userId";
-      //var_dump($query); die;
-      $this->db->query($query);
+    public function updatePassword($userId, $password) {
+        $pwd = $password ? $password : User::generatePassword();
+        $pwd = password_hash($pwd, PASSWORD_DEFAULT);
+        $this->db->execute(
+            "UPDATE {$this->tableName} SET password = ? WHERE id = ?",
+            [$pwd, (int)$userId]
+        );
     }
 
-    public function createAddress($userId, $street, $city, $cap){
-      $query = "SELECT count(1) as has_address FROM address WHERE user_id = $userId"; 
-      //var_dump($query); die;
-      $result = $this->db->query($query);
-      
-      if ($result[0]['has_address'] > 0) {
-        $this->db->query("UPDATE address SET street = '$street', city = '$city', cap = '$cap' WHERE user_id = $userId");
-      } else {
-        $this->db->query("INSERT INTO address (user_id, street, city, cap) VALUES ($userId, '$street', '$city', '$cap' )");
-      }
+    public function createAddress($userId, $street, $city, $cap) {
+        $result = $this->db->prepare(
+            "SELECT count(1) as has_address FROM address WHERE user_id = ?",
+            [(int)$userId]
+        );
+
+        if ($result[0]['has_address'] > 0) {
+            $this->db->execute(
+                "UPDATE address SET street = ?, city = ?, cap = ? WHERE user_id = ?",
+                [$street, $city, $cap, (int)$userId]
+            );
+        } else {
+            $this->db->execute(
+                "INSERT INTO address (user_id, street, city, cap) VALUES (?, ?, ?, ?)",
+                [(int)$userId, $street, $city, $cap]
+            );
+        }
     }
-    
-    public function getAddress($userId){
-      $result = $this->db->query("SELECT street, city, cap  FROM address WHERE user_id = $userId");
-      if(count($result) > 0){
-        return $result[0];
-      }
+
+    public function getAddress($userId) {
+        $result = $this->db->prepare(
+            "SELECT street, city, cap FROM address WHERE user_id = ?",
+            [(int)$userId]
+        );
+        if (count($result) > 0) {
+            return $result[0];
+        }
+        return null;
     }
 
     public function getUserByEmail($email){
@@ -146,21 +159,25 @@
     }
 
     private function _getPassword($userId) {
-      $result =  $this->db->query("SELECT password FROM user WHERE id = $userId;");
-      if ($result){
-        return $result[0]['password'];
-      }
-      return null;
+        $result = $this->db->prepare(
+            "SELECT password FROM user WHERE id = ?",
+            [(int)$userId]
+        );
+        if ($result) {
+            return $result[0]['password'];
+        }
+        return null;
     }
 
-    private function _getUserByEmail($email){
-      $email = esc($email);      
-      $query = "SELECT id, email, first_name, last_name, user_type, profile_id FROM " . $this->tableName . " WHERE email = '$email';";
-      $user = $this->db->query($query);
-      if (count($user) == 0) {
-        return null;
-      }
-      return $user[0];
+    private function _getUserByEmail($email) {
+        $result = $this->db->prepare(
+            "SELECT id, email, first_name, last_name, user_type, profile_id FROM {$this->tableName} WHERE email = ?",
+            [$email]
+        );
+        if (count($result) == 0) {
+            return null;
+        }
+        return $result[0];
     }
 
 

@@ -1,2 +1,33 @@
 web/htdocs/inc/config.php
 web/htdocs/staging/inc/config.php
+
+# Environment files containing secrets
+.env
+*.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+*.log
+performance_log.txt
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Uploads (user-generated content)
+web/htdocs/uploads/*
+web/htdocs/staging/uploads/*
+!web/htdocs/uploads/.gitkeep
+!web/htdocs/staging/uploads/.gitkeep
+
+# Vendor dependencies (if using composer install on deploy)
+# Uncomment if you prefer to install dependencies on deploy
+# vendor/

@@ -1,9 +1,12 @@
 <?php
-require_once '../../inc/init.php'; 
+require_once '../../inc/init.php';
 
 if (! defined('ROOT_URL')) {
   die;
 }
+
+// Validate CSRF token for all AJAX requests
+CSRF::validateAjaxOrDie();
 
 $action = $_POST['action'];
 switch($action) {
@@ -15,7 +18,7 @@ switch($action) {
   case 'incrementOrDecrement':
     incrementOrDecrement();
     break;
-    
+
   default:
     break;
 }

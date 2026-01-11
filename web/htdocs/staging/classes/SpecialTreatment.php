@@ -24,14 +24,15 @@ class SpecialTreatment {
     }
 
     public function GetTypes(){
-      $types = $this->db->query("
-        SELECT 
+      $types = $this->db->prepare("
+        SELECT
           code AS code
           , description AS description
           , special_treatment_name as special_treatment_name
-        FROM 
-          special_treatment_type;
-      ");
+        FROM
+          special_treatment_type
+      ", []);
+
       if (!$types){
         return [];
       }
@@ -43,19 +44,20 @@ class SpecialTreatment {
     }
 
     public function getAllTreatments(){
-      $treatments = $this->db->query("
-        SELECT 
+      $treatments = $this->db->prepare("
+        SELECT
           st.id as id
           , st.name as name
           , sttype.code as type_code
           , sttype.description as type_desc
           , sttype.special_treatment_name as special_treatment_name
           , st.special_treatment_value as special_treatment_value
-        FROM 
+        FROM
           special_treatment st
           INNER JOIN special_treatment_type sttype
-            ON st.type_code = sttype.code;
-      ");
+            ON st.type_code = sttype.code
+      ", []);
+
       if (!$treatments){
         return [];
       }

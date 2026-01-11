@@ -1,7 +1,6 @@
 <?php
 
-unset($_SESSION['user']);
-echo "<script>location.href='".ROOT_URL."auth/?page=login';</script>";
+unset($_SESSION['user_id']);
+session_destroy();
+header('Location: ' . ROOT_URL . 'auth/?page=login');
 exit;
-
-?>

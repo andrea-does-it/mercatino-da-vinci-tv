@@ -27,17 +27,18 @@ class Profile {
 
     public function SaveProfileTreatments($profileId, $treatments){
 
-      $this->db->query("
+      $this->db->execute("
         DELETE FROM profile_treatments
-        WHERE profile_id = $profileId;
-      ");
+        WHERE profile_id = ?
+      ", [(int)$profileId]);
+
       if (!$treatments) return;
 
       foreach($treatments as $treatmentId){
-        $this->db->query("
+        $this->db->execute("
           INSERT INTO profile_treatments (profile_id, special_treatment_id)
-          VALUES ($profileId, $treatmentId);
-        ");
+          VALUES (?, ?)
+        ", [(int)$profileId, (int)$treatmentId]);
       }
     }
 
@@ -75,8 +76,8 @@ class Profile {
     }
 
     public function GetTreatmentsByType($profileId, $treatmentType){
-      $result = $this->db->query("
-        SELECT 
+      $result = $this->db->prepare("
+        SELECT
           t.id as id
           , t.name as name
           , tt.special_treatment_name as special_treatment_name
@@ -89,9 +90,10 @@ class Profile {
           INNER JOIN special_treatment_type tt
             ON t.type_code = tt.code
         WHERE
-          p.id = $profileId
-          AND t.type_code = '$treatmentType';
-      ");
+          p.id = ?
+          AND t.type_code = ?
+      ", [(int)$profileId, $treatmentType]);
+
       if (count($result) == 0) {
         return [];
       }
@@ -104,15 +106,15 @@ class Profile {
 
     // Private methods
     private function _getProfileTreatments($profileId){
-      $treatments = $this->db->query("
+      $treatments = $this->db->prepare("
         SELECT t.*
-        FROM 
+        FROM
           profile_treatments pt
           INNER JOIN special_treatment t
             ON pt.special_treatment_id = t.id
         WHERE
-          pt.profile_id = $profileId;
-      ");
+          pt.profile_id = ?
+      ", [(int)$profileId]);
 
       if (count($treatments) == 0) {
         return [];

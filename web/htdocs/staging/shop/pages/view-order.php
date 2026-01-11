@@ -17,7 +17,7 @@
 
   $orderId = esc($_GET['id']);
   $orderMgr = new OrderManager();
-  
+
   $order = $orderMgr->get($orderId);
   if ($loggedInUser->user_type != 'admin' && $order->user_id != $loggedInUser->id) {
     echo "<script>location.href='".ROOT_URL."shop/?page=my-orders&msg=forbidden';</script>";
@@ -25,16 +25,24 @@
   }
 
   $orderItems = $orderMgr->getOrderItems($orderId);
-  $orderTotal = $orderMgr->getOrderTotalVenduto($orderId)[0];
 
-  $pratica = $orderItems[0]['pratica'];
-  $status = $orderItems[0]['order_status'];
-
-  //var_dump($orderTotal);die;
-  if (count($orderItems) == 0) {
+  // Check if order has items before accessing
+  if (!$orderItems || count($orderItems) == 0) {
     echo "<script>location.href='".ROOT_URL."admin/?page=orders-list&msg=order_empty';</script>";
     exit;
   }
+
+  $orderTotalResult = $orderMgr->getOrderTotalVenduto($orderId);
+  $orderTotal = $orderTotalResult && count($orderTotalResult) > 0 ? $orderTotalResult[0] : [
+    'total' => 0,
+    'total_vend' => 0,
+    'total_com' => 0,
+    'shipment_price' => 0,
+    'shipment_name' => 'N/D'
+  ];
+
+  $pratica = $orderItems[0]['pratica'];
+  $status = $orderItems[0]['order_status'];
   $count = 0;
 ?>
 

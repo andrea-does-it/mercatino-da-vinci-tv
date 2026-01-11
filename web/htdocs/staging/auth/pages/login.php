@@ -5,9 +5,15 @@ $password = '';
 
 if (isset($_POST['login'])) {
 
+  // Validate CSRF token
+  if (!CSRF::validateToken()) {
+    echo "<script>location.href='".ROOT_URL."auth?page=login&msg=csrf_error';</script>";
+    exit;
+  }
+
   $email = trim($_POST['email']);
   $password = $_POST['password'];
-  
+
   // Basic validation
   if (empty($email) || empty($password)) {
     echo "<script>location.href='".ROOT_URL."auth?page=login&msg=mandatory_fields';</script>";
@@ -18,12 +24,13 @@ if (isset($_POST['login'])) {
   $userObj = $userMgr->login($email, $password);
 
   if ($userObj) {
-    $_SESSION['user'] = serialize($userObj);
+    // Store only user ID in session to prevent object injection attacks
+    $_SESSION['user_id'] = $userObj->id;
     if (isset($_SESSION['client_id'])) {
       $cartMgr = new CartManager();
       $cartMgr->mergeCarts();
     }
-    echo "<script>location.href='".ROOT_URL."user?page=dashboard';</script>";
+    header('Location: ' . ROOT_URL . 'user?page=dashboard');
     exit;
   } else {
     // Redirect with error message and preserve email
@@ -55,6 +62,7 @@ if (isset($_GET['msg']) && !isset($_POST['login'])) {
 <h1>Login</h1>
 
 <form method="post" class="mb-4">
+  <?php csrf_field(); ?>
   <div class="form-group">
     <label for="email">Email</label>
     <input name="email" id="email" type="email" class="form-control" value="<?php echo htmlspecialchars($email); ?>" required>

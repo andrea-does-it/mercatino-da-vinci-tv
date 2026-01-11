@@ -1,15 +1,25 @@
 <?php
-require_once '../inc/init.php'; 
+require_once '../inc/init.php';
 
 global $loggedInUser;
 
+// Whitelist of allowed pages to prevent LFI attacks
+$allowedPages = [
+    'forgot-password', 'index', 'login', 'logout',
+    'register', 'reset-password', 'reset-password-request'
+];
+
 $page = isset($_GET["page"]) ? $_GET["page"] : 'login';
 
-if ($loggedInUser && $page != 'logout') {
-  Header('Location: ' . ROOT_URL);
-  exit;
+// Validate page against whitelist
+if (!in_array($page, $allowedPages, true)) {
+    $page = 'login';
 }
 
+if ($loggedInUser && $page != 'logout') {
+    header('Location: ' . ROOT_URL);
+    exit;
+}
 ?>
 
 <?php include 'template-parts/header.php'; ?>

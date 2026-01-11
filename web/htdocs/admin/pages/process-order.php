@@ -425,7 +425,7 @@
       <td><?php echo esc_html($item['quantity']); ?></td>
       <td><?php echo esc_html($item['product_ISBN']); ?></td>
       <td><?php echo esc_html($item['product_nota_volumi']); ?></td>
-      <td><?php echo esc_html($item['total_price']); ?> €</td>
+      <td><?php echo esc_html($item['total_price']+2); ?> €</td>
     </tr>
   <?php endforeach; $count=0; ?>
   </table>
