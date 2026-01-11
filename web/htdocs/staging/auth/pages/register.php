@@ -11,8 +11,14 @@ $cap = '';
 
 if (isset($_POST['register'])) {
 
+  // Validate CSRF token
+  if (!CSRF::validateToken()) {
+    echo "<script>location.href='".ROOT_URL."auth?page=register&msg=csrf_error';</script>";
+    exit;
+  }
+
   $errors = false;
-  
+
   $nome = esc($_POST['nome']);
   $cognome = esc($_POST['cognome']);
   $email = esc($_POST['email']);
@@ -138,6 +144,7 @@ $cap = isset($_GET['cap']) ? htmlspecialchars($_GET['cap']) : $cap;
 <h1>Registrazione</h1>
 
 <form method="post" class="mb-4">
+  <?php csrf_field(); ?>
   <h5 class="mb-3 mt-3">Informazioni personali</h5>
   <div class="form-group">
     <label for="nome">Nome</label>

@@ -10,3 +10,5 @@ CREATE TABLE email_recipients
   email_id INT NOT NULL
   , recipient_id INT NOT NULL  
 );
+
+--

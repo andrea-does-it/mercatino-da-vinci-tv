@@ -21,6 +21,12 @@ $orderMgr = new OrderManager();
 // Profilo pagamento Ritardato
 if (isset($_POST['pay'])) {
 
+  // Validate CSRF token
+  if (!CSRF::validateToken()) {
+    echo "<script>location.href='".ROOT_URL."shop?page=cart&msg=csrf_error';</script>";
+    exit;
+  }
+
  // $pm = new ProfileManager();
  // $delayedPayments = $pm->GetUserDelayedPayments();
 

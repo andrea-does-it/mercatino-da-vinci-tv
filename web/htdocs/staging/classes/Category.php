@@ -47,51 +47,56 @@ class Category {
     }
 
     public function SaveSubcategories($subcategoryIds, $productId){
-      $this->db->query("
+      $this->db->execute("
         DELETE FROM product_categories
-        WHERE product_id = $productId;
-      ");
+        WHERE product_id = ?
+      ", [(int)$productId]);
 
       foreach($subcategoryIds as $subcatId){
-        $this->db->query("
+        $this->db->execute("
           INSERT INTO product_categories (product_id, subcategory_id)
-          VALUES ($productId, $subcatId);
-        ");
+          VALUES (?, ?)
+        ", [(int)$productId, (int)$subcatId]);
       }
     }
   
     private function _getCategoriesAndSubs($parentId = 0, $productId = 0){
 
-      $filter = "";
+      $params = [];
+      $parentIdInt = (int)$parentId;
+      $productIdInt = (int)$productId;
 
-      if ($parentId != 0) {
-        $filter .= " AND parent_cat.id = $parentId";
+      // Build the query with prepared statement placeholders
+      $parentFilter = "";
+      if ($parentIdInt != 0) {
+        $parentFilter = " AND parent_cat.id = ?";
+        $params[] = $parentIdInt;
       }
 
-      // if ($productId != 0) {
-      //   $filter .= " AND prod_subcats.product_id = $productId";
-      // }
+      // Add product ID params for the LEFT JOIN condition
+      $params[] = $productIdInt;
+      $params[] = $productIdInt;
 
-      $categoriesArr = $this->db->query("
-        SELECT 
+      $categoriesArr = $this->db->prepare("
+        SELECT
           parent_cat.id as parent_id
           , parent_cat.name as parent_name
           , child_cat.id as child_id
           , child_cat.name as child_name
           , IFNULL(prod_subcats.product_id , 0) as product_id
-        FROM 
+        FROM
           category parent_cat
           LEFT JOIN category child_cat
             ON parent_cat.id = child_cat.parent_id
           LEFT JOIN product_categories prod_subcats
             ON child_cat.id = prod_subcats.subcategory_id
-            AND ($productId = 0 OR prod_subcats.product_id = $productId)
-        WHERE 
+            AND (? = 0 OR prod_subcats.product_id = ?)
+        WHERE
           parent_cat.parent_id IS NULL
-          $filter
+          $parentFilter
         ORDER BY
-        parent_cat.name;
-      ");
+        parent_cat.name
+      ", $params);
 
       if (!$categoriesArr){
         return ( $parentId != 0 || $productId != 0) ?  null : [];

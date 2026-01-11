@@ -1,9 +1,21 @@
 <?php
-require_once '../inc/init.php'; 
+require_once '../inc/init.php';
+
+// Whitelist of allowed pages to prevent LFI attacks
+$allowedPages = [
+    'cart', 'checkout', 'index', 'my-orders', 'my-orders_old',
+    'products-list', 'products-list_old', 'products-list-test',
+    'view-order', 'view-order_old', 'view-product', 'view-product_old'
+];
 
 $page = 'products-list';
-if(isset($_GET['page'])) {
-  $page = $_GET['page'];
+if (isset($_GET['page'])) {
+    $page = $_GET['page'];
+}
+
+// Validate page against whitelist
+if (!in_array($page, $allowedPages, true)) {
+    $page = 'products-list';
 }
 ?>
 <?php include ROOT_PATH . 'public/template-parts/header.php'; ?>

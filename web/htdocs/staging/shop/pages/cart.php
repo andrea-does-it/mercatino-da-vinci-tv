@@ -154,7 +154,7 @@
         </div>
 
         <form method="post"  action="<?php echo ROOT_URL . 'shop/pages/checkout.php' ?>">
-            
+            <?php csrf_field(); ?>
 
             <input type="hidden" name="paymentMethod" id="paymentMethod">
             <button name="pay" type="submit" class="btn btn-primary btn-block">Invia Elenco Libri da Vendere</a>
@@ -181,6 +181,7 @@
 
 <script>
 var $document = $(document);
+var csrfToken = '<?php echo csrf_token(); ?>';
 
 var $paymentMethods;
 var $paypal;
@@ -214,9 +215,10 @@ $document.ready(function(){
     var postData = {
       action: 'incrementOrDecrement',
       cart_id: cartId,
-      product_id: productId
+      product_id: productId,
+      csrf_token: csrfToken
     };
-    postData[incrementOrDecrement]= "QUALCOSA"; 
+    postData[incrementOrDecrement]= "QUALCOSA";
 
     $.post('../api/shop/cart.php', postData, data => { 
       console.log(data);
@@ -284,7 +286,8 @@ function updateShipmentPrice(e) {
 
   var postData = {
       action: 'setShipmentMethod',
-      shipmentMethod: shipmentMethod
+      shipmentMethod: shipmentMethod,
+      csrf_token: csrfToken
     };
   $.post('../api/shop/cart.php', postData, response => {
     console.log(response);

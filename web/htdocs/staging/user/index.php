@@ -1,22 +1,24 @@
 <?php
-require_once '../inc/init.php'; 
+require_once '../inc/init.php';
 
 global $loggedInUser;
 
 if (!$loggedInUser) {
-  $returnPage = isset($_GET['page']) ? esc($_GET['page']) : '';
-  echo "<script>location.href='".ROOT_URL."auth?page=login'</script>";
-  exit;
+    header('Location: ' . ROOT_URL . 'auth?page=login');
+    exit;
 }
 
-// if ($_GET['page'] == 'dashboard' && $loggedInUser->user_type == 'admin') {
-//   echo "<script>location.href='".ROOT_URL."admin/?page=dashboard'</script>";
-//   exit;
-// }
+// Whitelist of allowed pages to prevent LFI attacks
+$allowedPages = ['dashboard', 'index', 'libri_da_vendere', 'profile'];
 
 $page = 'profile';
-if(isset($_GET['page'])) {
-  $page = $_GET['page'];
+if (isset($_GET['page'])) {
+    $page = $_GET['page'];
+}
+
+// Validate page against whitelist
+if (!in_array($page, $allowedPages, true)) {
+    $page = 'profile';
 }
 ?>
 <?php include ROOT_PATH . 'public/template-parts/header.php'; ?>
