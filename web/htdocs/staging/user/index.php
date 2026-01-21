@@ -9,7 +9,7 @@ if (!$loggedInUser) {
 }
 
 // Whitelist of allowed pages to prevent LFI attacks
-$allowedPages = ['dashboard', 'index', 'libri_da_vendere', 'profile'];
+$allowedPages = ['dashboard', 'index', 'libri_da_vendere', 'profile', 'privacy'];
 
 $page = 'profile';
 if (isset($_GET['page'])) {

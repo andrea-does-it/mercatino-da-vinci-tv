@@ -5,7 +5,8 @@ require_once '../inc/init.php';
 $allowedPages = [
     'homepage', 'about', 'about_old', 'contacts', 'contacts_old',
     'downloads', 'homepage_old', 'homepage2', 'libri_da_vendere',
-    'libri_vecchi_accettati', 'news', 'services', 'services_old'
+    'libri_vecchi_accettati', 'news', 'services', 'services_old',
+    'privacy', 'cookie-policy'
 ];
 
 $page = isset($_GET["page"]) ? $_GET["page"] : 'homepage';

@@ -31,3 +31,4 @@ web/htdocs/staging/uploads/*
 # Vendor dependencies (if using composer install on deploy)
 # Uncomment if you prefer to install dependencies on deploy
 # vendor/
+.claude/settings.local.json

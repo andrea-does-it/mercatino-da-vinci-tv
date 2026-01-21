@@ -19,7 +19,7 @@ if (isset($_POST['login'])) {
     echo "<script>location.href='".ROOT_URL."auth?page=login&msg=mandatory_fields';</script>";
     exit;
   }
-  
+
   $userMgr = new UserManager();
   $userObj = $userMgr->login($email, $password);
 

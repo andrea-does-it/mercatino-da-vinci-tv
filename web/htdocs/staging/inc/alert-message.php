@@ -179,6 +179,54 @@ if ($alertMsg != '') {
       $msgBody = 'Password aggiornata correttamente.';
       break;
 
+    case 'invalid_iban':
+      $cssClass = 'alert-danger';
+      $msgHeading = 'ERRORE';
+      $msgBody = 'Il codice IBAN inserito non è valido. Verifica di averlo digitato correttamente.';
+      break;
+
+    case 'iban_owner_required':
+      $cssClass = 'alert-danger';
+      $msgHeading = 'ERRORE';
+      $msgBody = 'L\'intestatario del conto è obbligatorio quando si inserisce un IBAN.';
+      break;
+
+    case 'iban_deleted':
+      $cssClass = 'alert-success';
+      $msgHeading = 'OK';
+      $msgBody = 'Codice IBAN rimosso correttamente.';
+      break;
+
+    case 'csrf_error':
+      $cssClass = 'alert-danger';
+      $msgHeading = 'ERRORE DI SICUREZZA';
+      $msgBody = 'Token di sicurezza non valido. Riprova.';
+      break;
+
+    case 'privacy_required':
+      $cssClass = 'alert-danger';
+      $msgHeading = 'CONSENSO RICHIESTO';
+      $msgBody = 'È necessario accettare l\'informativa sulla privacy per completare la registrazione.';
+      break;
+
+    case 'consent_updated':
+      $cssClass = 'alert-success';
+      $msgHeading = 'OK';
+      $msgBody = 'Preferenze aggiornate correttamente.';
+      break;
+
+    case 'confirm_deletion_required':
+      $cssClass = 'alert-warning';
+      $msgHeading = 'CONFERMA RICHIESTA';
+      $msgBody = 'Devi confermare di voler cancellare il tuo account selezionando la casella di conferma.';
+      break;
+
+    case 'account_deleted':
+      $cssClass = 'alert-success';
+      $msgHeading = 'ACCOUNT CANCELLATO';
+      $msgBody = 'Il tuo account è stato cancellato correttamente. Tutti i tuoi dati personali sono stati eliminati.';
+      break;
+
   }
 
 }
