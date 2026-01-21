@@ -5,6 +5,7 @@
 
   require_once ROOT_PATH . 'classes/DB.php';
   require_once ROOT_PATH . 'classes/CSRF.php';
+  require_once ROOT_PATH . 'classes/Encryption.php';
   require_once ROOT_PATH . 'classes/Product.php';
   require_once ROOT_PATH . 'classes/User.php';
   require_once ROOT_PATH . 'classes/Cart.php';
@@ -20,3 +21,5 @@
   require_once ROOT_PATH . 'classes/utilities/UrlUtilities.php';
   require_once ROOT_PATH . 'classes/NewsManager.php';
   require_once ROOT_PATH . 'classes/DownloadManager.php';
+  require_once ROOT_PATH . 'classes/SalesTransaction.php';
+  require_once ROOT_PATH . 'classes/SellerRefund.php';
