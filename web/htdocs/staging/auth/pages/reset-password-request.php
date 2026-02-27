@@ -40,11 +40,7 @@ $msg = "<!DOCTYPE html>
 </body>
 </html>";
 
-$headers = "From: Mercatino Comitato Genitori <mercatino@comitatogenitoridavtv.it>\r\n";
-$headers .= "MIME-Version: 1.0\r\n";
-$headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-
-$mailSent = mail($user['email'], SITE_NAME . " - Reset Password", $msg, $headers);
+$mailSent = send_mail($user['email'], SITE_NAME . " - Reset Password", $msg);
 
 ?>
 

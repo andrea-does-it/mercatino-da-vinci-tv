@@ -5,11 +5,11 @@ $cognome = '';
 $email = '';
 $password = '';
 $confirm_password = '';
-$street = '';
-$city = '';
-$cap = '';
 $iban = '';
 $iban_owner_name = '';
+$student_first_name = '';
+$student_last_name = '';
+$student_class = '';
 
 if (isset($_POST['register'])) {
 
@@ -29,14 +29,14 @@ if (isset($_POST['register'])) {
   $password = $_POST['password'];
   $confirm_password = $_POST['confirm_password'];
 
-  // Address is now optional
-  $street = isset($_POST['street']) ? esc($_POST['street']) : '';
-  $city = isset($_POST['city']) ? esc($_POST['city']) : '';
-  $cap = isset($_POST['cap']) ? esc($_POST['cap']) : '';
-
   // IBAN is optional
   $iban = isset($_POST['iban']) ? esc($_POST['iban']) : '';
   $iban_owner_name = isset($_POST['iban_owner_name']) ? esc($_POST['iban_owner_name']) : '';
+
+  // Student info (optional)
+  $student_first_name = isset($_POST['student_first_name']) ? esc($_POST['student_first_name']) : '';
+  $student_last_name = isset($_POST['student_last_name']) ? esc($_POST['student_last_name']) : '';
+  $student_class = isset($_POST['student_class']) ? esc($_POST['student_class']) : '';
 
   // Validate privacy consent (required)
   $privacy_consent = isset($_POST['privacy_consent']) ? true : false;
@@ -48,17 +48,17 @@ if (isset($_POST['register'])) {
       'nome' => $nome,
       'cognome' => $cognome,
       'email' => $email,
-      'street' => $street,
-      'city' => $city,
-      'cap' => $cap,
       'iban' => $iban,
-      'iban_owner_name' => $iban_owner_name
+      'iban_owner_name' => $iban_owner_name,
+      'student_first_name' => $student_first_name,
+      'student_last_name' => $student_last_name,
+      'student_class' => $student_class
     ]);
     echo "<script>location.href='".ROOT_URL."auth?page=register&$params';</script>";
     exit;
   }
 
-  // Only require name, email, password (address is optional)
+  // Only require name, email, password
   if ($nome != '' AND $cognome != '' AND $email != '' AND $password != '' AND $confirm_password != '') {
 
     $userMgr = new UserManager();
@@ -71,9 +71,6 @@ if (isset($_POST['register'])) {
         'nome' => $nome,
         'cognome' => $cognome,
         'email' => $email,
-        'street' => $street,
-        'city' => $city,
-        'cap' => $cap,
         'iban' => $iban,
         'iban_owner_name' => $iban_owner_name
       ]);
@@ -88,9 +85,6 @@ if (isset($_POST['register'])) {
         'nome' => $nome,
         'cognome' => $cognome,
         'email' => $email,
-        'street' => $street,
-        'city' => $city,
-        'cap' => $cap,
         'iban' => $iban,
         'iban_owner_name' => $iban_owner_name
       ]);
@@ -105,9 +99,6 @@ if (isset($_POST['register'])) {
         'nome' => $nome,
         'cognome' => $cognome,
         'email' => $email,
-        'street' => $street,
-        'city' => $city,
-        'cap' => $cap,
         'iban' => $iban,
         'iban_owner_name' => $iban_owner_name
       ]);
@@ -122,9 +113,6 @@ if (isset($_POST['register'])) {
         'nome' => $nome,
         'cognome' => $cognome,
         'email' => $email,
-        'street' => $street,
-        'city' => $city,
-        'cap' => $cap,
         'iban' => $iban,
         'iban_owner_name' => $iban_owner_name
       ]);
@@ -139,9 +127,6 @@ if (isset($_POST['register'])) {
         'nome' => $nome,
         'cognome' => $cognome,
         'email' => $email,
-        'street' => $street,
-        'city' => $city,
-        'cap' => $cap,
         'iban' => $iban,
         'iban_owner_name' => $iban_owner_name
       ]);
@@ -156,9 +141,6 @@ if (isset($_POST['register'])) {
         'nome' => $nome,
         'cognome' => $cognome,
         'email' => $email,
-        'street' => $street,
-        'city' => $city,
-        'cap' => $cap,
         'iban' => $iban,
         'iban_owner_name' => $iban_owner_name
       ]);
@@ -167,12 +149,8 @@ if (isset($_POST['register'])) {
     }
 
     if (!$errors) {
-      $userId = $userMgr->register($nome, $cognome, $email, $password, 1, $privacy_consent, $newsletter_consent);
+      $userId = $userMgr->register($nome, $cognome, $email, $password, 1, $privacy_consent, $newsletter_consent, $student_first_name, $student_last_name, $student_class);
       if ($userId > 0){
-        // Only create address if provided
-        if ($street != '' && $city != '' && $cap != '') {
-          $userMgr->createAddress($userId, $street, $city, $cap);
-        }
         // Save IBAN if provided
         if ($iban != '') {
           $userMgr->saveIBAN($userId, $iban, $iban_owner_name);
@@ -185,9 +163,6 @@ if (isset($_POST['register'])) {
           'nome' => $nome,
           'cognome' => $cognome,
           'email' => $email,
-          'street' => $street,
-          'city' => $city,
-          'cap' => $cap,
           'iban' => $iban,
           'iban_owner_name' => $iban_owner_name
         ]);
@@ -202,11 +177,11 @@ if (isset($_POST['register'])) {
       'nome' => $nome,
       'cognome' => $cognome,
       'email' => $email,
-      'street' => $street,
-      'city' => $city,
-      'cap' => $cap,
       'iban' => $iban,
-      'iban_owner_name' => $iban_owner_name
+      'iban_owner_name' => $iban_owner_name,
+      'student_first_name' => $student_first_name,
+      'student_last_name' => $student_last_name,
+      'student_class' => $student_class
     ]);
     echo "<script>location.href='".ROOT_URL."auth?page=register&$params';</script>";
     exit;
@@ -217,11 +192,11 @@ if (isset($_POST['register'])) {
 $nome = isset($_GET['nome']) ? htmlspecialchars($_GET['nome']) : $nome;
 $cognome = isset($_GET['cognome']) ? htmlspecialchars($_GET['cognome']) : $cognome;
 $email = isset($_GET['email']) ? htmlspecialchars($_GET['email']) : $email;
-$street = isset($_GET['street']) ? htmlspecialchars($_GET['street']) : $street;
-$city = isset($_GET['city']) ? htmlspecialchars($_GET['city']) : $city;
-$cap = isset($_GET['cap']) ? htmlspecialchars($_GET['cap']) : $cap;
 $iban = isset($_GET['iban']) ? htmlspecialchars($_GET['iban']) : $iban;
 $iban_owner_name = isset($_GET['iban_owner_name']) ? htmlspecialchars($_GET['iban_owner_name']) : $iban_owner_name;
+$student_first_name = isset($_GET['student_first_name']) ? htmlspecialchars($_GET['student_first_name']) : $student_first_name;
+$student_last_name = isset($_GET['student_last_name']) ? htmlspecialchars($_GET['student_last_name']) : $student_last_name;
+$student_class = isset($_GET['student_class']) ? htmlspecialchars($_GET['student_class']) : $student_class;
 ?>
 
 <a class="underline " href="<?php echo ROOT_URL; ?>auth?page=login">Già Possiedi un account? Accedi</a>
@@ -255,19 +230,26 @@ $iban_owner_name = isset($_GET['iban_owner_name']) ? htmlspecialchars($_GET['iba
 
   <hr class="mb-4">
 
-  <h5 class="mb-3 mt-3">Indirizzo <small class="text-muted">(opzionale - per la consegna dei libri)</small></h5>
-  <div class="mb-3">
-    <label for="street">Via</label>
-    <input name="street" type="text" class="form-control" id="street" value="<?php echo esc_html($street); ?>" placeholder="Es. Viale Europa 32">
-  </div>
-  <div class="row">
-    <div class="col-md-8 mb-3">
-      <label for="city">Città</label>
-      <input name="city" type="text" class="form-control" id="city" value="<?php echo esc_html($city); ?>" placeholder="Es. Treviso">
+  <?php $scholasticYear = (date('Y') - 1) . '/' . date('Y'); ?>
+  <h5 class="mb-3 mt-3">Dati Studente <small class="text-muted">(anno scolastico <?php echo $scholasticYear; ?>)</small></h5>
+  <div class="form-group">
+    <div class="form-check">
+      <input type="checkbox" class="form-check-input" id="is_student" onchange="copyNameToStudent(this)">
+      <label class="form-check-label" for="is_student">Ti stai registrando come studente?</label>
     </div>
-    <div class="col-md-4 mb-3">
-      <label for="cap">CAP</label>
-      <input name="cap" type="text" class="form-control" id="cap" value="<?php echo esc_html($cap); ?>" placeholder="Es. 31100">
+  </div>
+  <div class="form-row">
+    <div class="form-group col-md-5">
+      <label for="student_first_name">Nome studente</label>
+      <input name="student_first_name" id="student_first_name" type="text" class="form-control" value="<?php echo esc_html($student_first_name); ?>" placeholder="Nome dello studente">
+    </div>
+    <div class="form-group col-md-5">
+      <label for="student_last_name">Cognome studente</label>
+      <input name="student_last_name" id="student_last_name" type="text" class="form-control" value="<?php echo esc_html($student_last_name); ?>" placeholder="Cognome dello studente">
+    </div>
+    <div class="form-group col-md-2">
+      <label for="student_class">Classe</label>
+      <input name="student_class" id="student_class" type="text" class="form-control" value="<?php echo esc_html($student_class); ?>" placeholder="Es. 3B" maxlength="3" pattern="[1-5][A-Za-z]" title="Formato: numero (1-5) seguito da una lettera (es. 3B)" style="text-transform: uppercase;">
     </div>
   </div>
 
@@ -313,3 +295,15 @@ $iban_owner_name = isset($_GET['iban_owner_name']) ? htmlspecialchars($_GET['iba
   <input class="btn btn-primary right mt-3" type="submit" value="Registrati" name="register">
 
 </form>
+
+<script>
+function copyNameToStudent(cb) {
+  if (cb.checked) {
+    document.getElementById('student_first_name').value = document.getElementById('nome').value;
+    document.getElementById('student_last_name').value = document.getElementById('cognome').value;
+  } else {
+    document.getElementById('student_first_name').value = '';
+    document.getElementById('student_last_name').value = '';
+  }
+}
+</script>

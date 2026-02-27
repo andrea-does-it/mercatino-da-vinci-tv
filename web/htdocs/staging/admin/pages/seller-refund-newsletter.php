@@ -55,16 +55,11 @@
             if ($emailData) {
               $emailContent = $sellerRefundMgr->generateNewsletterEmailContent($emailData);
 
-              // Send email using PHP mail()
-              $headers = "From: Mercatino Comitato Genitori <mercatino@comitatogenitoridavtv.it>\r\n";
-              $headers .= "MIME-Version: 1.0\r\n";
-              $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-
               // Convert plain text to HTML (preserve line breaks)
               $htmlBody = nl2br(esc_html($emailContent['body']));
               $htmlBody = "<html><head><meta charset='UTF-8'></head><body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>" . $htmlBody . "</body></html>";
 
-              $mailSent = mail($emailData->email, $emailContent['subject'], $htmlBody, $headers);
+              $mailSent = send_mail($emailData->email, $emailContent['subject'], $htmlBody);
 
               if ($mailSent) {
                 // Mark as sent
@@ -89,16 +84,11 @@
               if ($emailData && !$emailData->newsletter_sent) {
                 $emailContent = $sellerRefundMgr->generateNewsletterEmailContent($emailData);
 
-                // Send email using PHP mail()
-                $headers = "From: Mercatino Comitato Genitori <mercatino@comitatogenitoridavtv.it>\r\n";
-                $headers .= "MIME-Version: 1.0\r\n";
-                $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-
                 // Convert plain text to HTML (preserve line breaks)
                 $htmlBody = nl2br(esc_html($emailContent['body']));
                 $htmlBody = "<html><head><meta charset='UTF-8'></head><body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>" . $htmlBody . "</body></html>";
 
-                $mailSent = mail($emailData->email, $emailContent['subject'], $htmlBody, $headers);
+                $mailSent = send_mail($emailData->email, $emailContent['subject'], $htmlBody);
 
                 if ($mailSent) {
                   $sellerRefundMgr->markNewsletterSent($refundId, $loggedInUser->id);

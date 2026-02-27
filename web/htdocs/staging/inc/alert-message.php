@@ -71,11 +71,6 @@ if ($alertMsg != '') {
       $msgBody = 'Qualcosa è andato storto';
       break;
 
-    case 'address_not_found':
-      $cssClass = 'alert-danger';
-      $msgHeading = 'ERRORE';
-      $msgBody = 'Indirizzo di spedizione non presente. Correggere anagrafica';
-      break;
 
     case 'login_err':
       $cssClass = 'alert-danger';
@@ -225,6 +220,36 @@ if ($alertMsg != '') {
       $cssClass = 'alert-success';
       $msgHeading = 'ACCOUNT CANCELLATO';
       $msgBody = 'Il tuo account è stato cancellato correttamente. Tutti i tuoi dati personali sono stati eliminati.';
+      break;
+
+    case 'published':
+      $cssClass = 'alert-success';
+      $msgHeading = 'OK';
+      $msgBody = 'News pubblicata correttamente.';
+      break;
+
+    case 'unpublished':
+      $cssClass = 'alert-info';
+      $msgHeading = 'OK';
+      $msgBody = 'News archiviata come bozza.';
+      break;
+
+    case 'pinned':
+      $cssClass = 'alert-success';
+      $msgHeading = 'OK';
+      $msgBody = 'News fissata in cima alla lista.';
+      break;
+
+    case 'unpinned':
+      $cssClass = 'alert-info';
+      $msgHeading = 'OK';
+      $msgBody = 'News non più fissata in cima.';
+      break;
+
+    case 'attachment_deleted':
+      $cssClass = 'alert-success';
+      $msgHeading = 'OK';
+      $msgBody = 'Allegato rimosso correttamente.';
       break;
 
   }

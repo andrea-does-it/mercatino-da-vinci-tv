@@ -39,18 +39,16 @@ if (isset($_POST['save'])) {
 
 if (isset($_POST['send'])) {
   
-  $br = "\r\n";
   $to = esc_html($_POST['to']);
   $subject = $email->subject;
   $txt = $email->message ;
 
-  $headers = "From: ".SITE_NAME . $br ;
-  $headers .= "MIME-Version: 1.0\r\n";
-  $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-
-  mail($to,$subject,$txt,$headers);
-
-  echo 'email sent to : "' . $to . '"';
+  $errorMsg = '';
+  if (send_mail($to, $subject, $txt, $errorMsg)) {
+    echo 'email sent to : "' . $to . '"';
+  } else {
+    echo 'errore invio email: ' . esc_html($errorMsg);
+  }
 }
 
 

@@ -32,7 +32,6 @@
   $orderTotalVendutoArr = $orderMgr->getOrderTotalVenduto($orderId);
   $orderTotalVenduto = !empty($orderTotalVendutoArr) ? $orderTotalVendutoArr[0] : [];
 
-  $address = isset($orderTotal['user_id']) ? $orderMgr->getUserAddress($orderTotal['user_id']) : [];
   $emailAndName = $orderMgr->getEmailAndName($orderId);
   $email = $emailAndName['email'] ?? '';
   $first_name = $emailAndName['first_name'] ?? '';
@@ -438,7 +437,7 @@
       <td><?php echo esc_html($item['quantity']); ?></td>
       <td><?php echo esc_html($item['product_ISBN']); ?></td>
       <td><?php echo esc_html($item['product_nota_volumi']); ?></td>
-      <td><?php echo esc_html($item['total_price']+2); ?> €</td>
+      <td><?php echo esc_html($item['total_price'] + SiteSettings::totalMarkup()); ?> €</td>
     </tr>
   <?php endforeach; $count=0; ?>
   </table>
