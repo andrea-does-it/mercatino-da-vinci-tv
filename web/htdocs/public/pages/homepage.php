@@ -50,13 +50,9 @@
                 <div class="text-muted small mb-2">
                   <?php echo date('d/m/Y', strtotime($item['created_at'])); ?> 
                 </div>
-                <p>
-                  <?php 
-                  // Limit content to 100 characters for the sidebar
-                  $content = esc_html($item['content']);
-                  echo (strlen($content) > 100) ? substr($content, 0, 100) . '...' : $content; 
-                  ?>
-                </p>
+                <div class="news-snippet" style="max-height:80px;overflow:hidden;font-size:0.9em;line-height:1.4;">
+                  <?php echo $item['content']; ?>
+                </div>
                 <a href="<?php echo ROOT_URL; ?>public?page=news" class="btn btn-sm btn-outline-info">Leggi di più &raquo;</a>
                 
                 <?php

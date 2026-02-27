@@ -187,7 +187,9 @@ $urlUtilities = new UrlUtilities('public');
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>shop/?page=my-orders">Le mie Pratiche</a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>user?page=libri_da_vendere">Libri Disponibili per Acquisto</a>
-              <div class="dropdown-divider"></div>              
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>user?page=privacy"><i class="fas fa-shield-alt"></i> Gestione Privacy</a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>auth?page=logout">Logout</a>
             </div>
           </li>

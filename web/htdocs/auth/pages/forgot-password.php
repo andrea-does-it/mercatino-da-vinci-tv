@@ -6,6 +6,12 @@ global $alertMsg;
 
 if (isset($_POST['resetPwd'])) {
 
+  // Validate CSRF token
+  if (!CSRF::validateToken()) {
+    echo "<script>location.href='".ROOT_URL."auth?page=forgot-password&msg=csrf_error';</script>";
+    exit;
+  }
+
   $email = esc($_POST['email']);
   $userMgr = new UserManager();
   $userObj = $userMgr->getUserByEmail($email);
@@ -15,7 +21,7 @@ if (isset($_POST['resetPwd'])) {
     exit;
   }
 
-  echo "<script>location.href='".ROOT_URL."auth?page=reset-password-request&email=$email';</script>";
+  echo "<script>location.href='".ROOT_URL."auth?page=reset-password-request&email=".urlencode($email)."';</script>";
   exit;
 }
 ?>
@@ -25,9 +31,10 @@ if (isset($_POST['resetPwd'])) {
 <!-- <p class="text-muted">Ti invieremo una mail con un link per reimpostare la password.</p> -->
 
 <form method="post" class="mb-4">
+  <?php csrf_field(); ?>
   <div class="form-group">
     <label for="email">Email</label>
-    <input name="email" id="email" type="text" class="form-control" value="<?php echo $email; ?>">
+    <input name="email" id="email" type="email" class="form-control" value="<?php echo esc_html($email); ?>" required>
   </div>
   <input class="btn btn-primary right" type="submit" value="Reimposta Password" name="resetPwd">
 </form>

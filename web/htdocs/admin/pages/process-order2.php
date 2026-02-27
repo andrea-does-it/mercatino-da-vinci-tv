@@ -14,7 +14,6 @@
   $orderMgr = new OrderManager();
   $orderItems = $orderMgr->getOrderItems($orderId);
   $orderTotal = $orderMgr->getOrderTotal($orderId)[0];
-  $address = $orderMgr->getUserAddress($orderTotal['user_id']);
   $email = $orderMgr->getEmailAndName($orderId)['email'];
   $first_name = $orderMgr->getEmailAndName($orderId)['first_name'];
   $status = $orderItems[0]['order_status'];
@@ -31,16 +30,11 @@ if ($status == 'payed' AND (isset($_POST['ship_order']) OR isset($_GET['ship_ord
     $status = 'shipped';
     $orderMgr->updateStatus($orderId, $status);
     
-    $br = "\r\n";
     $to = $email;
     $subject = "SPEDITO ORDINE N. " . $orderId;
     $txt = "<h2>L'ordine è stato spedito!</h2>" ;
 
-    $headers = "From: ".SITE_NAME . $br ;
-    $headers .= "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-
-    mail($to,$subject,$txt,$headers);
+    send_mail($to, $subject, $txt);
 
     $alertMsg = 'order_shipped';
 }
@@ -136,7 +130,6 @@ $count = 0;
 
 <hr class="m-3">
 
-<?php if ($address) : ?>
   <h4>Dettagli Cliente</h4>
 
   <ul class="list-group">
@@ -148,10 +141,5 @@ $count = 0;
       <strong>Email: </strong><br>
       <?php echo esc_html($email); ?>
     </li>
-    <li class="list-group-item">
-      <strong>Indirizzo: </strong><br>
-      <?php echo esc_html($address['street']); ?> - <?php echo esc_html($address['city']); ?> (<?php echo esc_html($address['cap']); ?>)
-    </li>
   </ul>
-<?php endif; ?>
 

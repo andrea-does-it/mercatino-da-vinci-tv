@@ -1,13 +1,16 @@
 <?php
 
-require_once '../../inc/init.php'; 
+require_once '../../inc/init.php';
 global $loggedInUser;
 
 if (!$loggedInUser || $loggedInUser->user_type != 'admin') {
-  header('Content-type: application/json', false, 400);
+  header('Content-type: application/json', false, 403);
   echo json_encode(['error' => 'Forbidden']);
   exit;
 }
+
+// Validate CSRF token for all POST requests
+CSRF::validateAjaxOrDie();
 
 $imageMgr = new ProductImageManager();
 

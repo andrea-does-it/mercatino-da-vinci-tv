@@ -24,7 +24,6 @@
   $orderTotalAccettare = $orderMgr->getOrderTotalAccettare($orderId)[0];
   $orderTotalVendere = $orderMgr->getOrderTotalVendere($orderId)[0];
   $orderTotalVenduto = $orderMgr->getOrderTotalVenduto($orderId)[0];
-  $address = $orderMgr->getUserAddress($orderTotal['user_id']);
   $email = $orderMgr->getEmailAndName($orderId)['email'];
   $first_name = $orderMgr->getEmailAndName($orderId)['first_name'];
   $last_name = $orderMgr->getEmailAndName($orderId)['last_name'];
@@ -81,14 +80,9 @@ if ($status == 'inviata' AND (isset($_POST['accettata_order']) OR isset($_GET['a
     //var_dump($numPratica);die;
     $orderMgr->updatenumPratica($orderId, $pratica);
     
-    $br = "\r\n";
     $to = $email;
     $subject = "Richiesta N. " . $orderId . " è stata accettata";
     $txt = "<h2>La sua Richiesta è stata accettata e le è stato assegnato il seguente numero di Pratica " . $pratica1 . "</h2>" ;
-
-    $headers = "From: Comitato Genitori Da Vinci - TV <mercatino@comitatogenitoridavtv.it>\r\n";
-    $headers .= "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
 
     $style = "style='border: 1px solid black; border-collapse: collapse;'";
 
@@ -107,9 +101,7 @@ if ($status == 'inviata' AND (isset($_POST['accettata_order']) OR isset($_GET['a
 
     $txt .= $mailBody . $br ;
 
-    $parameters = "-f mercatino@comitatogenitoridavtv.it";
-
-    mail($to,$subject,$txt,$headers,$parameters);
+    send_mail($to, $subject, $txt);
     $order1->is_email_sent = 1;
 
     $alertMsg = 'order_ready';
@@ -552,7 +544,6 @@ $pratica = $orderItems[0]['pratica'];
 
 <hr class="m-3">
 
-<?php if ($address) : ?>
   <h4 class="text-warning font-weight-bold">Dettagli Venditore</h4>
 
   <ul class="list-group">
@@ -564,10 +555,5 @@ $pratica = $orderItems[0]['pratica'];
       <strong>Email: </strong><br>
       <?php echo esc_html($email); ?>
     </li>
-    <li class="list-group-item">
-      <strong>Indirizzo: </strong><br>
-      <?php echo esc_html($address['street']); ?> - <?php echo esc_html($address['city']); ?> (<?php echo esc_html($address['cap']); ?>)
-    </li>
   </ul>
-<?php endif; ?>
 

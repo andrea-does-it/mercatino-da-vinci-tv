@@ -4,8 +4,8 @@ class Pratica {
 
   public $numPratica;
 
-  public function __construct($numPratica){
-    $this->numPratica = $numPratrica;
+  public function __construct($numPratica) {
+      $this->numPratica = $numPratica;  // Fixed typo: was $numPratrica
   }
 }
 
@@ -106,238 +106,178 @@ class OrderManager extends DBManager {
       $this->tableName = 'orders';
     }
 
-    public function updateStatus($orderId, $status){
-      $query = "UPDATE orders SET status = '$status', updated_at = CURRENT_TIMESTAMP() WHERE id = $orderId"; 
-      $result = $this->db->query($query);
-      return $result;
+    public function updateStatus($orderId, $status) {
+        return $this->db->execute(
+            "UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP() WHERE id = ?",
+            [$status, (int)$orderId]
+        );
     }
 
-    public function updateStatusItem($id, $status){
-      $query = "UPDATE order_item SET status = '$status' WHERE id = $id"; 
-      $result = $this->db->query($query);
-      return $result;
+    public function updateStatusItem($id, $status) {
+        return $this->db->execute(
+            "UPDATE order_item SET status = ? WHERE id = ?",
+            [$status, (int)$id]
+        );
     }
 
-    public function updateStatusItem1($id, $status){
-      $query = "UPDATE order_item SET status = '$status', updated_at = CURRENT_DATE() WHERE id = $id"; 
-      $result = $this->db->query($query);
-      return $result;
+    public function updateStatusItem1($id, $status) {
+        return $this->db->execute(
+            "UPDATE order_item SET status = ?, updated_at = CURRENT_DATE() WHERE id = ?",
+            [$status, (int)$id]
+        );
     }
 
-    public function updateStatusItem2($id, $status){
-      $query = "UPDATE order_item SET status = '$status', updated_at = NULL WHERE id = $id"; 
-      $result = $this->db->query($query);
-      return $result;
+    public function updateStatusItem2($id, $status) {
+        return $this->db->execute(
+            "UPDATE order_item SET status = ?, updated_at = NULL WHERE id = ?",
+            [$status, (int)$id]
+        );
     }
 
-    public function updatenumPratica($orderId, $pratica){
-      $query = "UPDATE orders SET numPratica = '$pratica' WHERE id = $orderId"; 
-      $result = $this->db->query($query);
-      return $result;
+    public function updatenumPratica($orderId, $pratica) {
+        return $this->db->execute(
+            "UPDATE orders SET numPratica = ? WHERE id = ?",
+            [$pratica, (int)$orderId]
+        );
     }
 
-    public function updateStatusItem3($id, $status){
-      $query = "UPDATE order_item1 SET status = '$status' WHERE id = $id"; 
-      $result = $this->db->query($query);
-      return $result;
+    public function updateStatusItem3($id, $status) {
+        return $this->db->execute(
+            "UPDATE order_item1 SET status = ? WHERE id = ?",
+            [$status, (int)$id]
+        );
     }
 
-    public function removeOrderItem(){
-      return $this->db->query("DELETE FROM order_item1");
+    public function removeOrderItem() {
+        return $this->db->execute("DELETE FROM order_item1", []);
     }
 
-    public function getOrdersOfUser($userId, $status){
-      $result = $this->db->query("
-        SELECT 
-          o.id as order_id
-          , o.created_at as created_date
-          , o.updated_at as shipped_date
-          , o.status as status
-        FROM 
-          orders o
-        WHERE
-          o.user_id = $userId
-          AND ('$status' is NULL OR '$status' = o.status)
-        ORDER BY
-          o.created_at DESC;
-      ");
-      //var_dump($result); die;
-      return $result;
+    public function getOrdersOfUser($userId, $status) {
+        if ($status === null || $status === '') {
+            return $this->db->prepare(
+                "SELECT o.id as order_id, o.created_at as created_date, o.updated_at as shipped_date, o.status as status
+                 FROM orders o WHERE o.user_id = ? ORDER BY o.created_at DESC",
+                [(int)$userId]
+            );
+        }
+        return $this->db->prepare(
+            "SELECT o.id as order_id, o.created_at as created_date, o.updated_at as shipped_date, o.status as status
+             FROM orders o WHERE o.user_id = ? AND o.status = ? ORDER BY o.created_at DESC",
+            [(int)$userId, $status]
+        );
     }
 
-    public function getEmailAndName($orderId){
-      $result = $this->db->query("
-        SELECT 
-          u.email
-          , u.first_name
-          , u.last_name
-        FROM 
-          orders as o
-          INNER JOIN user as u
-            ON o.user_id = u.id
-        WHERE 
-          o.id = $orderId;
-      ");
-      //var_dump($result); die;
-      return $result[0];
+    public function getEmailAndName($orderId) {
+        $result = $this->db->prepare(
+            "SELECT u.email, u.first_name, u.last_name
+             FROM orders as o INNER JOIN user as u ON o.user_id = u.id WHERE o.id = ?",
+            [(int)$orderId]
+        );
+        return $result ? $result[0] : null;
     }
 
-    public function calcolaVendita($productId, $status){
-
-      $orderMgr = new OrderManager();
-      $item = $orderMgr->get($productId);
-
-      $this->db->query("
-        INSERT INTO order_item1 (product_id, quantity, single_price, status)
-        SELECT 
-          ci.product_id
-          , ci.quantity
-          , ci.single_price
-          , ci.status
-        FROM 
-          order_item ci
-        WHERE
-          ci.id = $productId AND ci.status = '$status';
-      "); 
+    public function calcolaVendita($productId, $status) {
+        $this->db->execute(
+            "INSERT INTO order_item1 (product_id, quantity, single_price, status)
+             SELECT ci.product_id, ci.quantity, ci.single_price, ci.status
+             FROM order_item ci WHERE ci.id = ? AND ci.status = ?",
+            [(int)$productId, $status]
+        );
     }
 
-    public function createOrderFromCart($cartId, $userId){
+    public function createOrderFromCart($cartId, $userId) {
+        $cm = new CartManager();
+        $cart = $cm->get($cartId);
+        $sm = new ShipmentManager();
+        $sh = $sm->get($cart->shipment_id);
 
-      $cm = new CartManager();
-      $cart = $cm->get($cartId);
-      $sm = new ShipmentManager();
-      $sh = $sm->get($cart->shipment_id);
+        $orderId = $this->create(new Order(0, '', $userId, 'inviata', 0, 0, 'sede', 0.00));
 
-      $orderId = $this->create(new Order(0, '', $userId, 'inviata', 0, 0, 'sede', 0.00));
-      $this->db->query("
-        INSERT INTO order_item (order_id, product_id, quantity, single_price)
-        SELECT 
-          $orderId
-          , ci.product_id
-          , ci.quantity
-          , IF(p.sconto > 0 AND p.data_inizio_sconto <= NOW() AND p.data_fine_sconto >=  NOW(),
-              CAST((p.price - (p.price * p.sconto)/100) AS DECIMAL(8,2)) 
-              , ifnull(p.price, 0)) 
-        FROM 
-          cart c
-          INNER JOIN cart_item ci
-            ON c.id = ci.cart_id
-          LEFT JOIN product p
-            ON ci.product_id = p.id
-        WHERE
-          c.id = $cartId;
-      ");
+        // Insert order items from cart - using raw query as it involves complex SELECT INTO
+        $this->db->execute(
+            "INSERT INTO order_item (order_id, product_id, quantity, single_price)
+             SELECT ?, ci.product_id, ci.quantity,
+                    IF(p.sconto > 0 AND p.data_inizio_sconto <= NOW() AND p.data_fine_sconto >= NOW(),
+                       CAST((p.price - (p.price * p.sconto)/100) AS DECIMAL(8,2)), IFNULL(p.price, 0))
+             FROM cart c
+             INNER JOIN cart_item ci ON c.id = ci.cart_id
+             LEFT JOIN product p ON ci.product_id = p.id
+             WHERE c.id = ?",
+            [(int)$orderId, (int)$cartId]
+        );
 
-      // User Profile Discount
-      $pm = new ProfileManager();
-      $userDiscount = $pm->GetUserDiscount();
-      if ($userDiscount > 0){
-        $this->db->query("
-          UPDATE order_item
-          SET single_price = CAST(single_price - ((single_price * $userDiscount) / 100) AS DECIMAL(8,2)) 
-          WHERE order_id = $orderId;
-        ");
-      }
-        
-      $this->db->query("
-        DELETE cart, cart_item
-          FROM cart
-          INNER JOIN cart_item
-          ON cart.id = cart_item.cart_id
-        WHERE
-          cart.id = $cartId;
-      ");
-      return $orderId;
+        // User Profile Discount
+        $pm = new ProfileManager();
+        $userDiscount = $pm->GetUserDiscount();
+        if ($userDiscount > 0) {
+            $this->db->execute(
+                "UPDATE order_item SET single_price = CAST(single_price - ((single_price * ?) / 100) AS DECIMAL(8,2)) WHERE order_id = ?",
+                [(float)$userDiscount, (int)$orderId]
+            );
+        }
+
+        $this->db->execute(
+            "DELETE cart, cart_item FROM cart INNER JOIN cart_item ON cart.id = cart_item.cart_id WHERE cart.id = ?",
+            [(int)$cartId]
+        );
+
+        return $orderId;
     }
 
     public function getOrderTotal($orderId) {
-      $result = $this->db->query("
-        SELECT 
-          o.id as order_id
-          , o.user_id as user_id
-          , SUM(ifnull(oi.quantity, 0)) as num_products
-          , SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price, 0)) as total
-          , IFNULL(o.shipment_price, 0) AS shipment_price
-          , IFNULL(o.shipment_name, 'N/D') AS shipment_name
-        FROM 
-          orders as o
-          INNER JOIN order_item as oi
-            ON o.id = oi.order_id
-        WHERE
-        $orderId = o.id;
-      ");
-      //var_dump($result); die;
-      return $result;
+        return $this->db->prepare(
+            "SELECT o.id as order_id, o.user_id as user_id, SUM(IFNULL(oi.quantity, 0)) as num_products,
+                    SUM(IFNULL(oi.quantity, 0) * IFNULL(oi.single_price, 0)) as total,
+                    IFNULL(o.shipment_price, 0) AS shipment_price, IFNULL(o.shipment_name, 'N/D') AS shipment_name
+             FROM orders as o INNER JOIN order_item as oi ON o.id = oi.order_id WHERE o.id = ?
+             GROUP BY o.id, o.user_id, o.shipment_price, o.shipment_name",
+            [(int)$orderId]
+        );
     }
 
     public function getOrderTotalAccettare($orderId) {
-      $result = $this->db->query("
-        SELECT 
-          o.id as order_id
-          , o.user_id as user_id
-          , SUM(ifnull(oi.quantity, 0)) as num_products
-          , SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price, 0)) as total
-          , IFNULL(o.shipment_price, 0) AS shipment_price
-          , IFNULL(o.shipment_name, 'N/D') AS shipment_name
-        FROM 
-          orders as o
-          INNER JOIN order_item as oi
-            ON o.id = oi.order_id
-        WHERE
-        $orderId = o.id AND oi.status = 'accettare';
-      ");
-      //var_dump($result); die;
-      return $result;
+        return $this->db->prepare(
+            "SELECT o.id as order_id, o.user_id as user_id, SUM(IFNULL(oi.quantity, 0)) as num_products,
+                    SUM(IFNULL(oi.quantity, 0) * IFNULL(oi.single_price, 0)) as total,
+                    IFNULL(o.shipment_price, 0) AS shipment_price, IFNULL(o.shipment_name, 'N/D') AS shipment_name
+             FROM orders as o INNER JOIN order_item as oi ON o.id = oi.order_id WHERE o.id = ? AND oi.status = 'accettare'
+             GROUP BY o.id, o.user_id, o.shipment_price, o.shipment_name",
+            [(int)$orderId]
+        );
     }
 
     public function getOrderTotalVendere($orderId) {
-      $result = $this->db->query("
-        SELECT 
-          o.id as order_id
-          , o.user_id as user_id
-          , SUM(ifnull(oi.quantity, 0)) as num_products
-          , SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price+2, 0)) as total
-          , IFNULL(o.shipment_price, 0) AS shipment_price
-          , IFNULL(o.shipment_name, 'N/D') AS shipment_name
-        FROM 
-          orders as o
-          INNER JOIN order_item as oi
-            ON o.id = oi.order_id
-        WHERE
-        $orderId = o.id AND oi.status = 'vendere';
-      ");
-      //var_dump($result); die;
-      return $result;
+        $markup = SiteSettings::totalMarkup();
+        return $this->db->prepare(
+            "SELECT o.id as order_id, o.user_id as user_id, SUM(IFNULL(oi.quantity, 0)) as num_products,
+                    SUM(IFNULL(oi.quantity, 0) * IFNULL(oi.single_price + $markup, 0)) as total,
+                    IFNULL(o.shipment_price, 0) AS shipment_price, IFNULL(o.shipment_name, 'N/D') AS shipment_name
+             FROM orders as o INNER JOIN order_item as oi ON o.id = oi.order_id WHERE o.id = ? AND oi.status = 'vendere'
+             GROUP BY o.id, o.user_id, o.shipment_price, o.shipment_name",
+            [(int)$orderId]
+        );
     }
 
-
     public function getOrderTotalVenduto($orderId) {
-      $result = $this->db->query("
-        SELECT 
-          o.id as order_id
-          , o.user_id as user_id
-          , SUM(ifnull(oi.quantity, 0)) as num_products
-          , SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price+2, 0)) as total
-          , SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price, 0)) as total_vend
-          , SUM(ifnull(oi.quantity, 0) * 2) as total_com
-          , IFNULL(o.shipment_price, 0) AS shipment_price
-          , IFNULL(o.shipment_name, 'N/D') AS shipment_name
-        FROM 
-          orders as o
-          INNER JOIN order_item as oi
-            ON o.id = oi.order_id
-        WHERE
-        $orderId = o.id AND oi.status = 'venduto';
-      ");
-      //var_dump($result); die;
-      return $result;
+        $markup = SiteSettings::totalMarkup();
+        return $this->db->prepare(
+            "SELECT o.id as order_id, o.user_id as user_id, SUM(IFNULL(oi.quantity, 0)) as num_products,
+                    SUM(IFNULL(oi.quantity, 0) * IFNULL(oi.single_price + $markup, 0)) as total,
+                    SUM(IFNULL(oi.quantity, 0) * IFNULL(oi.single_price, 0)) as total_vend,
+                    SUM(IFNULL(oi.quantity, 0) * $markup) as total_com,
+                    IFNULL(o.shipment_price, 0) AS shipment_price, IFNULL(o.shipment_name, 'N/D') AS shipment_name
+             FROM orders as o INNER JOIN order_item as oi ON o.id = oi.order_id WHERE o.id = ? AND oi.status = 'venduto'
+             GROUP BY o.id, o.user_id, o.shipment_price, o.shipment_name",
+            [(int)$orderId]
+        );
     }
 
     public function getOrderTotalVenduto1() {
+      $markup = SiteSettings::totalMarkup();
       $result = $this->db->query("
-        SELECT 
-          SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price+2, 0)) as total
-        FROM 
+        SELECT
+          SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price+$markup, 0)) as total
+        FROM
           order_item as oi
         WHERE
         oi.status = 'venduto';
@@ -347,10 +287,11 @@ class OrderManager extends DBManager {
     }
 
     public function getOrderTotalVendutoPerData() {
+      $markup = SiteSettings::totalMarkup();
       $result = $this->db->query("
-        SELECT 
-          SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price+2, 0)) as total
-        FROM 
+        SELECT
+          SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price+$markup, 0)) as total
+        FROM
           order_item as oi
         WHERE
         CURRENT_DATE() = oi.updated_at AND oi.status = 'venduto';
@@ -361,11 +302,12 @@ class OrderManager extends DBManager {
 
 
     public function getOrderTotalVendita() {
+      $markup = SiteSettings::totalMarkup();
       $result = $this->db->query("
-        SELECT 
+        SELECT
           SUM(ifnull(oi.quantity, 0)) as num_products
-          , SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price+2, 0)) as total
-        FROM 
+          , SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price+$markup, 0)) as total
+        FROM
           order_item1 as oi
         WHERE
           oi.status = 'venduto';
@@ -473,15 +415,16 @@ class OrderManager extends DBManager {
     }
 
     public function getOrderItems3(){
+      $markup = SiteSettings::totalMarkup();
       $result = $this->db->query("
-        SELECT 
+        SELECT
           oi.id as order_item_id
           , oi.status as order_item_status
           , p.name as product_name
           , p.id as product_id
           , p.ISBN as product_ISBN
           , ifnull(oi.quantity, 0) as quantity
-          , ifnull(oi.single_price+1, 0) as single_price
+          , ifnull(oi.single_price+$markup, 0) as single_price
           , ifnull(oi.quantity, 0) * ifnull(oi.single_price, 0) as total_price
         FROM
           order_item1 as oi
@@ -634,12 +577,6 @@ class OrderManager extends DBManager {
       return $result;
     }
 
-    public function getUserAddress($userId){
-      $result = $this->db->query("SELECT street, city, cap FROM address WHERE user_id = $userId");
-      //var_dump($result); die;
-      return $result ? $result[0] : null;
-    }
-    
     public function getAllOrders($status){
       $result = $this->db->query("
         SELECT 
@@ -746,42 +683,39 @@ class OrderManager extends DBManager {
     }
 
     public function sendAcceptanceEmail($orderId, $email, $first_name, $last_name, $pratica, $orderItems, $orderTotal) {
-      $br = "\r\n";
       $to = $email;
       $subject = "Richiesta N. " . $orderId . " è stata accettata";
       $message = "<h2>La sua Richiesta è stata accettata e le è stato assegnato il seguente numero di Pratica " . $pratica . "</h2>";
-  
-      $headers = "From: Comitato Genitori Da Vinci - TV <mercatino@comitatogenitoridavtv.it>\r\n";
-      $headers .= "MIME-Version: 1.0\r\n";
-      $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-  
-      $style = "style='border: 1px solid black; border-collapse: collapse;'";
+
+      $style = "style='border: 1px solid black; border-collapse: collapse; padding: 8px;'";
+      $tableStyle = "style='border: 1px solid black; border-collapse: collapse; width: 100%;'";
       $br = "<br>";
       $message .= $br . "<h3>Riepilogo Pratica:</h3>";
-  
-      // $mailBody = "<table $style><tr><th $style>Titolo</th><th $style >Prezzo Unitario</th><th $style >N. Pezzi</th><th $style >Importo</th></tr>";
-      // foreach($orderItems as $item) {
-      //     $mailBody .= "<tr><td $style>".$item['product_name']."</td><td $style>".$item['single_price']."</td><td $style>".$item['quantity']."</td><td $style>".$item['total_price']."</td></tr>";
-      // }
-      // $mailBody .= "<tr><td $style colspan='4'>Totale €". (number_format((float)($orderTotal['total'] + $orderTotal['shipment_price']), 2, '.', '')) . "</td></tr>";
-      // $mailBody .= "</table>";
-      
+
+      // Build the table with proper opening tag and headers
+      $mailBody = "<table $tableStyle>";
+      $mailBody .= "<tr><th $style>Titolo</th><th $style>Prezzo Unitario</th><th $style>N. Pezzi</th><th $style>Importo</th></tr>";
+
       $acceptedTotal = 0;
       foreach($orderItems as $item) {
           // Only include accepted items (vendere status) in the email
           if ($item['order_item_status'] == 'vendere') {
-              $mailBody .= "<tr><td $style>".$item['product_name']."</td><td $style>".$item['single_price']."</td><td $style>".$item['quantity']."</td><td $style>".$item['total_price']."</td></tr>";
+              $mailBody .= "<tr>";
+              $mailBody .= "<td $style>" . htmlspecialchars($item['product_name']) . "</td>";
+              $mailBody .= "<td $style>€" . number_format((float)$item['single_price'], 2, '.', '') . "</td>";
+              $mailBody .= "<td $style>" . (int)$item['quantity'] . "</td>";
+              $mailBody .= "<td $style>€" . number_format((float)$item['total_price'], 2, '.', '') . "</td>";
+              $mailBody .= "</tr>";
               $acceptedTotal += $item['total_price'];
           }
       }
-      $mailBody .= "<tr><td $style colspan='4'>Totale €". number_format((float)$acceptedTotal, 2, '.', '') . "</td></tr>";
-      $mailBody .= "</table>"; 
-      
-      
+      $mailBody .= "<tr><td $style colspan='4'><strong>Totale €" . number_format((float)$acceptedTotal, 2, '.', '') . "</strong></td></tr>";
+      $mailBody .= "</table>";
+
+
       $message .= $mailBody . $br;
-      $parameters = "-f mercatino@comitatogenitoridavtv.it";
-  
-      $result = mail($to, $subject, $message, $headers, $parameters);
+
+      $result = send_mail($to, $subject, $message);
       
       // Update the is_email_sent flag
       $order = $this->get($orderId);
@@ -870,7 +804,7 @@ class CartManager extends DBManager {
 
       //global $loggedInUser;
 
-      $this->userId = isset($_SESSION['user']) ? unserialize($_SESSION['user'])->id : 0;
+      $this->userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
       // $this->clientId = isset($_COOKIE['client_id']) ? $_COOKIE['client_id'] : random_string();
       $this->clientId = isset($_SESSION['client_id']) ? $_SESSION['client_id'] : random_string();
 
@@ -884,119 +818,132 @@ class CartManager extends DBManager {
     }
 
     private function quantityInCart($productId, $cartId) {
-      $quantity = 0;
-      $results = $this->db->query("SELECT quantity FROM cart_item WHERE cart_id = '$cartId' AND product_id = '$productId'");
-      if(count($results) > 0) {
-        $quantity = (int)$results[0]['quantity'];
-      }
-      return $quantity;
+        $quantity = 0;
+        $results = $this->db->prepare(
+            "SELECT quantity FROM cart_item WHERE cart_id = ? AND product_id = ?",
+            [(int)$cartId, (int)$productId]
+        );
+        if (count($results) > 0) {
+            $quantity = (int)$results[0]['quantity'];
+        }
+        return $quantity;
     }
 
-    private function incrementByOne($productId, $cartId, $quantityInCart){
-      $quantityInCart++;
-      $this->db->query("UPDATE cart_item SET quantity = $quantityInCart WHERE cart_id = '$cartId' AND product_id = '$productId'");
+    private function incrementByOne($productId, $cartId, $quantityInCart) {
+        $quantityInCart++;
+        $this->db->execute(
+            "UPDATE cart_item SET quantity = ? WHERE cart_id = ? AND product_id = ?",
+            [(int)$quantityInCart, (int)$cartId, (int)$productId]
+        );
     }
 
-    private function decrementOne($productId, $cartId, $quantityInCart){
-      $quantityInCart--;
-      $this->db->query("UPDATE cart_item SET quantity = $quantityInCart WHERE cart_id = '$cartId' AND product_id = '$productId'");
+    private function decrementOne($productId, $cartId, $quantityInCart) {
+        $quantityInCart--;
+        $this->db->execute(
+            "UPDATE cart_item SET quantity = ? WHERE cart_id = ? AND product_id = ?",
+            [(int)$quantityInCart, (int)$cartId, (int)$productId]
+        );
     }
 
-    private function createItem($productId, $cartId){
-      $item_id = $this->cartItemMgr->create(new CartItem(0, $cartId, $productId, 1));
-      //var_dump($item_id); die;
-      return $item_id;
+    private function createItem($productId, $cartId) {
+        $item_id = $this->cartItemMgr->create(new CartItem(0, $cartId, $productId, 1));
+        return $item_id;
     }
 
-    public function clearCart($cartId){
-      if($this->userId) {
-        $this->db->query("
-          DELETE cart, cart_item 
-          FROM cart 
-          INNER JOIN cart_item ON cart.id = cart_item.cart_id 
-          WHERE cart.user_id = '$this->userId' AND cart.id NOT IN ('$cartId');
-        ");
-      } else if ($this->clientIp) {
-        $this->db->query(
-          "DELETE cart, cart_item 
-          FROM cart 
-          INNER JOIN cart_item ON cart.id = cart_item.cart_id 
-          WHERE cart.client_id = '$this->clientIp' AND cart.id NOT IN ('$cartId');
-        ");
-      }
+    public function clearCart($cartId) {
+        if ($this->userId) {
+            $this->db->execute(
+                "DELETE cart, cart_item FROM cart INNER JOIN cart_item ON cart.id = cart_item.cart_id WHERE cart.user_id = ? AND cart.id != ?",
+                [(int)$this->userId, (int)$cartId]
+            );
+        } else if ($this->clientId) {
+            $this->db->execute(
+                "DELETE cart, cart_item FROM cart INNER JOIN cart_item ON cart.id = cart_item.cart_id WHERE cart.client_id = ? AND cart.id != ?",
+                [$this->clientId, (int)$cartId]
+            );
+        }
     }
 
-    public function isEmptyCart($cartId){
-      $results = $this->db->query("SELECT 1 FROM cart_item WHERE cart_id = '$cartId'"); 
-      return count($results) == 0;
+    public function isEmptyCart($cartId) {
+        $results = $this->db->prepare("SELECT 1 FROM cart_item WHERE cart_id = ?", [(int)$cartId]);
+        return count($results) == 0;
     }
 
-    private function createCart(){
-
-      $client_id = $this->userId > 0 ? '' : $this->clientId;
-      $cart_id = $this->create(new Cart(0, $this->userId, $client_id)); 
-      return $cart_id;
+    private function createCart() {
+        $client_id = $this->userId > 0 ? '' : $this->clientId;
+        $cart_id = $this->create(new Cart(0, $this->userId, $client_id));
+        return $cart_id;
     }
 
-    private function removeItem($productId, $cartId){
-      return $this->db->query("DELETE FROM cart_item WHERE cart_id = '$cartId' AND product_id = '$productId'");
+    private function removeItem($productId, $cartId) {
+        return $this->db->execute(
+            "DELETE FROM cart_item WHERE cart_id = ? AND product_id = ?",
+            [(int)$cartId, (int)$productId]
+        );
     }
 
     private function clearUserCart() {
-      if($this->userId) {
-        $this->db->query('DELETE cart, cart_item FROM cart INNER JOIN cart_item ON cart.id = cart_item.cart_id WHERE cart.user_id = ' . $this->userId );
-      }
+        if ($this->userId) {
+            $this->db->execute(
+                "DELETE cart, cart_item FROM cart INNER JOIN cart_item ON cart.id = cart_item.cart_id WHERE cart.user_id = ?",
+                [(int)$this->userId]
+            );
+        }
     }
 
-    public function mergeCarts(){
+    public function mergeCarts() {
+        $result = true;
 
-      // Initialize result to prevent "Undefined variable" warning
-      $result = true;
-      
-      $oldUserCart = $this->db->query("SELECT id FROM cart where user_id = $this->userId");
-      $oldClientCart = $this->db->query("SELECT id FROM cart where client_id = '$this->clientId'");
-      //var_dump($oldUserCart, $oldClientCart, $this->userId, $this->clientId); die;
-      
-      if (count($oldClientCart) > 0 AND count($oldUserCart) == 0){
-        // Case 1: User has no cart, but client has cart - transfer client cart to user
-        $result = $this->db->query("UPDATE cart SET user_id = $this->userId, client_id = '' WHERE client_id = '$this->clientId'");
-      }
-      else if (count($oldClientCart) > 0 AND count($oldUserCart) > 0 ) {
-        // Case 2: Both user and client have carts - merge them
-        
-        $userCartId = $oldUserCart[0]['id'];
-        $userCartItems = $this->getCartItems($userCartId);
+        $oldUserCart = $this->db->prepare("SELECT id FROM cart WHERE user_id = ?", [(int)$this->userId]);
+        $oldClientCart = $this->db->prepare("SELECT id FROM cart WHERE client_id = ?", [$this->clientId]);
 
-        $clientCartId = $oldClientCart[0]['id'];
-        $clientCartItems = $this->getCartItems($clientCartId);
-        
-        foreach($clientCartItems as $clientItem){
-          
-          $isAlreadyInCart = false;
-          $clientProductId = $clientItem['product_id'];
+        if (count($oldClientCart) > 0 && count($oldUserCart) == 0) {
+            // Case 1: User has no cart, but client has cart - transfer client cart to user
+            $this->db->execute(
+                "UPDATE cart SET user_id = ?, client_id = '' WHERE client_id = ?",
+                [(int)$this->userId, $this->clientId]
+            );
+        } else if (count($oldClientCart) > 0 && count($oldUserCart) > 0) {
+            // Case 2: Both user and client have carts - merge them
+            $userCartId = (int)$oldUserCart[0]['id'];
+            $userCartItems = $this->getCartItems($userCartId);
 
-          foreach($userCartItems as $userItem){
-            if ($userItem['product_id'] == $clientProductId){
-              $isAlreadyInCart = true;
-              $newQuantity = $userItem['quantity'] + $clientItem['quantity'];
-              $this->db->query("UPDATE cart_item SET quantity = $newQuantity  WHERE cart_id = $userCartId AND product_id = $clientProductId");
-              $this->db->query("DELETE FROM cart_item WHERE cart_id = $clientCartId AND product_id = $clientProductId");
-              break;
+            $clientCartId = (int)$oldClientCart[0]['id'];
+            $clientCartItems = $this->getCartItems($clientCartId);
+
+            foreach ($clientCartItems as $clientItem) {
+                $isAlreadyInCart = false;
+                $clientProductId = (int)$clientItem['product_id'];
+
+                foreach ($userCartItems as $userItem) {
+                    if ($userItem['product_id'] == $clientProductId) {
+                        $isAlreadyInCart = true;
+                        $newQuantity = (int)$userItem['quantity'] + (int)$clientItem['quantity'];
+                        $this->db->execute(
+                            "UPDATE cart_item SET quantity = ? WHERE cart_id = ? AND product_id = ?",
+                            [$newQuantity, $userCartId, $clientProductId]
+                        );
+                        $this->db->execute(
+                            "DELETE FROM cart_item WHERE cart_id = ? AND product_id = ?",
+                            [$clientCartId, $clientProductId]
+                        );
+                        break;
+                    }
+                }
+
+                if (!$isAlreadyInCart) {
+                    $this->db->execute(
+                        "UPDATE cart_item SET cart_id = ? WHERE cart_id = ? AND product_id = ?",
+                        [$userCartId, $clientCartId, $clientProductId]
+                    );
+                }
             }
-          }
 
-          if (!$isAlreadyInCart) {
-            $this->db->query("UPDATE cart_item SET cart_id = $userCartId  WHERE cart_id = $clientCartId AND product_id = $clientProductId");
-          }
+            $this->db->execute("DELETE FROM cart WHERE id = ?", [$clientCartId]);
         }
 
-        $result = $this->db->query("DELETE FROM cart WHERE id = $clientCartId");
-      }
-      // Case 3: No action needed (user has cart but client doesn't, or neither has cart)
-      // $result remains true (initialized at the beginning)
-
-      unset($_SESSION['client_id']);
-      return $result;
+        unset($_SESSION['client_id']);
+        return $result;
     }
 
 
@@ -1039,27 +986,26 @@ class CartManager extends DBManager {
       $prodMgr->increaseQuantity($productId);
     }
 
-    public function getCurrentCartId(){
-      $cartId = 0;
+    public function getCurrentCartId() {
+        $cartId = 0;
 
-      if (!$this->userId) {
-        //var_dump($this->clientId, $_SESSION['client_id']); die;
-        $result = $this->db->query("SELECT id FROM cart WHERE client_id = '$this->clientId'"); 
-        if (count($result) == 0) {
-          $cartId = $this->createCart();
+        if (!$this->userId) {
+            $result = $this->db->prepare("SELECT id FROM cart WHERE client_id = ?", [$this->clientId]);
+            if (count($result) == 0) {
+                $cartId = $this->createCart();
+            } else {
+                $cartId = $result[0]['id'];
+            }
         } else {
-          $cartId = $result[0]['id'];
+            $result = $this->db->prepare("SELECT id FROM cart WHERE user_id = ?", [(int)$this->userId]);
+            if (count($result) == 0) {
+                $cartId = $this->createCart();
+            } else {
+                $cartId = $result[0]['id'];
+            }
         }
-      } else {
-        $result = $this->db->query("SELECT id FROM cart WHERE user_id = $this->userId");
-        if (count($result) == 0) {
-          $cartId = $this->createCart();
-        } else {
-          $cartId = $result[0]['id'];
-        }
-      }
-        
-      return $cartId;
+
+        return $cartId;
     }
 
     public function getCurrentUserId(){
