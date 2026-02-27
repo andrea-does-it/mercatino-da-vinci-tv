@@ -1,5 +1,8 @@
 RewriteEngine On
 
+# Payment preference landing page
+RewriteRule ^payment-preference$ payment-preference.php [L,QSA]
+
 RewriteRule ^category/([0-9]+)-([a-z0-9-]+)/?$ shop?page=products-list&id=$1&slug=$2
 RewriteRule ^product/([0-9]+)-([a-z0-9-]+)/?$ shop?page=view-product&id=$1
 

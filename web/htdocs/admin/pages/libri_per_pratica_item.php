@@ -18,11 +18,14 @@
   $orderItemsAccettare = $orderMgr->getOrderItemsAccettare($orderId);
   $orderItemsVendere = $orderMgr->getOrderItemsVendere($orderId);
   $orderItemsVenduto = $orderMgr->getOrderItemsVenduto($orderId);
-  $orderTotal = $orderMgr->getOrderTotal($orderId)[0];
-  $orderTotalAccettare = $orderMgr->getOrderTotalAccettare($orderId)[0];
-  $orderTotalVendere = $orderMgr->getOrderTotalVendere($orderId)[0];
-  $orderTotalVenduto = $orderMgr->getOrderTotalVenduto($orderId)[0];
-  $address = $orderMgr->getUserAddress($orderTotal['user_id']);
+  $tmp = $orderMgr->getOrderTotal($orderId);
+  $orderTotal = !empty($tmp) ? $tmp[0] : [];
+  $tmp = $orderMgr->getOrderTotalAccettare($orderId);
+  $orderTotalAccettare = !empty($tmp) ? $tmp[0] : [];
+  $tmp = $orderMgr->getOrderTotalVendere($orderId);
+  $orderTotalVendere = !empty($tmp) ? $tmp[0] : [];
+  $tmp = $orderMgr->getOrderTotalVenduto($orderId);
+  $orderTotalVenduto = !empty($tmp) ? $tmp[0] : [];
   $email = $orderMgr->getEmailAndName($orderId)['email'];
   $first_name = $orderMgr->getEmailAndName($orderId)['first_name'];
   $last_name = $orderMgr->getEmailAndName($orderId)['last_name'];
@@ -72,14 +75,9 @@ if ($status == 'inviata' AND (isset($_POST['accettata_order']) OR isset($_GET['a
     $status = 'accettata';
     $orderMgr->updateStatus($orderId, $status);
     
-    $br = "\r\n";
     $to = $email;
     $subject = "Pratica N. " . $orderId . " è stata accettata";
     $txt = "<h2>La Pratica è stata accettata!</h2>" ;
-
-    $headers = "From: APS Cambiamenti <mercatino@apscambiamenti.it>\r\n";
-    $headers .= "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
 
     $style = "style='border: 1px solid black; border-collapse: collapse;'";
 
@@ -98,9 +96,7 @@ if ($status == 'inviata' AND (isset($_POST['accettata_order']) OR isset($_GET['a
 
     $txt .= $mailBody . $br ;
 
-    $parameters = "-f mercatino@apscambiamenti.it";
-
-    mail($to,$subject,$txt,$headers,$parameters);
+    send_mail($to, $subject, $txt);
     $order1->is_email_sent = 1;
 
     $alertMsg = 'order_ready';
@@ -259,7 +255,7 @@ $count = 0;
       <td><?php echo esc_html($item['product_name']); ?></td>
       <td><?php echo esc_html($item['quantity']); ?></td>
       <td class="big-screen"><?php echo esc_html($item['product_ISBN']); ?></td>
-      <td><?php echo esc_html($item['total_price']+2); ?> €</td>
+      <td><?php echo esc_html($item['total_price'] + SiteSettings::totalMarkup()); ?> €</td>
     </tr>
   <?php endforeach; $count=0; ?>
 
@@ -336,7 +332,7 @@ $count = 0;
       <td><?php echo esc_html($item['product_name']); ?></td>
       <td><?php echo esc_html($item['quantity']); ?></td>
       <td class="big-screen"><?php echo esc_html($item['product_ISBN']); ?></td>
-      <td><?php echo esc_html($item['total_price']+2); ?> €</td>
+      <td><?php echo esc_html($item['total_price'] + SiteSettings::totalMarkup()); ?> €</td>
     </tr>
   <?php endforeach; $count=0; ?>
 
@@ -412,7 +408,6 @@ $count = 0;
 
 <hr class="m-3">
 
-<?php if ($address) : ?>
   <h4 class="text-warning font-weight-bold">Dettagli Venditore</h4>
 
   <ul class="list-group">
@@ -424,10 +419,5 @@ $count = 0;
       <strong>Email: </strong><br>
       <?php echo esc_html($email); ?>
     </li>
-    <li class="list-group-item">
-      <strong>Indirizzo: </strong><br>
-      <?php echo esc_html($address['street']); ?> - <?php echo esc_html($address['city']); ?> (<?php echo esc_html($address['cap']); ?>)
-    </li>
   </ul>
-<?php endif; ?>
 

@@ -31,43 +31,57 @@ class DownloadManager extends DBManager {
     $this->columns = array('id', 'user_id', 'title', 'description', 'filename', 'filepath', 'filesize', 'filetype', 'created_at', 'is_published');
     $this->tableName = 'downloads';
   }
-  
+
   public function uploadFile($file, $userId, $title, $description = '') {
-    // Create uploads directory if it doesn't exist
     $targetDir = ROOT_PATH . 'uploads/';
     if (!file_exists($targetDir)) {
       mkdir($targetDir, 0777, true);
     }
-    
-    // Generate unique filename
+
     $filename = $file['name'];
     $fileExt = pathinfo($filename, PATHINFO_EXTENSION);
     $safeFilename = uniqid() . '.' . $fileExt;
     $targetFile = $targetDir . $safeFilename;
-    
-    // Move uploaded file
+
     if (move_uploaded_file($file['tmp_name'], $targetFile)) {
       $filesize = filesize($targetFile);
       $download = new Download(
-        0, $userId, $title, $description, 
-        $filename, 'uploads/' . $safeFilename, 
+        0, $userId, $title, $description,
+        $filename, 'uploads/' . $safeFilename,
         $filesize, $file['type']
       );
-      
       return $this->create($download);
     }
-    
+
     return false;
   }
-  
+
   public function getAllDownloadsWithUserInfo() {
     return $this->db->query("
-      SELECT d.*, u.first_name, u.last_name 
+      SELECT d.*, u.first_name, u.last_name
       FROM downloads d
-      JOIN user u ON d.user_id = u.id 
-      WHERE d.is_published = 1 
+      JOIN user u ON d.user_id = u.id
+      WHERE d.is_published = 1
       ORDER BY d.created_at DESC
     ");
   }
 
+  public function getAllAdmin() {
+    return $this->db->prepare(
+      "SELECT d.*, u.first_name, u.last_name,
+              COUNT(nd.news_id) AS linked_news_count
+       FROM downloads d
+       JOIN user u ON d.user_id = u.id
+       LEFT JOIN news_downloads nd ON d.id = nd.download_id
+       GROUP BY d.id
+       ORDER BY d.created_at DESC"
+    );
+  }
+
+  public function updateInfo($id, $title, $description) {
+    $this->db->execute(
+      "UPDATE downloads SET title = ?, description = ? WHERE id = ?",
+      [trim($title), trim($description), (int)$id]
+    );
+  }
 }

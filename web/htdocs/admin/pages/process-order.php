@@ -18,17 +18,29 @@
   $orderItemsVendere = $orderMgr->getOrderItemsVendere($orderId);
   $orderItemsEliminato = $orderMgr->getOrderItemsEliminato($orderId);
   $orderItemsVenduto = $orderMgr->getOrderItemsVenduto($orderId);
-  $orderTotal = $orderMgr->getOrderTotal($orderId)[0];
-  $orderTotalAccettare = $orderMgr->getOrderTotalAccettare($orderId)[0];
-  $orderTotalVendere = $orderMgr->getOrderTotalVendere($orderId)[0];
-  $orderTotalVenduto = $orderMgr->getOrderTotalVenduto($orderId)[0];
-  $address = $orderMgr->getUserAddress($orderTotal['user_id']);
-  $email = $orderMgr->getEmailAndName($orderId)['email'];
-  $first_name = $orderMgr->getEmailAndName($orderId)['first_name'];
-  $last_name = $orderMgr->getEmailAndName($orderId)['last_name'];
-  $status = $orderItems[0]['order_status'];
-  $oi_status = $orderItems[0]['order_item_status'];
-  $pratica1 = $orderItems[0]['pratica'];
+
+  // Safely get totals with null checks for empty arrays
+  $orderTotalArr = $orderMgr->getOrderTotal($orderId);
+  $orderTotal = !empty($orderTotalArr) ? $orderTotalArr[0] : [];
+
+  $orderTotalAccettareArr = $orderMgr->getOrderTotalAccettare($orderId);
+  $orderTotalAccettare = !empty($orderTotalAccettareArr) ? $orderTotalAccettareArr[0] : [];
+
+  $orderTotalVendereArr = $orderMgr->getOrderTotalVendere($orderId);
+  $orderTotalVendere = !empty($orderTotalVendereArr) ? $orderTotalVendereArr[0] : [];
+
+  $orderTotalVendutoArr = $orderMgr->getOrderTotalVenduto($orderId);
+  $orderTotalVenduto = !empty($orderTotalVendutoArr) ? $orderTotalVendutoArr[0] : [];
+
+  $emailAndName = $orderMgr->getEmailAndName($orderId);
+  $email = $emailAndName['email'] ?? '';
+  $first_name = $emailAndName['first_name'] ?? '';
+  $last_name = $emailAndName['last_name'] ?? '';
+
+  // Safely access order items with null checks
+  $status = !empty($orderItems) ? $orderItems[0]['order_status'] : 'unknown';
+  $oi_status = !empty($orderItems) ? $orderItems[0]['order_item_status'] : 'unknown';
+  $pratica1 = !empty($orderItems) ? $orderItems[0]['pratica'] : '';
 
   $order1 = $orderMgr->get($orderId);
 
@@ -425,7 +437,7 @@
       <td><?php echo esc_html($item['quantity']); ?></td>
       <td><?php echo esc_html($item['product_ISBN']); ?></td>
       <td><?php echo esc_html($item['product_nota_volumi']); ?></td>
-      <td><?php echo esc_html($item['total_price']+2); ?> €</td>
+      <td><?php echo esc_html($item['total_price'] + SiteSettings::totalMarkup()); ?> €</td>
     </tr>
   <?php endforeach; $count=0; ?>
   </table>

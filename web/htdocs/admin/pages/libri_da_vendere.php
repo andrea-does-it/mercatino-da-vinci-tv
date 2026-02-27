@@ -58,7 +58,7 @@
     <td name="quantità"><?php echo esc_html($item['quantity']); ?></td>
     <td name="ISBN"><?php echo esc_html($item['product_ISBN']); ?></td>
     <td name="volumi"><?php echo esc_html($item['product_nota_volumi']); ?></td>
-    <td name="prezzo"><?php echo esc_html($item['total_price']+2); ?> €</td>
+    <td name="prezzo"><?php echo esc_html($item['total_price'] + SiteSettings::totalMarkup()); ?> €</td>
     <td>
     <form method="post" class="left">
     <input type="hidden" name="item_id" value="<?php echo esc_html($item['order_item_id']); ?>">

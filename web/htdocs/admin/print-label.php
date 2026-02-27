@@ -32,7 +32,7 @@ $generator = new BarcodeGeneratorHTML();
 // Generate EAN128 (Code128) barcode
 try {
     // Use the original pratica number without padding (no leading zeros)
-    $barcode = $generator->getBarcode($pratica, $generator::TYPE_CODE_128, 2, 60);
+    $barcode = $generator->getBarcode($pratica, $generator::TYPE_CODE_128, 2, 40);
 } catch (Exception $e) {
     die('Errore nella generazione del barcode: ' . $e->getMessage());
 }
@@ -90,7 +90,7 @@ try {
         }
         
         .pratica-date-text {
-            font-size: 14px;
+            font-size: 18px;
             font-weight: bold;
             margin: 0;
             text-align: center;
@@ -103,7 +103,7 @@ try {
             justify-content: center;
             align-items: center;
             width: 100%;
-            max-height: 12mm;
+            max-height: 8mm;
             background: white;
         }
         

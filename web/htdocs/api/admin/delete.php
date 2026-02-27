@@ -1,12 +1,15 @@
 <?php
 
-require_once '../../inc/init.php'; 
+require_once '../../inc/init.php';
 
 if (!$loggedInUser || $loggedInUser->user_type != 'admin') {
   header('HTTP/1.0 403 Forbidden');
   echo 'Forbidden';
   exit;
 }
+
+// Validate CSRF token for all POST requests
+CSRF::validateAjaxOrDie();
 
 $action = $_POST['action'];
 switch($action) {
