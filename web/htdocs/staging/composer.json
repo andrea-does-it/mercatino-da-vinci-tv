@@ -1,10 +1,11 @@
 {
     "config": {
-        "vendor-dir": "./php-ecommerce/vendor/"
+        "vendor-dir": "./vendor/"
     },
     "require": {
         "paypal/rest-api-sdk-php": "^1.14",
         "stripe/stripe-php": "^7.0",
-        "fpdf/fpdf": "^1.82"
+        "fpdf/fpdf": "^1.82",
+        "phpmailer/phpmailer": "^6.9"
     }
 }

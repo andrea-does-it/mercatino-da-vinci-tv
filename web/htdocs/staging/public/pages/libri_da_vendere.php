@@ -49,7 +49,7 @@
     <tr>
     <td name="titolo"><?php echo esc_html($item['product_name']); ?></td>
     <td name="ISBN"><?php echo esc_html($item['product_ISBN']); ?></td>
-    <td name="prezzo"><?php echo esc_html($item['total_price']+2); ?> €</td>
+    <td name="prezzo"><?php echo esc_html($item['total_price'] + SiteSettings::totalMarkup()); ?> €</td>
     <td name="quantità"><?php echo esc_html($item['quantita']);?></td>
     </tr>
     <?php endforeach ; ?>

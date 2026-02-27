@@ -8,6 +8,9 @@
     public $email;
     public $user_type;
     public $profile_id;
+    public $student_first_name;
+    public $student_last_name;
+    public $student_class;
     public $privacy_consent;
     public $newsletter_consent;
     public $created_at;
@@ -32,7 +35,7 @@
     public function __construct(){
       parent::__construct();
       $this->tableName = 'user';
-      $this->columns = array('id', 'email', 'first_name', 'last_name', 'user_type', 'profile_id');
+      $this->columns = array('id', 'email', 'first_name', 'last_name', 'user_type', 'profile_id', 'student_first_name', 'student_last_name', 'student_class');
     }
 
     public function guidExists($guid) {
@@ -62,13 +65,16 @@
         return ROOT_URL . "auth?page=reset-password&guid=" . urlencode($guid);
     }
 
-    public function register($first_name, $last_name, $email, $password, $profile_id, $privacy_consent = true, $newsletter_consent = false){
+    public function register($first_name, $last_name, $email, $password, $profile_id, $privacy_consent = true, $newsletter_consent = false, $student_first_name = '', $student_last_name = '', $student_class = ''){
       $user = new User(0, $first_name, $last_name, $email, 'regular', $profile_id);
       $userId = $this->_createUser($user, $password);
 
       // Save consent information
       if ($userId > 0) {
         $this->saveConsent($userId, $privacy_consent, $newsletter_consent);
+        if ($student_first_name !== '' || $student_last_name !== '' || $student_class !== '') {
+          $this->saveStudentInfo($userId, $student_first_name, $student_last_name, $student_class);
+        }
       }
 
       return $userId;
@@ -143,42 +149,20 @@
         return true;
     }
 
-    public function createAddress($userId, $street, $city, $cap) {
-        $result = $this->db->prepare(
-            "SELECT count(1) as has_address FROM address WHERE user_id = ?",
-            [(int)$userId]
-        );
-
-        if ($result[0]['has_address'] > 0) {
-            $this->db->execute(
-                "UPDATE address SET street = ?, city = ?, cap = ? WHERE user_id = ?",
-                [$street, $city, $cap, (int)$userId]
-            );
-        } else {
-            $this->db->execute(
-                "INSERT INTO address (user_id, street, city, cap) VALUES (?, ?, ?, ?)",
-                [(int)$userId, $street, $city, $cap]
-            );
-        }
-    }
-
-    public function getAddress($userId) {
-        $result = $this->db->prepare(
-            "SELECT street, city, cap FROM address WHERE user_id = ?",
-            [(int)$userId]
-        );
-        if (count($result) > 0) {
-            return $result[0];
-        }
-        return null;
-    }
-
     public function getUserByEmail($email){
       return $this->_getUserByEmail($email);
     }
 
     public function createUser($user, $password){
       return $this->_createUser($user, $password);
+    }
+
+    // Student Info Methods
+    public function saveStudentInfo($userId, $studentFirstName, $studentLastName, $studentClass) {
+        $this->db->execute(
+            "UPDATE {$this->tableName} SET student_first_name = ?, student_last_name = ?, student_class = ? WHERE id = ?",
+            [trim($studentFirstName), trim($studentLastName), strtoupper(trim($studentClass)), (int)$userId]
+        );
     }
 
     // GDPR Consent Methods
@@ -229,8 +213,6 @@
             $userData[0]['iban'] = $this->maskIBAN($storedIban);
         }
 
-        $address = $this->getAddress($userId);
-
         $orders = $this->db->prepare(
             "SELECT o.id, o.status, o.created_at
              FROM orders o
@@ -253,7 +235,6 @@
 
         return [
             'user' => $userData[0] ?? null,
-            'address' => $address,
             'orders' => $orders,
             'order_items' => $orderItems,
             'export_date' => date('Y-m-d H:i:s')
@@ -380,12 +361,6 @@
     }
 
     public function deleteAccount($userId) {
-        // Delete address
-        $this->db->execute(
-            "DELETE FROM address WHERE user_id = ?",
-            [(int)$userId]
-        );
-
         // Anonymize orders (keep for accounting but remove personal data)
         $this->db->execute(
             "UPDATE orders SET user_id = 0 WHERE user_id = ?",

@@ -247,9 +247,10 @@ class OrderManager extends DBManager {
     }
 
     public function getOrderTotalVendere($orderId) {
+        $markup = SiteSettings::totalMarkup();
         return $this->db->prepare(
             "SELECT o.id as order_id, o.user_id as user_id, SUM(IFNULL(oi.quantity, 0)) as num_products,
-                    SUM(IFNULL(oi.quantity, 0) * IFNULL(oi.single_price + 2, 0)) as total,
+                    SUM(IFNULL(oi.quantity, 0) * IFNULL(oi.single_price + $markup, 0)) as total,
                     IFNULL(o.shipment_price, 0) AS shipment_price, IFNULL(o.shipment_name, 'N/D') AS shipment_name
              FROM orders as o INNER JOIN order_item as oi ON o.id = oi.order_id WHERE o.id = ? AND oi.status = 'vendere'
              GROUP BY o.id, o.user_id, o.shipment_price, o.shipment_name",
@@ -258,11 +259,12 @@ class OrderManager extends DBManager {
     }
 
     public function getOrderTotalVenduto($orderId) {
+        $markup = SiteSettings::totalMarkup();
         return $this->db->prepare(
             "SELECT o.id as order_id, o.user_id as user_id, SUM(IFNULL(oi.quantity, 0)) as num_products,
-                    SUM(IFNULL(oi.quantity, 0) * IFNULL(oi.single_price + 2, 0)) as total,
+                    SUM(IFNULL(oi.quantity, 0) * IFNULL(oi.single_price + $markup, 0)) as total,
                     SUM(IFNULL(oi.quantity, 0) * IFNULL(oi.single_price, 0)) as total_vend,
-                    SUM(IFNULL(oi.quantity, 0) * 2) as total_com,
+                    SUM(IFNULL(oi.quantity, 0) * $markup) as total_com,
                     IFNULL(o.shipment_price, 0) AS shipment_price, IFNULL(o.shipment_name, 'N/D') AS shipment_name
              FROM orders as o INNER JOIN order_item as oi ON o.id = oi.order_id WHERE o.id = ? AND oi.status = 'venduto'
              GROUP BY o.id, o.user_id, o.shipment_price, o.shipment_name",
@@ -271,10 +273,11 @@ class OrderManager extends DBManager {
     }
 
     public function getOrderTotalVenduto1() {
+      $markup = SiteSettings::totalMarkup();
       $result = $this->db->query("
-        SELECT 
-          SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price+2, 0)) as total
-        FROM 
+        SELECT
+          SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price+$markup, 0)) as total
+        FROM
           order_item as oi
         WHERE
         oi.status = 'venduto';
@@ -284,10 +287,11 @@ class OrderManager extends DBManager {
     }
 
     public function getOrderTotalVendutoPerData() {
+      $markup = SiteSettings::totalMarkup();
       $result = $this->db->query("
-        SELECT 
-          SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price+2, 0)) as total
-        FROM 
+        SELECT
+          SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price+$markup, 0)) as total
+        FROM
           order_item as oi
         WHERE
         CURRENT_DATE() = oi.updated_at AND oi.status = 'venduto';
@@ -298,11 +302,12 @@ class OrderManager extends DBManager {
 
 
     public function getOrderTotalVendita() {
+      $markup = SiteSettings::totalMarkup();
       $result = $this->db->query("
-        SELECT 
+        SELECT
           SUM(ifnull(oi.quantity, 0)) as num_products
-          , SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price+2, 0)) as total
-        FROM 
+          , SUM(ifnull(oi.quantity, 0) * ifnull(oi.single_price+$markup, 0)) as total
+        FROM
           order_item1 as oi
         WHERE
           oi.status = 'venduto';
@@ -410,15 +415,16 @@ class OrderManager extends DBManager {
     }
 
     public function getOrderItems3(){
+      $markup = SiteSettings::totalMarkup();
       $result = $this->db->query("
-        SELECT 
+        SELECT
           oi.id as order_item_id
           , oi.status as order_item_status
           , p.name as product_name
           , p.id as product_id
           , p.ISBN as product_ISBN
           , ifnull(oi.quantity, 0) as quantity
-          , ifnull(oi.single_price+1, 0) as single_price
+          , ifnull(oi.single_price+$markup, 0) as single_price
           , ifnull(oi.quantity, 0) * ifnull(oi.single_price, 0) as total_price
         FROM
           order_item1 as oi
@@ -571,12 +577,6 @@ class OrderManager extends DBManager {
       return $result;
     }
 
-    public function getUserAddress($userId){
-      $result = $this->db->query("SELECT street, city, cap FROM address WHERE user_id = $userId");
-      //var_dump($result); die;
-      return $result ? $result[0] : null;
-    }
-    
     public function getAllOrders($status){
       $result = $this->db->query("
         SELECT 
@@ -683,15 +683,10 @@ class OrderManager extends DBManager {
     }
 
     public function sendAcceptanceEmail($orderId, $email, $first_name, $last_name, $pratica, $orderItems, $orderTotal) {
-      $br = "\r\n";
       $to = $email;
       $subject = "Richiesta N. " . $orderId . " è stata accettata";
       $message = "<h2>La sua Richiesta è stata accettata e le è stato assegnato il seguente numero di Pratica " . $pratica . "</h2>";
-  
-      $headers = "From: Comitato Genitori Da Vinci - TV <mercatino@comitatogenitoridavtv.it>\r\n";
-      $headers .= "MIME-Version: 1.0\r\n";
-      $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-  
+
       $style = "style='border: 1px solid black; border-collapse: collapse; padding: 8px;'";
       $tableStyle = "style='border: 1px solid black; border-collapse: collapse; width: 100%;'";
       $br = "<br>";
@@ -715,13 +710,12 @@ class OrderManager extends DBManager {
           }
       }
       $mailBody .= "<tr><td $style colspan='4'><strong>Totale €" . number_format((float)$acceptedTotal, 2, '.', '') . "</strong></td></tr>";
-      $mailBody .= "</table>"; 
-      
-      
+      $mailBody .= "</table>";
+
+
       $message .= $mailBody . $br;
-      $parameters = "-f mercatino@comitatogenitoridavtv.it";
-  
-      $result = mail($to, $subject, $message, $headers, $parameters);
+
+      $result = send_mail($to, $subject, $message);
       
       // Update the is_email_sent flag
       $order = $this->get($orderId);

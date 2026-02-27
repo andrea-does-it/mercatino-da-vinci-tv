@@ -24,8 +24,8 @@ if ($loggedInUser && $page != 'logout') {
 
 <?php include 'template-parts/header.php'; ?>
 <div class="container mt-5">
-  <div class="row">
-    <div class="col-md-6 ml-auto mr-auto login-box">
+  <div class="row justify-content-center">
+    <div class="<?php echo ($page === 'register') ? 'col-lg-8 col-md-10' : 'col-md-6'; ?> login-box">
       <div class="main">
         <?php include ROOT_PATH . 'inc/alert-message.php'; ?>
         <a class="back underline" href="<?php echo ROOT_URL; ?>">&laquo; Torna alla Home</a>

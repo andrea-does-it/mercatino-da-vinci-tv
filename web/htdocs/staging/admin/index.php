@@ -24,7 +24,7 @@ $allowedPages = [
     'products-list', 'profile', 'profiles-list', 'sales-transactions',
     'sales-transaction-new', 'sales-transaction-view', 'seller-refunds',
     'seller-refund-view', 'seller-refund-newsletter', 'seller-refund-report', 'shipment', 'shipment-list',
-    'special-treatment', 'special-treatments-list', 'upgrade', 'user', 'users-list'
+    'site_utils', 'special-treatment', 'special-treatments-list', 'upgrade', 'user', 'users-list'
 ];
 
 $page = isset($_GET["page"]) ? $_GET["page"] : 'dashboard';

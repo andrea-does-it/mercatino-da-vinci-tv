@@ -22,7 +22,6 @@ if (!isset($order->id) || ( $loggedInUser->user_type != 'admin' && $order->user_
 
 $orderItems = $orderMgr->getOrderItems($orderId);
 $orderTotal = $orderMgr->getOrderTotal($orderId)[0];
-$address = $orderMgr->getUserAddress($orderTotal['user_id']);
 $email = $orderMgr->getEmailAndName($orderId)['email'];
 $first_name = $orderMgr->getEmailAndName($orderId)['first_name'];
 $last_name = $orderMgr->getEmailAndName($orderId)['last_name'];

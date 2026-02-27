@@ -23,3 +23,4 @@
   require_once ROOT_PATH . 'classes/DownloadManager.php';
   require_once ROOT_PATH . 'classes/SalesTransaction.php';
   require_once ROOT_PATH . 'classes/SellerRefund.php';
+  require_once ROOT_PATH . 'classes/SiteSettings.php';

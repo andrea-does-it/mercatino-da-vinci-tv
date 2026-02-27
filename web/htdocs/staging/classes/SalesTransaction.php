@@ -119,8 +119,8 @@ class SalesTransactionManager extends DBManager {
         $results = $this->db->prepare($query, $params);
         $items = [];
         foreach ($results as $result) {
-            // Calculate sale price (single_price + 2 euro markup as per existing logic)
-            $result['sale_price'] = (float)$result['single_price'] + 2;
+            // Calculate sale price (single_price + bookshop markup)
+            $result['sale_price'] = (float)$result['single_price'] + SiteSettings::totalMarkup();
             $items[] = (object)$result;
         }
         return $items;
@@ -152,7 +152,7 @@ class SalesTransactionManager extends DBManager {
             // Verify the item is still available (status = 'vendere')
             $itemInfo = $this->getOrderItemForSale($orderItemId);
             if ($itemInfo) {
-                $salePrice = (float)$itemInfo->single_price + 2; // 2 euro markup
+                $salePrice = (float)$itemInfo->single_price + SiteSettings::totalMarkup();
                 $totalAmount += $salePrice;
                 $validItems[] = [
                     'order_item_id' => $orderItemId,

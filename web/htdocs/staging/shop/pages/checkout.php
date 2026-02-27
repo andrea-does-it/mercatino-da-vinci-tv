@@ -86,20 +86,14 @@ if ($order->is_email_sent){
   exit;
 }
 
-$address = $orderMgr->getUserAddress($loggedInUser->id);
 $orderItems = $orderMgr->getOrderItems($orderId);
 $orderTotal = $orderMgr->getOrderTotal($orderId)[0];
 
-$br = "\r\n";
 $to = $loggedInUser->email;
 $subject = "Richiesta N. " . $orderId;
-$message = "" . $br ;
-
-$headers = "From: Mercatino Comitato Genitori <mercatino@comitatogenitoridavtv.it>\r\n";
-$headers .= "MIME-Version: 1.0\r\n";
-$headers .= "Content-Type: text/html; charset=UTF-8\r\n";
 
 $style = "style='border: 1px solid black; border-collapse: collapse;'";
+$br = "<br>";
 
 if ($error == false) {
   $message = "<h2>Grazie per la richiesta di vendita dei suoi libri</h2>" . $br ;
@@ -108,7 +102,6 @@ if ($error == false) {
   $message .= "<p>La richiesta è stata annullata.</p>" . $br ;
 }
 
-$br = "<br>";
 $message.= $br . "<h3>Riepilogo Richiesta:</h3>";
 
 $mailBody = "<table $style><tr><th $style>Prodotto</th><th $style >Prezzo Unitario</th><th $style >N. Pezzi</th><th $style >Importo</th></tr>";
@@ -122,23 +115,18 @@ $mailBody .= "</table>";
 
 $message .= $mailBody . $br ;
 
-$parameters = "-f mercatino@comitatogenitoridavtv.it";
-
 if ($error == false) {
   $message.= $br . "<h3>Indirizzo di consegna libri:</h3>";
 
   //$txt.= $br . "<h3>Indirizzo di spedizione:</h3>";
 
-  //$shippingAddressStr = "<strong>Indirizzo: </strong>" . $address['street'] . $br;
-  //$shippingAddressStr .= "<strong>Città: </strong>" . $address['city'] . $br;
-  //$shippingAddressStr .= "<strong>CAP: </strong>" . $address['cap'] . $br;
   $shippingAddressStr = "<strong>Indirizzo: Via de Coubertin, 4 </strong>" . $br;
   $shippingAddressStr .= "<strong>Città: Treviso </strong>" . $br;
   $message .= $shippingAddressStr . $br;
   $message .= $br . "Segui le info sul nostro sito per le date in cui poter consegnare i libri da mettere in vendita.";
 }
 
-mail($to,$subject,$message,$headers,$parameters);
+send_mail($to, $subject, $message);
 $order->is_email_sent = 1;
 $orderMgr->update($order, $orderId);
 

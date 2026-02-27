@@ -38,25 +38,6 @@
     }
   }
 
-  if (isset($_POST['change_address'])){
-    // Validate CSRF token
-    if (!CSRF::validateToken()) {
-      $alertMsg = 'csrf_error';
-    } else {
-      $street = esc($_POST['street']);
-      $city = esc($_POST['city']);
-      $cap = esc($_POST['cap']);
-
-      if ($street == '' OR $city == '' OR $cap == ''){
-        $errors = true;
-        $alertMsg = 'mandatory_fields';
-      } else {
-        $userMgr->createAddress($loggedInUser->id, $street, $city, $cap);
-        $alertMsg = 'updated';
-      }
-    }
-  }
-
   // Handle IBAN update
   $ibanError = '';
   $ibanSuccess = false;
@@ -89,34 +70,86 @@
     }
   }
 
-  $address = $userMgr->getAddress($loggedInUser->id);
+  // Handle student info update
+  $studentError = '';
+  $studentSuccess = false;
+  if (isset($_POST['change_student'])){
+    if (!CSRF::validateToken()) {
+      $alertMsg = 'csrf_error';
+    } else {
+      $studentFirstName = isset($_POST['student_first_name']) ? esc($_POST['student_first_name']) : '';
+      $studentLastName = isset($_POST['student_last_name']) ? esc($_POST['student_last_name']) : '';
+      $studentClass = isset($_POST['student_class']) ? esc($_POST['student_class']) : '';
+
+      if ($studentClass !== '' && !preg_match('/^[1-5][A-Za-z]$/', $studentClass)) {
+        $errors = true;
+        $studentError = 'Formato classe non valido. Usa il formato: numero (1-5) seguito da una lettera (es. 3B).';
+      }
+
+      if (!$errors) {
+        $userMgr->saveStudentInfo($loggedInUser->id, $studentFirstName, $studentLastName, $studentClass);
+        $studentSuccess = true;
+        $alertMsg = 'updated';
+        $loggedInUser = $userMgr->get($loggedInUser->id);
+      }
+    }
+  }
+
   $ibanData = $userMgr->getIBAN($loggedInUser->id);
 ?>
 
 <h1>Il tuo Profilo</h1>
-<p>Puoi gestire i tuoi dati personali...</p>
 
-<hr class=mb-4>
+<h5 class="mb-3 mt-3">Informazioni personali</h5>
+<div class="row">
+  <div class="col-md-4 mb-3">
+    <label>Nome</label>
+    <input type="text" class="form-control-plaintext font-weight-bold" value="<?php echo esc_html($loggedInUser->first_name); ?>" readonly>
+  </div>
+  <div class="col-md-4 mb-3">
+    <label>Cognome</label>
+    <input type="text" class="form-control-plaintext font-weight-bold" value="<?php echo esc_html($loggedInUser->last_name); ?>" readonly>
+  </div>
+  <div class="col-md-4 mb-3">
+    <label>Email</label>
+    <input type="text" class="form-control-plaintext font-weight-bold" value="<?php echo esc_html($loggedInUser->email); ?>" readonly>
+  </div>
+</div>
 
-<h5 class="mb-3 mt-3">Indirizzo di spedizione</h5>
+<hr class="mb-4">
+
+<?php $scholasticYear = (date('Y') - 1) . '/' . date('Y'); ?>
+<h5 class="mb-3 mt-3">Dati Studente <small class="text-muted">(anno scolastico <?php echo $scholasticYear; ?>)</small></h5>
 
 <form method="post">
   <?php csrf_field(); ?>
-  <div class="mb-3">
-    <label for="street">Via</label>
-    <input name="street" type="text" class="form-control" id="street" value="<?php echo isset($address['street']) ? esc_html($address['street']) : ''; ?>">
-  </div>
-  <div class="row">
-    <div class="col-md-8 mb-3">
-      <label for="city">Città</label>
-      <input name="city" type="text" class="form-control" id="city" value="<?php echo isset($address['city']) ? esc_html($address['city']) : ''; ?>">
-    </div>
-    <div class="col-md-4 mb-3">
-      <label for="cap">CAP</label>
-      <input name="cap" type="text" class="form-control" id="cap" value="<?php echo isset($address['cap']) ? esc_html($address['cap']) : ''; ?>">
+  <div class="form-group">
+    <div class="form-check">
+      <input type="checkbox" class="form-check-input" id="is_student" onchange="copyNameToStudent(this)">
+      <label class="form-check-label" for="is_student">Ti stai registrando come studente?</label>
     </div>
   </div>
-  <input name="change_address" type="submit" class="btn btn-primary" value="Cambia Indirizzo">
+  <div class="form-row">
+    <div class="form-group col-md-5">
+      <label for="student_first_name">Nome studente</label>
+      <input name="student_first_name" id="student_first_name" type="text" class="form-control" value="<?php echo esc_html($loggedInUser->student_first_name); ?>" placeholder="Nome dello studente">
+    </div>
+    <div class="form-group col-md-5">
+      <label for="student_last_name">Cognome studente</label>
+      <input name="student_last_name" id="student_last_name" type="text" class="form-control" value="<?php echo esc_html($loggedInUser->student_last_name); ?>" placeholder="Cognome dello studente">
+    </div>
+    <div class="form-group col-md-2">
+      <label for="student_class">Classe</label>
+      <input name="student_class" id="student_class" type="text" class="form-control<?php echo $studentError ? ' is-invalid' : ''; ?>" value="<?php echo esc_html($loggedInUser->student_class); ?>" placeholder="Es. 3B" maxlength="3" pattern="[1-5][A-Za-z]" title="Formato: numero (1-5) seguito da una lettera (es. 3B)" style="text-transform: uppercase;">
+      <?php if ($studentError): ?>
+        <div class="invalid-feedback d-block"><?php echo esc_html($studentError); ?></div>
+      <?php endif; ?>
+    </div>
+  </div>
+  <input name="change_student" type="submit" class="btn btn-primary" value="Salva Dati Studente">
+  <?php if ($studentSuccess): ?>
+    <span class="text-success ml-2"><i class="fas fa-check"></i> Salvato</span>
+  <?php endif; ?>
 </form>
 
 <hr class="mb-4">
@@ -176,3 +209,15 @@
   Per gestire le tue preferenze privacy, il consenso newsletter, esportare i tuoi dati o cancellare il tuo account,
   visita la sezione <a href="<?php echo ROOT_URL; ?>user?page=privacy">Gestione Privacy</a>.
 </div>
+
+<script>
+function copyNameToStudent(cb) {
+  if (cb.checked) {
+    document.getElementById('student_first_name').value = '<?php echo addslashes(esc_html($loggedInUser->first_name)); ?>';
+    document.getElementById('student_last_name').value = '<?php echo addslashes(esc_html($loggedInUser->last_name)); ?>';
+  } else {
+    document.getElementById('student_first_name').value = '';
+    document.getElementById('student_last_name').value = '';
+  }
+}
+</script>
