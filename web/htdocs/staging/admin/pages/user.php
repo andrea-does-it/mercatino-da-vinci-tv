@@ -38,6 +38,7 @@ if (isset($_POST['add'])) {
     $id = $mgr->createUser(new User(0, $first_name, $last_name, $email, $user_type, $profile_id), null);
       
     if ($id > 0) {
+      log_activity($loggedInUser->id, 'admin_user_created', 'user_id: ' . $id);
       echo "<script>location.href='".ROOT_URL."admin/?page=users-list&msg=created';</script>";
       exit;
     } else {
@@ -64,6 +65,7 @@ if (isset($_POST['update'])) {
     $numUpdated = $mgr->update(new User($id, $first_name, $last_name, $email, $user_type, $profile_id), $id);
 
     if ($numUpdated > 0) {
+      log_activity($loggedInUser->id, 'admin_user_updated', 'user_id: ' . $id);
       echo "<script>location.href='".ROOT_URL."admin/?page=users-list&msg=updated';</script>";
       exit;
     } else {

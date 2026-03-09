@@ -40,11 +40,28 @@ if (isset($_POST['register'])) {
 
   // Validate privacy consent (required)
   $privacy_consent = isset($_POST['privacy_consent']) ? true : false;
+  $rules_consent = isset($_POST['rules_consent']) ? true : false;
   $newsletter_consent = isset($_POST['newsletter_consent']) ? true : false;
 
   if (!$privacy_consent) {
     $params = http_build_query([
       'msg' => 'privacy_required',
+      'nome' => $nome,
+      'cognome' => $cognome,
+      'email' => $email,
+      'iban' => $iban,
+      'iban_owner_name' => $iban_owner_name,
+      'student_first_name' => $student_first_name,
+      'student_last_name' => $student_last_name,
+      'student_class' => $student_class
+    ]);
+    echo "<script>location.href='".ROOT_URL."auth?page=register&$params';</script>";
+    exit;
+  }
+
+  if (!$rules_consent) {
+    $params = http_build_query([
+      'msg' => 'rules_required',
       'nome' => $nome,
       'cognome' => $cognome,
       'email' => $email,
@@ -68,6 +85,20 @@ if (isset($_POST['register'])) {
       // Redirect with error message and preserve form data
       $params = http_build_query([
         'msg' => 'invalid_email',
+        'nome' => $nome,
+        'cognome' => $cognome,
+        'email' => $email,
+        'iban' => $iban,
+        'iban_owner_name' => $iban_owner_name
+      ]);
+      echo "<script>location.href='".ROOT_URL."auth?page=register&$params';</script>";
+      exit;
+    }
+
+    // Reject liceo email addresses
+    if(!$errors AND stripos($email, '@liceodavinci.tv') !== false) {
+      $params = http_build_query([
+        'msg' => 'liceo_email',
         'nome' => $nome,
         'cognome' => $cognome,
         'email' => $email,
@@ -155,6 +186,7 @@ if (isset($_POST['register'])) {
         if ($iban != '') {
           $userMgr->saveIBAN($userId, $iban, $iban_owner_name);
         }
+        log_activity($userId, 'register');
         echo "<script>location.href='".ROOT_URL."auth?page=login&msg=registered';</script>";
         exit;
       } else {
@@ -215,8 +247,11 @@ $student_class = isset($_GET['student_class']) ? htmlspecialchars($_GET['student
     <input name="cognome" id="cognome" type="text" class="form-control" value="<?php echo esc_html($cognome); ?>" required>
   </div>
   <div class="form-group">
-    <label for="email">Email <span class="text-danger">*</span> <small class="text-muted">(non usare email del liceo)</small></label>
-    <input name="email" id="email" type="email" class="form-control" value="<?php echo esc_html($email); ?>" required>
+    <label for="email">Email <span class="text-danger">*</span></label>
+    <input name="email" id="email" type="email" class="form-control" value="<?php echo esc_html($email); ?>" required
+      oninput="validateEmailDomain(this)">
+    <small class="form-text text-danger font-weight-bold">Non usare l'indirizzo email del liceo (@liceodavinci.tv).</small>
+    <div id="emailDomainError" class="invalid-feedback">Non puoi usare un indirizzo email @liceodavinci.tv.</div>
   </div>
   <div class="form-group">
     <label for="password">Password <span class="text-danger">*</span></label>
@@ -273,6 +308,16 @@ $student_class = isset($_GET['student_class']) ? htmlspecialchars($_GET['student
 
   <div class="form-group">
     <div class="form-check">
+      <input type="checkbox" class="form-check-input" id="rules_consent" name="rules_consent" required>
+      <label class="form-check-label" for="rules_consent">
+        <span class="text-danger">*</span> Ho letto e accetto il
+        <a href="<?php echo ROOT_URL; ?>public/docs/regolamento-mercatino-libri-usati-da-vinci.pdf" target="_blank">Regolamento del Mercatino dei Libri Usati</a>.
+      </label>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <div class="form-check">
       <input type="checkbox" class="form-check-input" id="privacy_consent" name="privacy_consent" required>
       <label class="form-check-label" for="privacy_consent">
         <span class="text-danger">*</span> Ho letto e accetto l'<a href="<?php echo ROOT_URL; ?>public?page=privacy" target="_blank">Informativa sulla Privacy</a>
@@ -297,6 +342,16 @@ $student_class = isset($_GET['student_class']) ? htmlspecialchars($_GET['student
 </form>
 
 <script>
+function validateEmailDomain(input) {
+  if (input.value.toLowerCase().indexOf('@liceodavinci.tv') !== -1) {
+    input.setCustomValidity('Non puoi usare un indirizzo email @liceodavinci.tv.');
+    input.classList.add('is-invalid');
+  } else {
+    input.setCustomValidity('');
+    input.classList.remove('is-invalid');
+  }
+}
+
 function copyNameToStudent(cb) {
   if (cb.checked) {
     document.getElementById('student_first_name').value = document.getElementById('nome').value;

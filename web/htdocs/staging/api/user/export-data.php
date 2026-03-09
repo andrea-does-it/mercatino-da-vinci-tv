@@ -28,6 +28,7 @@ if (!CSRF::validateToken()) {
 
 $userMgr = new UserManager();
 $exportData = $userMgr->exportUserData($loggedInUser->id);
+log_activity($loggedInUser->id, 'data_export');
 
 // Output as JSON download
 header('Content-Type: application/json; charset=utf-8');

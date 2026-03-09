@@ -55,6 +55,22 @@
    * @param string|null &$errorMsg Error message if sending fails
    * @return bool True on success, false on failure
    */
+  /**
+   * Log a user activity event (GDPR-compliant, IP pseudonymised).
+   *
+   * @param int|null $userId  Authenticated user id, or null
+   * @param string   $action  Short identifier (e.g. 'login', 'logout', 'register')
+   * @param string   $detail  Optional non-personal context
+   */
+  function log_activity($userId, $action, $detail = null) {
+    try {
+      $log = new ActivityLog();
+      $log->log($userId, $action, $detail);
+    } catch (Exception $e) {
+      // Logging must never break the main request
+    }
+  }
+
   function send_mail($to, $subject, $htmlBody, &$errorMsg = null, $debug = false) {
     require_once ROOT_PATH . 'lib/phpmailer/Exception.php';
     require_once ROOT_PATH . 'lib/phpmailer/PHPMailer.php';

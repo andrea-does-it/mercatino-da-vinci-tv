@@ -20,12 +20,24 @@ if (isset($_POST['update_newsletter'])) {
     } else {
         $newsletter = isset($_POST['newsletter_consent']) ? 1 : 0;
         $userMgr->updateNewsletterConsent($loggedInUser->id, $newsletter);
+        log_activity($loggedInUser->id, 'newsletter_update', 'consent: ' . $newsletter);
         $alertMsg = 'consent_updated';
         $consent = $userMgr->getConsent($loggedInUser->id);
     }
 }
 
 // Data export is now handled by api/user/export-data.php
+
+// Handle activity log deletion (GDPR Art. 17)
+if (isset($_POST['delete_activity_logs'])) {
+    if (!CSRF::validateToken()) {
+        $alertMsg = 'csrf_error';
+    } else {
+        $actLog = new ActivityLog();
+        $actLog->deleteUserLogs($loggedInUser->id);
+        $alertMsg = 'activity_logs_deleted';
+    }
+}
 
 // Handle account deletion request
 if (isset($_POST['request_deletion'])) {
@@ -132,6 +144,62 @@ if (isset($_POST['request_deletion'])) {
                 <i class="fas fa-file-download"></i> Scarica i Miei Dati
             </button>
         </form>
+    </div>
+</div>
+
+<!-- Activity Log -->
+<?php
+$actLog = new ActivityLog();
+$recentLogs = $actLog->getUserLogs($loggedInUser->id, 20);
+?>
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-history"></i> Registro Attività</h5>
+    </div>
+    <div class="card-body">
+        <p>
+            In conformità all'Art. 15 del GDPR, puoi visualizzare le tue ultime attività registrate dal sito.
+            Le attività vengono conservate per 12 mesi e non contengono dati personali oltre al tuo identificativo utente.
+        </p>
+
+        <?php if (empty($recentLogs)): ?>
+            <p class="text-muted">Nessuna attività registrata.</p>
+        <?php else: ?>
+            <table class="table table-sm table-bordered">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Data</th>
+                        <th>Azione</th>
+                        <th>Dettaglio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($recentLogs as $entry): ?>
+                    <tr>
+                        <td class="text-nowrap"><?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($entry['created_at']))); ?></td>
+                        <td><?php echo htmlspecialchars($entry['action']); ?></td>
+                        <td class="text-muted small"><?php echo htmlspecialchars($entry['detail'] ?? ''); ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
+        <div class="mt-3">
+            <form method="post" action="<?php echo ROOT_URL; ?>api/user/activity-logs-export.php" class="d-inline">
+                <?php csrf_field(); ?>
+                <button type="submit" class="btn btn-info btn-sm">
+                    <i class="fas fa-file-download"></i> Scarica il Registro Attività (JSON)
+                </button>
+            </form>
+            &nbsp;
+            <form method="post" class="d-inline" onsubmit="return confirm('Sei sicuro di voler eliminare tutto il registro attività? Questa azione è irreversibile.');">
+                <?php csrf_field(); ?>
+                <button type="submit" name="delete_activity_logs" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-trash"></i> Elimina Registro Attività
+                </button>
+            </form>
+        </div>
     </div>
 </div>
 

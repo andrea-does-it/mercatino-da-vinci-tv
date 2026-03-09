@@ -31,6 +31,7 @@
 
       if(!$errors){
         $userMgr->updatePassword($loggedInUser->id, $password);
+        log_activity($loggedInUser->id, 'password_change');
         $alertMsg = 'updated';
         $password = '';
         $confirm_password = '';
@@ -54,6 +55,7 @@
       if ($ibanInputValue == '') {
         // Delete IBAN if empty
         $userMgr->deleteIBAN($loggedInUser->id);
+        log_activity($loggedInUser->id, 'iban_delete');
         $ibanSuccess = true;
         $alertMsg = 'iban_deleted';
       } else if (trim($ibanOwnerInputValue) == '') {
@@ -64,6 +66,7 @@
         $ibanError = 'Il codice IBAN inserito non è valido. Verifica di averlo digitato correttamente.';
       } else {
         $userMgr->saveIBAN($loggedInUser->id, $ibanInputValue, $ibanOwnerInputValue);
+        log_activity($loggedInUser->id, 'iban_update');
         $ibanSuccess = true;
         $alertMsg = 'updated';
       }
@@ -88,6 +91,7 @@
 
       if (!$errors) {
         $userMgr->saveStudentInfo($loggedInUser->id, $studentFirstName, $studentLastName, $studentClass);
+        log_activity($loggedInUser->id, 'student_info_update');
         $studentSuccess = true;
         $alertMsg = 'updated';
         $loggedInUser = $userMgr->get($loggedInUser->id);

@@ -118,7 +118,19 @@ if ($alertMsg != '') {
       $cssClass = 'alert-danger';
       $msgHeading = 'ERRORE';
       $msgBody = 'la mail non è valida';
-      break; 
+      break;
+
+    case 'liceo_email':
+      $cssClass = 'alert-danger';
+      $msgHeading = 'ERRORE';
+      $msgBody = 'non puoi usare un indirizzo email @liceodavinci.tv. Usa un indirizzo email personale.';
+      break;
+
+    case 'rules_required':
+      $cssClass = 'alert-danger';
+      $msgHeading = 'ERRORE';
+      $msgBody = 'è necessario leggere e accettare il Regolamento del Mercatino per completare la registrazione.';
+      break;
 
     case 'email_not_exists':
       $cssClass = 'alert-danger';
@@ -250,6 +262,12 @@ if ($alertMsg != '') {
       $cssClass = 'alert-success';
       $msgHeading = 'OK';
       $msgBody = 'Allegato rimosso correttamente.';
+      break;
+
+    case 'activity_logs_deleted':
+      $cssClass = 'alert-success';
+      $msgHeading = 'OK';
+      $msgBody = 'Il registro attività è stato eliminato correttamente.';
       break;
 
   }

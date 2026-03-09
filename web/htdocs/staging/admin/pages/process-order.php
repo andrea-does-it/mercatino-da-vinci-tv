@@ -49,6 +49,7 @@
     $id = trim($_POST['item_id']);
     $status = 'eliminato';
     $orderMgr->updateStatusItem($id, $status);
+    log_activity($loggedInUser->id, 'admin_order_item_delete', 'order_id: ' . $orderId . ', item_id: ' . $id);
     $alertMsg = 'deleted';
     echo "<script>location.href='".ROOT_URL."admin?page=process-order&id=".$orderId."&msg=".$alertMsg."';</script>";
     exit;
@@ -59,6 +60,7 @@
     $id = trim($_POST['item_id']);
     $status = 'vendere';
     $orderMgr->updateStatusItem($id, $status);
+    log_activity($loggedInUser->id, 'admin_order_item_accept', 'order_id: ' . $orderId . ', item_id: ' . $id);
     $alertMsg = 'accepted';
     echo "<script>location.href='".ROOT_URL."admin?page=process-order&id=".$orderId."&msg=".$alertMsg."';</script>";
     exit;
@@ -69,6 +71,7 @@
     $id = trim($_POST['item_id']);
     $status = 'accettare';
     $orderMgr->updateStatusItem($id, $status);
+    log_activity($loggedInUser->id, 'admin_order_item_restore', 'order_id: ' . $orderId . ', item_id: ' . $id);
     
     // If order was rejected (eliminato), reopen it for processing
     if ($orderItems[0]['order_status'] == 'eliminato') {
@@ -108,6 +111,7 @@
         // All items were rejected - set order status to 'eliminato'
         $newOrderStatus = 'eliminato';
         $orderMgr->updateStatus($orderId, $newOrderStatus);
+        log_activity($loggedInUser->id, 'admin_order_rejected', 'order_id: ' . $orderId);
         
         // Redirect back to orders list with rejection message
         echo "<script>location.href='".ROOT_URL."admin/?page=orders-list&msg=order_rejected';</script>";
@@ -140,6 +144,7 @@
           $updatedOrderTotal
         );
         
+        log_activity($loggedInUser->id, 'admin_order_accepted', 'order_id: ' . $orderId . ', pratica: ' . $updatedPratica);
         // Redirect to print-label page
         echo "<script>location.href='".ROOT_URL."admin/print-label.php?pratica=".$updatedPratica."&autoprint=1&source=acceptance';</script>";
         exit;
@@ -151,6 +156,7 @@
     $id = trim($_POST['item_id']);
     $status = 'venduto';
     $orderMgr->updateStatusItem($id, $status);
+    log_activity($loggedInUser->id, 'admin_order_item_sold', 'order_id: ' . $orderId . ', item_id: ' . $id);
     $alertMsg = 'sold';
   }
 

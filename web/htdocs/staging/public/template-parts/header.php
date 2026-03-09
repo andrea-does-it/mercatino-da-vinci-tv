@@ -147,6 +147,8 @@ $urlUtilities = new UrlUtilities('public');
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=user">Aggiungi Utente</a>
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=users-list">Lista Utenti</a>
               <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=activity-logs">Registro Attività</a>
+              <div class="dropdown-divider"></div>
           <!--<a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=upgrade">Aggiornamento DB</a>
               <div class="dropdown-divider"></div>-->
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>auth?page=logout">Logout</a>
