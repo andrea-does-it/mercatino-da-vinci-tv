@@ -226,9 +226,10 @@ class SalesTransactionManager extends DBManager {
      * This will remove the item from the transaction and change order_item status back to 'vendere'
      *
      * @param int $salesTransactionItemId
+     * @param string|null $notes Optional refund note
      * @return bool
      */
-    public function refundItem($salesTransactionItemId) {
+    public function refundItem($salesTransactionItemId, $notes = null) {
         $itemMgr = new SalesTransactionItemManager();
         $item = $itemMgr->get($salesTransactionItemId);
 
@@ -252,6 +253,14 @@ class SalesTransactionManager extends DBManager {
         // Change order_item status back to 'vendere'
         $orderMgr->updateStatusItem2($orderItemId, 'vendere');
 
+        // Store refund note on order_item
+        if ($notes !== null && trim($notes) !== '') {
+            $this->db->execute(
+                "UPDATE order_item SET refund_notes = ? WHERE id = ?",
+                [trim($notes), (int)$orderItemId]
+            );
+        }
+
         // Remove from order_item1 table (reverse of calcolaVendita)
         $orderMgr->removeFirstOrderItem1($productId);
 
@@ -267,9 +276,10 @@ class SalesTransactionManager extends DBManager {
     /**
      * Refund entire transaction
      * @param int $transactionId
+     * @param string|null $notes Optional refund note (applied to all items)
      * @return bool
      */
-    public function refundTransaction($transactionId) {
+    public function refundTransaction($transactionId, $notes = null) {
         $transaction = $this->getTransactionWithItems($transactionId);
         if (!$transaction || count($transaction->items) == 0) {
             return false;
@@ -277,7 +287,7 @@ class SalesTransactionManager extends DBManager {
 
         // Refund each item
         foreach ($transaction->items as $item) {
-            $this->refundItem($item->id);
+            $this->refundItem($item->id, $notes);
         }
 
         // Delete the transaction (items already deleted by refundItem)

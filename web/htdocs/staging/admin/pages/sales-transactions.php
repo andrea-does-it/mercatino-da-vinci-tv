@@ -44,7 +44,11 @@
   $todaySummary = $salesMgr->getTodaySummary();
 ?>
 
-<h1>Gestione Vendite</h1>
+<h1>Gestione Vendite
+  <a href="<?php echo ROOT_URL; ?>admin/?page=help-sales-transactions" class="btn btn-sm btn-outline-info ml-2" title="Guida">
+    <i class="fas fa-question-circle"></i> Guida
+  </a>
+</h1>
 
 <div class="row mb-4">
   <div class="col-md-6">

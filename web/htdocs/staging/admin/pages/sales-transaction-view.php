@@ -23,7 +23,8 @@
       $alertMsg = 'csrf_error';
     } else {
       $itemId = (int)$_POST['item_id'];
-      if ($salesMgr->refundItem($itemId)) {
+      $refundNotes = isset($_POST['refund_notes']) ? trim($_POST['refund_notes']) : '';
+      if ($salesMgr->refundItem($itemId, $refundNotes)) {
         $alertMsg = 'order_quantity_resored';
       } else {
         $alertMsg = 'err';
@@ -36,7 +37,8 @@
     if (!CSRF::validateToken()) {
       $alertMsg = 'csrf_error';
     } else {
-      if ($salesMgr->refundTransaction($transactionId)) {
+      $refundNotes = isset($_POST['refund_notes']) ? trim($_POST['refund_notes']) : '';
+      if ($salesMgr->refundTransaction($transactionId, $refundNotes)) {
         echo "<script>window.location.href = '" . ROOT_URL . "admin/?page=sales-transactions&msg=order_quantity_resored';</script>";
         exit;
       } else {
@@ -163,13 +165,10 @@
             <td class="text-right text-muted">&euro; <?php echo number_format($item->original_price, 2, ',', '.'); ?></td>
             <td class="text-right"><strong>&euro; <?php echo number_format($item->price, 2, ',', '.'); ?></strong></td>
             <td>
-              <form method="post" class="d-inline">
-                <?php csrf_field(); ?>
-                <input type="hidden" name="item_id" value="<?php echo $item->id; ?>">
-                <button type="submit" name="refund_item" class="btn btn-sm btn-warning" onclick="return confirm('Vuoi rimborsare questo articolo? Il libro tornerà disponibile per la vendita.');" title="Rimborsa">
-                  <i class="fas fa-undo"></i> Rimborsa
-                </button>
-              </form>
+              <button type="button" class="btn btn-sm btn-warning" title="Rimborsa"
+                      onclick="openRefundModal('item', <?php echo $item->id; ?>, '<?php echo esc_html(addslashes($item->product_name)); ?>')">
+                <i class="fas fa-undo"></i> Rimborsa
+              </button>
             </td>
           </tr>
         <?php endforeach; ?>
@@ -213,12 +212,9 @@
   </div>
   <div class="card-body">
     <?php if (count($transaction->items) > 0): ?>
-    <form method="post" class="d-inline">
-      <?php csrf_field(); ?>
-      <button type="submit" name="refund_transaction" class="btn btn-danger" onclick="return confirm('Sei sicuro di voler rimborsare TUTTA la vendita? Tutti i libri torneranno disponibili per la vendita. Questa azione non può essere annullata.');">
-        <i class="fas fa-undo"></i> Rimborsa Tutta la Vendita
-      </button>
-    </form>
+    <button type="button" class="btn btn-danger" onclick="openRefundModal('transaction', 0, 'TUTTA la vendita #<?php echo esc_html($transaction->id); ?>')">
+      <i class="fas fa-undo"></i> Rimborsa Tutta la Vendita
+    </button>
     <?php endif; ?>
     <a href="<?php echo ROOT_URL; ?>admin/?page=sales-transaction-new" class="btn btn-success">
       <i class="fas fa-plus"></i> Nuova Vendita
@@ -228,5 +224,61 @@
 
 <div class="alert alert-info mt-4">
   <i class="fas fa-info-circle"></i>
-  <strong>Nota:</strong> Quando un articolo viene rimborsato, il libro torna automaticamente nello stato "da vendere" e sarà nuovamente disponibile per la vendita nella pagina "Libri da Vendere".
+  <strong>Nota:</strong> Quando un articolo viene rimborsato, il libro torna automaticamente nello stato "da vendere" e sar&agrave; nuovamente disponibile per la vendita nella pagina "Libri da Vendere".
 </div>
+
+<!-- Refund Modal -->
+<div class="modal fade" id="refundModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form method="post" id="refundForm">
+        <?php csrf_field(); ?>
+        <input type="hidden" name="item_id" id="refundItemId" value="">
+        <input type="hidden" name="refund_item" id="refundItemFlag" value="">
+        <input type="hidden" name="refund_transaction" id="refundTransactionFlag" value="" disabled>
+
+        <div class="modal-header bg-warning">
+          <h5 class="modal-title"><i class="fas fa-undo"></i> Conferma Rimborso</h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p id="refundMessage"></p>
+          <div class="form-group">
+            <label for="refundNotes"><strong>Nota di rimborso</strong> <small class="text-muted">(facoltativa)</small></label>
+            <textarea name="refund_notes" id="refundNotes" class="form-control" rows="3"
+                      placeholder="Motivo del rimborso..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Annulla</button>
+          <button type="submit" class="btn btn-warning"><i class="fas fa-undo"></i> Conferma Rimborso</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openRefundModal(type, itemId, label) {
+  // Reset
+  document.getElementById('refundNotes').value = '';
+  document.getElementById('refundItemId').value = '';
+  document.getElementById('refundItemFlag').disabled = true;
+  document.getElementById('refundTransactionFlag').disabled = true;
+
+  if (type === 'item') {
+    document.getElementById('refundItemId').value = itemId;
+    document.getElementById('refundItemFlag').disabled = false;
+    document.getElementById('refundMessage').innerHTML =
+      'Vuoi rimborsare <strong>' + label + '</strong>?<br>' +
+      '<small class="text-muted">Il libro torner&agrave; disponibile per la vendita.</small>';
+  } else {
+    document.getElementById('refundTransactionFlag').disabled = false;
+    document.getElementById('refundMessage').innerHTML =
+      'Sei sicuro di voler rimborsare <strong>' + label + '</strong>?<br>' +
+      '<small class="text-danger">Tutti i libri torneranno disponibili per la vendita.</small>';
+  }
+
+  $('#refundModal').modal('show');
+}
+</script>
