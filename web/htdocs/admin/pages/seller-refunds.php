@@ -26,23 +26,15 @@
         case 'create_records':
           // Create refund records for all sellers who sold books this year
           $count = $sellerRefundMgr->createRecordsForYear($selectedYear);
+          log_activity($loggedInUser->id, 'admin_refund_records_created', 'year: ' . $selectedYear . ', count: ' . $count);
           $alertMsg = $count > 0 ? 'records_created' : 'no_records_to_create';
-          break;
-
-        case 'generate_token':
-          // Generate token for a single seller
-          if (isset($_POST['refund_id'])) {
-            $token = $sellerRefundMgr->generatePreferenceToken((int)$_POST['refund_id']);
-            if ($token) {
-              $alertMsg = 'token_generated';
-            }
-          }
           break;
 
         case 'recalculate':
           // Recalculate amount owed for a seller
           if (isset($_POST['refund_id'])) {
             $sellerRefundMgr->recalculateAmountOwed((int)$_POST['refund_id']);
+            log_activity($loggedInUser->id, 'admin_refund_recalc', 'refund_id: ' . (int)$_POST['refund_id']);
             $alertMsg = 'amount_recalculated';
           }
           break;
@@ -70,12 +62,15 @@
   $alertMessages = [
     'records_created' => ['type' => 'success', 'text' => 'Record di rimborso creati con successo.'],
     'no_records_to_create' => ['type' => 'info', 'text' => 'Nessun nuovo record da creare.'],
-    'token_generated' => ['type' => 'success', 'text' => 'Link di preferenza generato con successo.'],
     'amount_recalculated' => ['type' => 'success', 'text' => 'Importo ricalcolato con successo.'],
   ];
 ?>
 
-<h1>Gestione Rimborsi Venditori - <?php echo $selectedYear; ?></h1>
+<h1>Gestione Rimborsi Venditori - <?php echo $selectedYear; ?>
+  <a href="<?php echo ROOT_URL; ?>admin/?page=help-seller-refunds" class="btn btn-sm btn-outline-info ml-2" title="Guida">
+    <i class="fas fa-question-circle"></i> Guida
+  </a>
+</h1>
 
 <?php if ($alertMsg && isset($alertMessages[$alertMsg])): ?>
   <div class="alert alert-<?php echo $alertMessages[$alertMsg]['type']; ?> alert-dismissible fade show">
@@ -254,16 +249,6 @@
               <a href="<?php echo ROOT_URL; ?>admin/?page=seller-refund-view&id=<?php echo $refund->id; ?>" class="btn btn-sm btn-primary" title="Dettaglio">
                 <i class="fas fa-eye"></i>
               </a>
-              <?php if (!$refund->preference_token || strtotime($refund->preference_token_expires) < time()): ?>
-                <form method="post" class="d-inline">
-                  <?php csrf_field(); ?>
-                  <input type="hidden" name="action" value="generate_token">
-                  <input type="hidden" name="refund_id" value="<?php echo $refund->id; ?>">
-                  <button type="submit" class="btn btn-sm btn-outline-info" title="Genera Link">
-                    <i class="fas fa-link"></i>
-                  </button>
-                </form>
-              <?php endif; ?>
             </td>
           </tr>
         <?php endforeach; ?>

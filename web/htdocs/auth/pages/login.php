@@ -26,6 +26,7 @@ if (isset($_POST['login'])) {
   if ($userObj) {
     // Store only user ID in session to prevent object injection attacks
     $_SESSION['user_id'] = $userObj->id;
+    log_activity($userObj->id, 'login');
     if (isset($_SESSION['client_id'])) {
       $cartMgr = new CartManager();
       $cartMgr->mergeCarts();
@@ -33,6 +34,7 @@ if (isset($_POST['login'])) {
     header('Location: ' . ROOT_URL . 'user?page=dashboard');
     exit;
   } else {
+    log_activity(null, 'login_failed', 'email: ' . substr($email, 0, 50));
     // Redirect with error message and preserve email
     $emailParam = urlencode($email);
     echo "<script>location.href='".ROOT_URL."auth?page=login&msg=login_err&email=".$emailParam."';</script>";

@@ -10,14 +10,15 @@
   $salesMgr = new SalesTransactionManager();
   $paymentMethods = SalesTransactionManager::getPaymentMethods();
 
-  // Handle delete action
-  if (isset($_POST['delete_transaction']) && isset($_POST['transaction_id'])) {
+  // Handle full refund from list page
+  if (isset($_POST['refund_transaction']) && isset($_POST['transaction_id'])) {
     if (!CSRF::validateToken()) {
       $alertMsg = 'csrf_error';
     } else {
       $transactionId = (int)$_POST['transaction_id'];
-      if ($salesMgr->deleteTransaction($transactionId)) {
-        $alertMsg = 'deleted';
+      $refundNotes = isset($_POST['refund_notes']) ? trim($_POST['refund_notes']) : '';
+      if ($salesMgr->refundTransaction($transactionId, $refundNotes, $loggedInUser->id)) {
+        $alertMsg = 'order_quantity_resored';
       } else {
         $alertMsg = 'err';
       }
@@ -154,6 +155,7 @@
     <tr>
       <th>#</th>
       <th>Data/Ora</th>
+      <th>Stato</th>
       <th>Metodo Pagamento</th>
       <th>Descrizione</th>
       <th>N. Articoli</th>
@@ -163,10 +165,17 @@
     </tr>
   </thead>
   <tbody>
-    <?php foreach ($transactions as $transaction): ?>
-      <tr>
+    <?php foreach ($transactions as $transaction): $txRefunded = !empty($transaction->refunded_at); ?>
+      <tr class="<?php echo $txRefunded ? 'table-danger' : ''; ?>">
         <td><?php echo esc_html($transaction->id); ?></td>
         <td><?php echo date('d/m/Y H:i', strtotime($transaction->created_at)); ?></td>
+        <td>
+          <?php if ($txRefunded): ?>
+            <span class="badge badge-danger" title="Rimborsata il <?php echo date('d/m/Y H:i', strtotime($transaction->refunded_at)); ?>">Rimborsata</span>
+          <?php else: ?>
+            <span class="badge badge-success">Attiva</span>
+          <?php endif; ?>
+        </td>
         <td>
           <?php
             $badgeClass = 'badge-secondary';
@@ -195,13 +204,12 @@
           <a href="<?php echo ROOT_URL; ?>admin/?page=sales-transaction-view&id=<?php echo $transaction->id; ?>" class="btn btn-sm btn-info" title="Visualizza">
             <i class="fas fa-eye"></i>
           </a>
-          <form method="post" class="d-inline">
-            <?php csrf_field(); ?>
-            <input type="hidden" name="transaction_id" value="<?php echo $transaction->id; ?>">
-            <button type="submit" name="delete_transaction" class="btn btn-sm btn-danger" title="Elimina" onclick="return confirm('Sei sicuro di voler eliminare questa vendita?');">
-              <i class="fas fa-trash"></i>
-            </button>
-          </form>
+          <?php if (!$txRefunded): ?>
+          <button type="button" class="btn btn-sm btn-warning" title="Rimborsa"
+                  onclick="openRefundModal(<?php echo $transaction->id; ?>, '#<?php echo esc_html($transaction->id); ?>')">
+            <i class="fas fa-undo"></i>
+          </button>
+          <?php endif; ?>
         </td>
       </tr>
     <?php endforeach; ?>
@@ -244,3 +252,44 @@
     <i class="fas fa-info-circle"></i> Nessuna vendita trovata.
   </div>
 <?php endif; ?>
+
+<!-- Refund Modal -->
+<div class="modal fade" id="refundModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form method="post" id="refundForm">
+        <?php csrf_field(); ?>
+        <input type="hidden" name="transaction_id" id="refundTransactionId" value="">
+        <input type="hidden" name="refund_transaction" value="1">
+
+        <div class="modal-header bg-warning">
+          <h5 class="modal-title"><i class="fas fa-undo"></i> Conferma Rimborso</h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p id="refundMessage"></p>
+          <div class="form-group">
+            <label for="refundNotes"><strong>Nota di rimborso</strong> <small class="text-muted">(facoltativa)</small></label>
+            <textarea name="refund_notes" id="refundNotes" class="form-control" rows="3"
+                      placeholder="Motivo del rimborso..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Annulla</button>
+          <button type="submit" class="btn btn-warning"><i class="fas fa-undo"></i> Conferma Rimborso</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openRefundModal(transactionId, label) {
+  document.getElementById('refundTransactionId').value = transactionId;
+  document.getElementById('refundNotes').value = '';
+  document.getElementById('refundMessage').innerHTML =
+    'Sei sicuro di voler rimborsare <strong>la vendita ' + label + '</strong>?<br>' +
+    '<small class="text-danger">Tutti i libri torneranno disponibili per la vendita.</small>';
+  $('#refundModal').modal('show');
+}
+</script>

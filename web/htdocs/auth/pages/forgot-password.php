@@ -21,6 +21,7 @@ if (isset($_POST['resetPwd'])) {
     exit;
   }
 
+  log_activity($userObj->id, 'password_reset_request');
   echo "<script>location.href='".ROOT_URL."auth?page=reset-password-request&email=".urlencode($email)."';</script>";
   exit;
 }

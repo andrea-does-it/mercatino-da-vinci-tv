@@ -32,6 +32,7 @@
 
           if ($amount > 0) {
             $sellerRefundMgr->recordPayment($refundId, $amount, $method, $date, $reference, $notes, $loggedInUser->id);
+            log_activity($loggedInUser->id, 'admin_refund_payment', 'refund_id: ' . $refundId . ', amount: ' . $amount);
             $alertMsg = 'payment_recorded';
           } else {
             $alertMsg = 'invalid_amount';
@@ -42,18 +43,21 @@
           $comments = isset($_POST['comments']) ? trim($_POST['comments']) : '';
           $envelopePrepared = isset($_POST['envelope_prepared']) ? 1 : 0;
           $sellerRefundMgr->updateCommentsAndEnvelope($refundId, $comments, $envelopePrepared);
+          log_activity($loggedInUser->id, 'admin_refund_updated', 'refund_id: ' . $refundId);
           $alertMsg = 'comments_updated';
           break;
 
         case 'generate_token':
           $token = $sellerRefundMgr->generatePreferenceToken($refundId);
           if ($token) {
+            log_activity($loggedInUser->id, 'admin_refund_token', 'refund_id: ' . $refundId);
             $alertMsg = 'token_generated';
           }
           break;
 
         case 'recalculate':
           $sellerRefundMgr->recalculateAmountOwed($refundId);
+          log_activity($loggedInUser->id, 'admin_refund_recalc', 'refund_id: ' . $refundId);
           $alertMsg = 'amount_recalculated';
           break;
       }

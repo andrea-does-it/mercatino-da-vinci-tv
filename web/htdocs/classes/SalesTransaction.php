@@ -226,9 +226,19 @@ class SalesTransactionManager extends DBManager {
      * This will remove the item from the transaction and change order_item status back to 'vendere'
      *
      * @param int $salesTransactionItemId
+     * @param string|null $notes Optional refund note
      * @return bool
      */
-    public function refundItem($salesTransactionItemId) {
+    /**
+     * Refund a single item from a transaction (soft-delete: marks item as refunded)
+     * If all items in the transaction are refunded, the transaction header is also marked as refunded.
+     *
+     * @param int $salesTransactionItemId
+     * @param string|null $notes Optional refund note
+     * @param int|null $refundedBy User ID of who performed the refund
+     * @return bool
+     */
+    public function refundItem($salesTransactionItemId, $notes = null, $refundedBy = null) {
         $itemMgr = new SalesTransactionItemManager();
         $item = $itemMgr->get($salesTransactionItemId);
 
@@ -236,9 +246,13 @@ class SalesTransactionManager extends DBManager {
             return false;
         }
 
+        // Skip if already refunded
+        if (!empty($item->refunded_at)) {
+            return false;
+        }
+
         $orderItemId = $item->order_item_id;
         $transactionId = $item->sales_transaction_id;
-        $itemPrice = (float)$item->price;
 
         $orderMgr = new OrderManager();
 
@@ -252,36 +266,77 @@ class SalesTransactionManager extends DBManager {
         // Change order_item status back to 'vendere'
         $orderMgr->updateStatusItem2($orderItemId, 'vendere');
 
+        // Store refund note on order_item
+        if ($notes !== null && trim($notes) !== '') {
+            $this->db->execute(
+                "UPDATE order_item SET refund_notes = ? WHERE id = ?",
+                [trim($notes), (int)$orderItemId]
+            );
+        }
+
         // Remove from order_item1 table (reverse of calcolaVendita)
         $orderMgr->removeFirstOrderItem1($productId);
 
-        // Delete the sales transaction item
-        $itemMgr->delete($salesTransactionItemId);
+        // Soft-delete: mark the transaction item as refunded
+        $this->db->execute(
+            "UPDATE sales_transaction_item SET refunded_at = NOW(), refunded_by = ?, refund_notes = ? WHERE id = ?",
+            [$refundedBy, $notes !== null ? trim($notes) : null, (int)$salesTransactionItemId]
+        );
 
-        // Update transaction total
+        // Update transaction total (only counts non-refunded items)
         $this->updateTransactionTotal($transactionId);
+
+        // If all items are now refunded, mark the transaction header as refunded too
+        $this->checkAndMarkTransactionRefunded($transactionId, $notes, $refundedBy);
 
         return true;
     }
 
     /**
-     * Refund entire transaction
+     * Refund entire transaction (soft-delete: marks as refunded, keeps items for audit trail)
      * @param int $transactionId
+     * @param string|null $notes Optional refund note (applied to all items)
+     * @param int|null $refundedBy User ID of who performed the refund
      * @return bool
      */
-    public function refundTransaction($transactionId) {
+    public function refundTransaction($transactionId, $notes = null, $refundedBy = null) {
         $transaction = $this->getTransactionWithItems($transactionId);
         if (!$transaction || count($transaction->items) == 0) {
             return false;
         }
 
-        // Refund each item
+        $orderMgr = new OrderManager();
+
+        // Restore each item to 'vendere' status without deleting transaction items
         foreach ($transaction->items as $item) {
-            $this->refundItem($item->id);
+            $orderItemId = $item->order_item_id;
+
+            $orderItemDetails = $orderMgr->getOrderItemById($orderItemId);
+            if (!$orderItemDetails) {
+                continue;
+            }
+            $productId = $orderItemDetails['product_id'];
+
+            // Change order_item status back to 'vendere'
+            $orderMgr->updateStatusItem2($orderItemId, 'vendere');
+
+            // Store refund note on order_item
+            if ($notes !== null && trim($notes) !== '') {
+                $this->db->execute(
+                    "UPDATE order_item SET refund_notes = ? WHERE id = ?",
+                    [trim($notes), (int)$orderItemId]
+                );
+            }
+
+            // Remove from order_item1 table (reverse of calcolaVendita)
+            $orderMgr->removeFirstOrderItem1($productId);
         }
 
-        // Delete the transaction (items already deleted by refundItem)
-        $this->delete($transactionId);
+        // Soft-delete: mark transaction as refunded (keep the row and items for history)
+        $this->db->execute(
+            "UPDATE sales_transaction SET refunded_at = NOW(), refunded_by = ?, refund_notes = ? WHERE id = ?",
+            [$refundedBy, $notes !== null ? trim($notes) : null, (int)$transactionId]
+        );
 
         return true;
     }
@@ -343,9 +398,11 @@ class SalesTransactionManager extends DBManager {
 
         $query = "
             SELECT st.*, u.first_name as operator_first_name, u.last_name as operator_last_name,
+                   ru.first_name as refunded_by_first_name, ru.last_name as refunded_by_last_name,
                    (SELECT COUNT(*) FROM sales_transaction_item WHERE sales_transaction_id = st.id) as item_count
             FROM sales_transaction st
             LEFT JOIN user u ON st.operator_id = u.id
+            LEFT JOIN user ru ON st.refunded_by = ru.id
             $whereClause
             ORDER BY st.created_at DESC
             LIMIT ?, ?
@@ -393,6 +450,15 @@ class SalesTransactionManager extends DBManager {
     }
 
     /**
+     * Check if a transaction has been refunded
+     * @param object $transaction
+     * @return bool
+     */
+    public function isRefunded($transaction) {
+        return !empty($transaction->refunded_at);
+    }
+
+    /**
      * Get total sales amount for a period
      * @param string|null $dateFrom
      * @param string|null $dateTo
@@ -401,7 +467,7 @@ class SalesTransactionManager extends DBManager {
      */
     public function getSalesTotals($dateFrom = null, $dateTo = null, $paymentMethod = null) {
         $params = [];
-        $conditions = [];
+        $conditions = ["refunded_at IS NULL"];
 
         if ($dateFrom !== null && $dateFrom !== '') {
             $conditions[] = "DATE(created_at) >= ?";
@@ -418,7 +484,7 @@ class SalesTransactionManager extends DBManager {
             $params[] = $paymentMethod;
         }
 
-        $whereClause = count($conditions) > 0 ? 'WHERE ' . implode(' AND ', $conditions) : '';
+        $whereClause = 'WHERE ' . implode(' AND ', $conditions);
 
         $query = "
             SELECT
@@ -461,7 +527,7 @@ class SalesTransactionManager extends DBManager {
     }
 
     /**
-     * Recalculate and update transaction total from items
+     * Recalculate and update transaction total from non-refunded items
      * @param int $transactionId
      */
     private function updateTransactionTotal($transactionId) {
@@ -470,11 +536,32 @@ class SalesTransactionManager extends DBManager {
             SET total_amount = (
                 SELECT COALESCE(SUM(price), 0)
                 FROM sales_transaction_item
-                WHERE sales_transaction_id = ?
+                WHERE sales_transaction_id = ? AND refunded_at IS NULL
             )
             WHERE id = ?
         ";
         $this->db->execute($query, [(int)$transactionId, (int)$transactionId]);
+    }
+
+    /**
+     * Check if all items in a transaction are refunded; if so, mark the header as refunded
+     * @param int $transactionId
+     * @param string|null $notes
+     * @param int|null $refundedBy
+     */
+    private function checkAndMarkTransactionRefunded($transactionId, $notes = null, $refundedBy = null) {
+        $result = $this->db->prepare(
+            "SELECT COUNT(*) as total, SUM(CASE WHEN refunded_at IS NULL THEN 1 ELSE 0 END) as active
+             FROM sales_transaction_item WHERE sales_transaction_id = ?",
+            [(int)$transactionId]
+        );
+
+        if ($result && (int)$result[0]['active'] === 0) {
+            $this->db->execute(
+                "UPDATE sales_transaction SET refunded_at = NOW(), refunded_by = ?, refund_notes = ? WHERE id = ? AND refunded_at IS NULL",
+                [$refundedBy, $notes !== null ? trim($notes) : null, (int)$transactionId]
+            );
+        }
     }
 
     /**
@@ -511,18 +598,24 @@ class SalesTransactionItemManager extends DBManager {
                 sti.order_item_id,
                 sti.price,
                 sti.created_at,
+                sti.refunded_at,
+                sti.refunded_by,
+                sti.refund_notes,
                 oi.single_price as original_price,
                 p.name as product_name,
                 p.ISBN as isbn,
                 p.nota_volumi,
                 o.numPratica as pratica,
                 u.first_name as seller_first_name,
-                u.last_name as seller_last_name
+                u.last_name as seller_last_name,
+                ru.first_name as refunded_by_first_name,
+                ru.last_name as refunded_by_last_name
             FROM sales_transaction_item sti
             INNER JOIN order_item oi ON sti.order_item_id = oi.id
             INNER JOIN product p ON oi.product_id = p.id
             INNER JOIN orders o ON oi.order_id = o.id
             INNER JOIN user u ON o.user_id = u.id
+            LEFT JOIN user ru ON sti.refunded_by = ru.id
             WHERE sti.sales_transaction_id = ?
             ORDER BY sti.id
         ";

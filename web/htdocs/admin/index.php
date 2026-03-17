@@ -15,9 +15,10 @@ if ($loggedInUser->user_type != 'admin' && $loggedInUser->user_type != 'pwuser')
 
 // Whitelist of allowed pages to prevent LFI attacks
 $allowedPages = [
-    'calcolo_vendita', 'category', 'category-list', 'dashboard',
+    'activity-logs', 'calcolo_vendita', 'category', 'category-list', 'dashboard',
     'download-management', 'edit-news', 'email', 'emails-list',
-    'generate-images-run', 'incasso_vendita', 'index', 'libri_da_vendere',
+    'generate-images-run', 'help-sales-transactions', 'help-seller-refunds',
+    'help-seller-refund-newsletter', 'incasso_vendita', 'index', 'libri_da_vendere',
     'libri_per_pratica', 'libri_per_pratica_item', 'libri_venduti',
     'news-management', 'orders-list', 'orders-list_old', 'process-order',
     'process-order_old', 'process-order2', 'product', 'product_old',

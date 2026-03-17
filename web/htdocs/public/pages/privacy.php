@@ -57,15 +57,28 @@ if (!defined('ROOT_URL')) {
     <li>Accesso limitato ai dati solo al personale autorizzato</li>
 </ul>
 
-<h2>6. Periodo di Conservazione</h2>
+<h2>6. Registro Attività (Log)</h2>
+<p>
+    Il sito registra alcune attività degli utenti autenticati (accesso, logout, registrazione) per finalità di sicurezza e
+    trasparenza, in conformità all'Art. 5.1.f del GDPR (integrità e riservatezza).
+</p>
+<ul>
+    <li><strong>Dati registrati:</strong> tipo di azione eseguita, data e ora, informazioni contestuali non personali</li>
+    <li><strong>Indirizzo IP:</strong> non viene memorizzato in chiaro; viene conservato solo un hash SHA-256 (pseudonimizzazione, Art. 25 GDPR)</li>
+    <li><strong>Conservazione:</strong> 12 mesi, dopodiché i dati vengono eliminati automaticamente</li>
+    <li><strong>Diritti dell'utente:</strong> puoi visualizzare, esportare ed eliminare il tuo registro attività dalla tua <a href="<?php echo ROOT_URL; ?>user?page=privacy">area personale</a></li>
+</ul>
+
+<h2>7. Periodo di Conservazione</h2>
 <p>I dati personali vengono conservati per il tempo necessario al raggiungimento delle finalità per cui sono stati raccolti:</p>
 <ul>
     <li><strong>Dati dell'account:</strong> fino alla cancellazione dell'account da parte dell'utente o per 3 anni dall'ultimo accesso</li>
     <li><strong>Dati delle pratiche:</strong> per 5 anni dalla chiusura della pratica (per adempimenti fiscali)</li>
+    <li><strong>Registro attività:</strong> 12 mesi</li>
     <li><strong>Dati di navigazione:</strong> per la durata della sessione</li>
 </ul>
 
-<h2>7. Diritti dell'Interessato</h2>
+<h2>8. Diritti dell'Interessato</h2>
 <p>In conformità al GDPR, hai diritto di:</p>
 <ul>
     <li><strong>Accesso:</strong> ottenere conferma dell'esistenza di un trattamento e accedere ai tuoi dati</li>
@@ -82,7 +95,7 @@ if (!defined('ROOT_URL')) {
     o contattandoci all'indirizzo <a href="mailto:mercatino@comitatogenitoridavtv.it">mercatino@comitatogenitoridavtv.it</a>.
 </p>
 
-<h2>8. Comunicazione e Diffusione dei Dati</h2>
+<h2>9. Comunicazione e Diffusione dei Dati</h2>
 <p>
     I dati personali non vengono diffusi a terzi. Possono essere comunicati a:
 </p>
@@ -91,25 +104,25 @@ if (!defined('ROOT_URL')) {
     <li>Autorità competenti, se richiesto dalla legge</li>
 </ul>
 
-<h2>9. Trasferimento dei Dati</h2>
+<h2>10. Trasferimento dei Dati</h2>
 <p>
     I dati personali sono conservati su server situati nell'Unione Europea.
     Non effettuiamo trasferimenti di dati verso paesi terzi.
 </p>
 
-<h2>10. Cookie</h2>
+<h2>11. Cookie</h2>
 <p>
     Il sito utilizza cookie tecnici necessari al funzionamento.
     Per maggiori informazioni, consulta la nostra <a href="<?php echo ROOT_URL; ?>public?page=cookie-policy">Cookie Policy</a>.
 </p>
 
-<h2>11. Modifiche all'Informativa</h2>
+<h2>12. Modifiche all'Informativa</h2>
 <p>
     Ci riserviamo il diritto di modificare questa informativa in qualsiasi momento.
     Le modifiche saranno pubblicate su questa pagina con indicazione della data di ultimo aggiornamento.
 </p>
 
-<h2>12. Contatti e Reclami</h2>
+<h2>13. Contatti e Reclami</h2>
 <p>
     Per qualsiasi domanda relativa al trattamento dei tuoi dati personali, puoi contattarci a:
     <a href="mailto:mercatino@comitatogenitoridavtv.it">mercatino@comitatogenitoridavtv.it</a>

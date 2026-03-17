@@ -64,6 +64,7 @@ if (isset($_POST['pay'])) {
   $paymentMethod = $paymentMethodId;
   $orderMgr->SavePaymentDetails($orderId, $paymentCode, $paymentStatus, $paymentMethod, $status);
 
+  log_activity($loggedInUser->id, 'order_submit', 'order_id: ' . $orderId);
   echo "<script>location.href='".ROOT_URL."shop/?page=checkout&orderId=".$orderId."&success=true';</script>";
   exit;
 }

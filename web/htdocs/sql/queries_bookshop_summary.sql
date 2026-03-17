@@ -11,6 +11,24 @@
 -- ============================================================================
 
 
+--LIBRI IN GIACENZA
+SELECT
+    p.name                                          AS titolo,
+    cat.name AS categoria,
+    p.autori                                        AS autori,
+    p.ISBN                                          AS ISBN,
+    p.nota_volumi                                   AS volumi,
+    SUM(oi.quantity)                                     AS qta_rimanente,
+    p.id
+FROM order_item oi
+INNER JOIN orders o    ON o.id = oi.order_id
+INNER JOIN product p   ON p.id = oi.product_id
+INNER JOIN user u      ON u.id = o.user_id
+LEFT OUTER JOIN category cat ON p.category_id = cat.id
+WHERE oi.status = 'vendere'
+GROUP BY p.name, cat.name, p.autori, p.ISBN, p.nota_volumi, p.id 
+ORDER BY cat.name, p.name;
+
 -- ────────────────────────────────────────────────────────────────────────────
 -- 1. LIBRI ATTUALMENTE IN VENDITA PRESSO IL MERCATINO
 --    (order_item.status = 'vendere')

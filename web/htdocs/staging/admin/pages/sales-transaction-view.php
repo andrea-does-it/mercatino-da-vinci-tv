@@ -24,7 +24,7 @@
     } else {
       $itemId = (int)$_POST['item_id'];
       $refundNotes = isset($_POST['refund_notes']) ? trim($_POST['refund_notes']) : '';
-      if ($salesMgr->refundItem($itemId, $refundNotes)) {
+      if ($salesMgr->refundItem($itemId, $refundNotes, $loggedInUser->id)) {
         $alertMsg = 'order_quantity_resored';
       } else {
         $alertMsg = 'err';
@@ -38,9 +38,8 @@
       $alertMsg = 'csrf_error';
     } else {
       $refundNotes = isset($_POST['refund_notes']) ? trim($_POST['refund_notes']) : '';
-      if ($salesMgr->refundTransaction($transactionId, $refundNotes)) {
-        echo "<script>window.location.href = '" . ROOT_URL . "admin/?page=sales-transactions&msg=order_quantity_resored';</script>";
-        exit;
+      if ($salesMgr->refundTransaction($transactionId, $refundNotes, $loggedInUser->id)) {
+        $alertMsg = 'order_quantity_resored';
       } else {
         $alertMsg = 'err';
       }
@@ -56,7 +55,13 @@
   }
 ?>
 
-<h1>Dettaglio Vendita #<?php echo esc_html($transaction->id); ?></h1>
+<?php $isRefunded = !empty($transaction->refunded_at); ?>
+
+<h1>Dettaglio Vendita #<?php echo esc_html($transaction->id); ?>
+  <?php if ($isRefunded): ?>
+    <span class="badge badge-danger">RIMBORSATA</span>
+  <?php endif; ?>
+</h1>
 
 <a href="<?php echo ROOT_URL; ?>admin/?page=sales-transactions" class="btn btn-secondary mb-3">
   <i class="fas fa-arrow-left"></i> Torna all'elenco
@@ -122,10 +127,25 @@
     <div class="card mb-4 bg-light">
       <div class="card-body text-center">
         <h5 class="card-title">Totale Vendita</h5>
-        <h1 class="text-success">&euro; <?php echo number_format($transaction->total_amount, 2, ',', '.'); ?></h1>
+        <h1 class="<?php echo $isRefunded ? 'text-danger' : 'text-success'; ?>">&euro; <?php echo number_format($transaction->total_amount, 2, ',', '.'); ?></h1>
         <p class="text-muted"><?php echo count($transaction->items); ?> articoli</p>
       </div>
     </div>
+    <?php if ($isRefunded): ?>
+    <div class="alert alert-danger">
+      <h5><i class="fas fa-undo"></i> Vendita Rimborsata</h5>
+      <p class="mb-1"><strong>Data rimborso:</strong> <?php echo date('d/m/Y H:i:s', strtotime($transaction->refunded_at)); ?></p>
+      <?php if (!empty($transaction->refunded_by)):
+        $userMgr2 = new UserManager();
+        $refundUser = $userMgr2->get($transaction->refunded_by);
+      ?>
+        <p class="mb-1"><strong>Rimborsato da:</strong> <?php echo esc_html($refundUser->first_name . ' ' . $refundUser->last_name); ?></p>
+      <?php endif; ?>
+      <?php if (!empty($transaction->refund_notes)): ?>
+        <p class="mb-0"><strong>Motivo:</strong> <?php echo esc_html($transaction->refund_notes); ?></p>
+      <?php endif; ?>
+    </div>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -150,8 +170,8 @@
         </tr>
       </thead>
       <tbody>
-        <?php $count = 0; foreach ($transaction->items as $item): $count++; ?>
-          <tr>
+        <?php $count = 0; foreach ($transaction->items as $item): $count++; $itemRefunded = !empty($item->refunded_at); ?>
+          <tr class="<?php echo $itemRefunded ? 'table-danger' : ''; ?>">
             <td><?php echo $count; ?></td>
             <td><span class="badge badge-secondary"><?php echo esc_html($item->pratica); ?></span></td>
             <td>
@@ -159,16 +179,31 @@
               <?php if (isset($item->nota_volumi) && $item->nota_volumi): ?>
                 <br><small class="text-muted"><?php echo esc_html($item->nota_volumi); ?></small>
               <?php endif; ?>
+              <?php if ($itemRefunded): ?>
+                <br><small class="text-danger">
+                  <i class="fas fa-undo"></i> Rimborsato il <?php echo date('d/m/Y H:i', strtotime($item->refunded_at)); ?>
+                  <?php if (!empty($item->refunded_by_first_name)): ?>
+                    da <?php echo esc_html($item->refunded_by_first_name . ' ' . $item->refunded_by_last_name); ?>
+                  <?php endif; ?>
+                  <?php if (!empty($item->refund_notes)): ?>
+                    &mdash; <em><?php echo esc_html($item->refund_notes); ?></em>
+                  <?php endif; ?>
+                </small>
+              <?php endif; ?>
             </td>
             <td><code><?php echo esc_html($item->isbn); ?></code></td>
             <td><small><?php echo esc_html($item->seller_last_name . ' ' . $item->seller_first_name); ?></small></td>
             <td class="text-right text-muted">&euro; <?php echo number_format($item->original_price, 2, ',', '.'); ?></td>
             <td class="text-right"><strong>&euro; <?php echo number_format($item->price, 2, ',', '.'); ?></strong></td>
             <td>
+              <?php if (!$itemRefunded && !$isRefunded): ?>
               <button type="button" class="btn btn-sm btn-warning" title="Rimborsa"
                       onclick="openRefundModal('item', <?php echo $item->id; ?>, '<?php echo esc_html(addslashes($item->product_name)); ?>')">
                 <i class="fas fa-undo"></i> Rimborsa
               </button>
+              <?php elseif ($itemRefunded): ?>
+              <span class="badge badge-danger">Rimborsato</span>
+              <?php endif; ?>
             </td>
           </tr>
         <?php endforeach; ?>
@@ -211,7 +246,7 @@
     <i class="fas fa-cogs"></i> Azioni
   </div>
   <div class="card-body">
-    <?php if (count($transaction->items) > 0): ?>
+    <?php if (count($transaction->items) > 0 && !$isRefunded): ?>
     <button type="button" class="btn btn-danger" onclick="openRefundModal('transaction', 0, 'TUTTA la vendita #<?php echo esc_html($transaction->id); ?>')">
       <i class="fas fa-undo"></i> Rimborsa Tutta la Vendita
     </button>

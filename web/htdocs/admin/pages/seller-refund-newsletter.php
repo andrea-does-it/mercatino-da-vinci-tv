@@ -157,7 +157,11 @@
   unset($_SESSION['emails_sent_count'], $_SESSION['emails_error_count']);
 ?>
 
-<h1>Invio Newsletter Preferenze Pagamento - <?php echo $selectedYear; ?></h1>
+<h1>Invio Newsletter Preferenze Pagamento - <?php echo $selectedYear; ?>
+  <a href="<?php echo ROOT_URL; ?>admin/?page=help-seller-refund-newsletter" class="btn btn-sm btn-outline-info ml-2" title="Guida">
+    <i class="fas fa-question-circle"></i> Guida
+  </a>
+</h1>
 
 <a href="<?php echo ROOT_URL; ?>admin/?page=seller-refunds&year=<?php echo $selectedYear; ?>" class="btn btn-secondary mb-3">
   <i class="fas fa-arrow-left"></i> Torna a Rimborsi Venditori

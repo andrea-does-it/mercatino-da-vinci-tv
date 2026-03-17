@@ -86,6 +86,24 @@
   $sqlColumns  = [];
   $sqlRows     = [];
 
+  // ── DB SCHEMA (for treeview) – uses global mysqli $conn directly ─────────
+  $dbSchema = [];
+  global $conn;
+  if ($conn) {
+    $schemaResult = mysqli_query($conn,
+      "SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY
+       FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE()
+       ORDER BY TABLE_NAME, ORDINAL_POSITION"
+    );
+    if ($schemaResult) {
+      while ($col = mysqli_fetch_assoc($schemaResult)) {
+        $dbSchema[$col['TABLE_NAME']][] = $col;
+      }
+      mysqli_free_result($schemaResult);
+    }
+  }
+
   if (isset($_POST['execute_sql'])) {
     $activeTab = 'sql';
     if (!CSRF::validateToken()) {
@@ -204,11 +222,12 @@
       </div>
     <?php endif; ?>
 
+    <!-- ── Query form ── -->
     <form method="post">
       <?php csrf_field(); ?>
       <div class="form-group">
         <label for="sql_query">Query SQL</label>
-        <textarea name="sql_query" id="sql_query" class="form-control" rows="6"
+        <textarea name="sql_query" id="sql_query" class="form-control" rows="8"
                   placeholder="SELECT * FROM user LIMIT 10;"
                   style="font-family: monospace; font-size: 0.9em;"><?php echo esc_html($sqlQuery); ?></textarea>
         <small class="form-text text-muted">SELECT, SHOW, DESCRIBE restituiscono risultati in griglia. INSERT, UPDATE, DELETE mostrano righe interessate.</small>
@@ -217,6 +236,97 @@
         <i class="fas fa-play"></i> Esegui Query
       </button>
     </form>
+
+    <!-- ── Schema treeview (collapsible) ── -->
+    <?php if (!empty($dbSchema)): ?>
+    <div class="mt-3">
+      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleSchemaPanel(this)">
+        <i class="fas fa-sitemap mr-1"></i> Schema DB
+        <small class="text-muted ml-1">(<?php echo count($dbSchema); ?> tabelle &mdash; clic su un nome per copiarlo)</small>
+      </button>
+      <div id="schemaPanel" style="display:none;" class="mt-2">
+        <div class="card">
+          <div class="card-body p-1" style="max-height: 380px; overflow-y: auto;">
+            <?php foreach ($dbSchema as $tableName => $columns): ?>
+            <div>
+              <div class="d-flex align-items-center px-2 py-1 schema-table-header"
+                   style="cursor:pointer; user-select:none;"
+                   onclick="toggleTableCols(this)">
+                <i class="fas fa-chevron-right schema-chevron mr-1" style="font-size:0.65em; color:#6c757d; transition:transform 0.15s;"></i>
+                <i class="fas fa-table mr-1" style="font-size:0.75em; color:#007bff;"></i>
+                <code class="schema-copy" data-copy="<?php echo htmlspecialchars($tableName); ?>"
+                      style="font-size:0.85em; cursor:pointer;"
+                      title="Copia nome tabella"
+                      onclick="schemaCopy(event, this)"><?php echo esc_html($tableName); ?></code>
+                <small class="text-muted ml-2" style="font-size:0.7em;">(<?php echo count($columns); ?> colonne)</small>
+              </div>
+              <div class="schema-cols" style="display:none;">
+                <?php foreach ($columns as $col): ?>
+                <?php
+                  $colIcon = 'fa-columns'; $colColor = '#6c757d';
+                  if ($col['COLUMN_KEY'] === 'PRI') { $colIcon = 'fa-key';  $colColor = '#ffc107'; }
+                  elseif ($col['COLUMN_KEY'] === 'MUL') { $colIcon = 'fa-link'; $colColor = '#17a2b8'; }
+                ?>
+                <div class="d-flex align-items-center py-0" style="padding-left:32px; border-left:2px solid #dee2e6; margin-left:16px;">
+                  <i class="fas <?php echo htmlspecialchars($colIcon); ?> mr-1" style="font-size:0.65em; color:<?php echo htmlspecialchars($colColor); ?>;"></i>
+                  <code class="schema-copy" data-copy="<?php echo htmlspecialchars($col['COLUMN_NAME']); ?>"
+                        style="font-size:0.8em; cursor:pointer; white-space:nowrap;"
+                        title="<?php echo htmlspecialchars($col['COLUMN_TYPE'] . ($col['IS_NULLABLE'] === 'YES' ? ' NULL' : ' NOT NULL')); ?>"
+                        onclick="schemaCopy(event, this)"><?php echo esc_html($col['COLUMN_NAME']); ?></code>
+                  <small class="text-muted ml-1" style="font-size:0.65em;"><?php echo esc_html($col['COLUMN_TYPE']); ?></small>
+                </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+    .schema-table-header:hover { background: #f8f9fa; }
+    .schema-copy:hover { color: #007bff !important; text-decoration: underline; }
+    </style>
+    <script>
+    function toggleSchemaPanel(btn) {
+      var panel = document.getElementById('schemaPanel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+    function toggleTableCols(header) {
+      var cols = header.nextElementSibling;
+      var chevron = header.querySelector('.schema-chevron');
+      if (cols.style.display === 'none') {
+        cols.style.display = 'block';
+        chevron.style.transform = 'rotate(90deg)';
+      } else {
+        cols.style.display = 'none';
+        chevron.style.transform = 'rotate(0deg)';
+      }
+    }
+    function schemaCopy(e, el) {
+      e.stopPropagation();
+      var text = el.dataset.copy;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() { flashCopied(el); });
+      } else {
+        // Fallback for HTTP contexts
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        try { document.execCommand('copy'); flashCopied(el); } catch(err) {}
+        document.body.removeChild(ta);
+      }
+    }
+    function flashCopied(el) {
+      var orig = el.style.color;
+      el.style.color = '#28a745';
+      setTimeout(function() { el.style.color = orig; }, 800);
+    }
+    </script>
+    <?php endif; ?>
 
     <?php if ($sqlIsSelect && !empty($sqlRows)): ?>
     <!-- DataTables Buttons extension (CSV/Excel export) -->

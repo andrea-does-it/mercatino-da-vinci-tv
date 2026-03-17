@@ -58,6 +58,12 @@
 
 <h1>Lista Libri Adottati</h1>
 
+<p>
+  <a href="<?php echo ROOT_URL; ?>public/docs/regolamento-mercatino-libri-usati-da-vinci.pdf" target="_blank" class="btn btn-outline-secondary btn-sm">
+    <i class="fas fa-file-pdf"></i> Regolamento del Mercatino dei Libri Usati
+  </a>
+</p>
+
 <?php if ($totalProducts > 0) : ?>
 <p class="lead">Di seguito la lista dei libri adottati dal Liceo Scientifico Da Vinci - Treviso</p>
 <p class="lead">Vecchie Edizioni accettate dai Dipartimenti <a class="underline" href="<?php echo ROOT_URL . 'public?page=libri_vecchi_accettati'; ?>">Clicca qui &raquo;</a></p>
