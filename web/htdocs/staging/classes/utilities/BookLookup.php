@@ -131,22 +131,37 @@ class BookLookup {
      * @return string|null Response body or null on error
      */
     private static function httpGet($url) {
-        $context = stream_context_create([
-            'http' => [
-                'timeout' => 12,
-                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            ],
-            'https' => [
-                'timeout' => 12,
-                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            ]
-        ]);
+        $ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
-        try {
-            $data = file_get_contents($url, false, $context);
-            return $data !== false ? $data : null;
-        } catch (Exception $e) {
+        // Preferisci cURL: funziona anche dove allow_url_fopen e' disabilitato
+        // (tipico hosting condiviso) e non emette warning che corromperebbero il JSON.
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            curl_setopt_array($ch, array(
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_TIMEOUT        => 15,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_SSL_VERIFYHOST => 0,
+                CURLOPT_USERAGENT      => $ua,
+            ));
+            $data = curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            if ($data !== false && $data !== '' && $code < 400) {
+                return $data;
+            }
             return null;
         }
+
+        // Fallback: file_get_contents con warning SOPPRESSI (la @ evita di
+        // sporcare l'output, es. quando allow_url_fopen e' off).
+        $context = stream_context_create(array(
+            'http'  => array('timeout' => 12, 'user_agent' => $ua),
+            'https' => array('timeout' => 12, 'user_agent' => $ua),
+        ));
+        $data = @file_get_contents($url, false, $context);
+        return $data !== false ? $data : null;
     }
 }

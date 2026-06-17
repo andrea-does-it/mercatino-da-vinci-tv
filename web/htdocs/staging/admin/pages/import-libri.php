@@ -173,14 +173,16 @@ $(document).ready(function() {
         const cols = parseCsvLine(line);
         const isbn = (cols[isbnCol] || '').replace(/[^0-9Xx]/g, '');
         if (!isbn) continue;
-        isbnsOnly.push(isbn);
         if (rich) {
+          const title = cTitle !== -1 ? (cols[cTitle] || '').trim() : '';
+          if (title === '') continue;   // salta righe senza titolo (es. righe vuote finali)
           const lp = cListPrice !== -1 ? toNum(cols[cListPrice]) : null;
           let pm = cMerc !== -1 ? toNum(cols[cMerc]) : null;
           if (pm === null && lp !== null) pm = Math.round((lp / 2 - 1.50) * 100) / 100;
+          isbnsOnly.push(isbn);
           items.push({
             isbn: isbn,
-            title: cTitle !== -1 ? (cols[cTitle] || '') : '',
+            title: title,
             authors: cAuthors !== -1 ? (cols[cAuthors] || '') : '',
             publisher: cPublisher !== -1 ? (cols[cPublisher] || '') : '',
             list_price: lp,
@@ -191,6 +193,8 @@ $(document).ready(function() {
             existing_id: null,
             warnings: []
           });
+        } else {
+          isbnsOnly.push(isbn);
         }
       }
 
