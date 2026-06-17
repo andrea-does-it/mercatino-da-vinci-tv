@@ -540,9 +540,10 @@ $(document).ready(function() {
         $('#visible-count').text(badge);
         $('#visible-table').show();
       },
-      error: function() {
+      error: function(xhr) {
         $btn.prop('disabled', false);
-        alert('Errore nel recupero dei libri visibili');
+        const body = (xhr && xhr.responseText) ? xhr.responseText.substring(0, 500) : '(nessun corpo risposta)';
+        alert('Errore nel recupero dei libri visibili\nStato HTTP: ' + (xhr ? xhr.status : '?') + '\nRisposta:\n' + body);
       }
     });
   });
