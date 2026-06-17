@@ -20,7 +20,7 @@ grafia. Corretti cercando per titolo e riconfermati su Libraccio.
 | ISBN | Titolo trascritto | Titolo reale (Libraccio) | Note |
 |---|---|---|---|
 | `9788842117445` | "Storia dell'arte vol.1" | **A passo d'arte. Vol. 1** (Nifosì, Laterza) | l'ISBN appartiene alla serie "A passo d'arte" delle prime classi; titolo manoscritto letto male |
-| `9781035141654` | "The Yellow Grammar Book **2023**" | The Yellow Grammar Book **2025** (Macmillan) | l'ISBN risolve all'edizione 2025; verificare se è davvero l'edizione adottata |
+| `9781035141654` | "The Yellow Grammar Book **2023**" | The Yellow Grammar Book **2025** (Macmillan) | **risolto**: confermata dall'utente l'edizione 2025; titolo manoscritto aggiornato a 2025 |
 
 ## 3. ISBN non trovati su Libraccio
 
@@ -36,7 +36,7 @@ prezzo di copertina e copertina scaricabile.
 
 ## 5. Da verificare con l'utente
 
-- Edizione "The Yellow Grammar Book" 2023 vs 2025 (riga sopra).
+- ~~Edizione "The Yellow Grammar Book" 2023 vs 2025~~ → **risolto: edizione 2025 confermata**.
 - Alcuni titoli compaiono in più sezioni/anni (es. "A passo d'arte", "Itinerario
   nell'arte", "Homo sum civis sum", "Milleduemilatrenta", "È tempo di filosofia",
   "Storia e storiografia", "Leggere e scrivere il mondo") ma con **volumi/ISBN

@@ -1,0 +1,177 @@
+Delivered-To: andrbuso@gmail.com
+Received: by 2002:a17:907:e902:b0:bfd:1bd9:c0d2 with SMTP id zh2csp1282048ejc;
+        Mon, 15 Jun 2026 05:59:24 -0700 (PDT)
+X-Received: by 2002:a05:6122:1690:b0:575:56fe:574d with SMTP id 71dfb90a1353d-5bb6c19b853mr6362234e0c.12.1781528364453;
+        Mon, 15 Jun 2026 05:59:24 -0700 (PDT)
+ARC-Seal: i=2; a=rsa-sha256; t=1781528364; cv=pass;
+        d=google.com; s=arc-20240605;
+        b=CPXZ3TlDARXdk6dBnGBerowHFVHjjwmuXgbZv5y2r81IWP1OBrH6yi6MXPgFeM+zwB
+         IYRa/os74pkwPXqLHG6ZQRUskKNC4eAT8msUWAnftpay2kMnp7uCAoEpqenES3FD/8pI
+         YVljUHYIya+p4prKoY4lwpJcLuHxLubcU0M2cSqXDKPOLj3fwYjJfeUqZUxjsXYIQrwk
+         3boiQpVqt63r4PMU/GkmLrMPlQ6n3stMwfCY6RlwLDNOd2c96YUNngzLIgplKm7onCK4
+         SpBZ0bq1WKS//uAJmNcZ0ZI1JaYf/R6a6QbliU32HOL4s324z0r+fwy1cIW8y/NYHsKz
+         VTBg==
+ARC-Message-Signature: i=2; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :dkim-signature;
+        bh=cZmS6ueus21QEHf1CSvOtjLRXicDTVlVNsWOtLjl2ZM=;
+        fh=5Skh9rdW8oHpXjrXDl55/wP4FtVwlem8bKevagH0TTg=;
+        b=d9SKklHqCQv5d3+C7BxlIXP96bNvfzEcyV6M3zqh7FdrJWDRuQ49wjeeOSzfyQ72EU
+         9vIfY9XrBxafN/o2ucSKaL8qd52sl9iiqP87HNafBD6xbFINb0x3I1ThRaSQWB/NfaGO
+         BDAao2DED+xGNeqFG8nBDS9b+kqgfxRH1LkXpBDcxdihPrnwjl1hduYDyybuzx7mrOM2
+         0Oy41bTj2yD+MhlUW7Q/egiEkNg0FR08w0k1ZOPjJvEUStV5+7ljc0/LKCZ1H9sQiaAD
+         M4e3K2ycb2BakPyuEE7BY5amhpbFQlazwaviRr8T5vfcnQlna/hmN0vs29ZkR/YXdcY1
+         b3iw==;
+        dara=google.com
+ARC-Authentication-Results: i=2; mx.google.com;
+       dkim=pass header.i=@liceodavinci.tv header.s=google header.b=Yl26HdxJ;
+       arc=pass (i=1);
+       spf=pass (google.com: domain of presidente.comitato.genitori@liceodavinci.tv designates 209.85.220.41 as permitted sender) smtp.mailfrom=presidente.comitato.genitori@liceodavinci.tv;
+       dmarc=pass (p=NONE sp=NONE dis=NONE) header.from=liceodavinci.tv;
+       dara=pass header.i=@gmail.com
+Return-Path: <presidente.comitato.genitori@liceodavinci.tv>
+Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])
+        by mx.google.com with SMTPS id 71dfb90a1353d-5bb691a337dsor5763804e0c.9.2026.06.15.05.59.23
+        for <andrbuso@gmail.com>
+        (Google Transport Security);
+        Mon, 15 Jun 2026 05:59:24 -0700 (PDT)
+Received-SPF: pass (google.com: domain of presidente.comitato.genitori@liceodavinci.tv designates 209.85.220.41 as permitted sender) client-ip=209.85.220.41;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@liceodavinci.tv header.s=google header.b=Yl26HdxJ;
+       arc=pass (i=1);
+       spf=pass (google.com: domain of presidente.comitato.genitori@liceodavinci.tv designates 209.85.220.41 as permitted sender) smtp.mailfrom=presidente.comitato.genitori@liceodavinci.tv;
+       dmarc=pass (p=NONE sp=NONE dis=NONE) header.from=liceodavinci.tv;
+       dara=pass header.i=@gmail.com
+ARC-Seal: i=1; a=rsa-sha256; t=1781528363; cv=none;
+        d=google.com; s=arc-20240605;
+        b=XTbDWnYxGadhiUq/YsqNOYQ/nYlYHEtUl+T6W7MV75Kew+WrPtRhdpHVlXC0zySTnA
+         MCm0UK5nkzzc+SXh1/76rTIaHF8gmgLIONaOmbXo/CFJBhk3p1glezc0pjLBbq6LMo25
+         dObj12mkXflsVO0xt+bYJ11qb8+45SIv0P78etdzY1sMOIRJ3iHuiKx1arv/vMte/4fV
+         xuvicJRIiBWD2GMPe460eCt0ncycwJLBkc8kduGqE/mI3i7eeIeeliwy3JWBVg2RHMbA
+         AEf2XhB/lNq7BlgANLSyJSUfdAvHZXvZdX4xVdEIHJ45Dm6Szh/l2/a7/wZGkfgRFXsm
+         tQrg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :dkim-signature;
+        bh=cZmS6ueus21QEHf1CSvOtjLRXicDTVlVNsWOtLjl2ZM=;
+        fh=5Skh9rdW8oHpXjrXDl55/wP4FtVwlem8bKevagH0TTg=;
+        b=AEniojwrOgROp2+PKwrHn24WyX/4NACMM1SSl0LSS5CCdBrSPEZ7TtcnDIbkA4Q2vL
+         ZErzTCPYoTDkdDplVuUHUMTCuw36kBTUlCfZG7CJZ94msok5REfxbhs7YOkB1hB2VOyi
+         YEc2xlzDXqfSvpkVgpg0eJxjEK+q6FFhYwJFTl2UN1VTbueOYvfNl3dgLPSznCqdPtrM
+         HDlu+c/ILNm0IbW/X/xBvfwIb5GK2SZ3KpNf8OQ2jp8iHWAIoYaCyh7oUfqOUJ8GcaKM
+         F1NFAaevU6gqQerD1Aof1JKJZt/C2bysEN1IzlvMa22iL1C/7+VbEV10Z1i5i79IU4fq
+         bwbw==;
+        dara=google.com
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=liceodavinci.tv; s=google; t=1781528363; x=1782133163; dara=google.com;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=cZmS6ueus21QEHf1CSvOtjLRXicDTVlVNsWOtLjl2ZM=;
+        b=Yl26HdxJc2DPW5f1RFx2C021T+7U+na0jScUVsJOZ8hzDxptWHRXzbj+YHN54z4Ciw
+         UoUuIdCIGwYMrP2eeMYsXC2/h5Y7AgEw+sEslHZ/Dt+CfGu4k0N3S5nhCi4zmILdJWov
+         t6DtODcI1Cp0TsS24V4lqX5P5mKD80yUJb68w=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1781528363; x=1782133163;
+        h=to:subject:message-id:date:from:in-reply-to:references:mime-version
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=cZmS6ueus21QEHf1CSvOtjLRXicDTVlVNsWOtLjl2ZM=;
+        b=pI2MqATJRybfu94mqYtz4N8GEjtgV6nzQ+LRIBAlWOF2e/LBo4qKgIQERItv9MtcDI
+         j2eHnNckHqBs5HaSD6d1L1higM/HIblZKJ6ZecIM1vBp0Jb4lfa5GQHOR1JMjCxc6RYH
+         mfh13//pDBYSHR5D48mwCFlyz5KqmqM7zcM+8v2qfuGgLBuEZxWfuyClkHjdwC2WFxGf
+         GPeMu7xsvJUDmpDUWPaG7bdAtTranDYtwxgv8DAtpR90v5wc9z9o1EVEESI0rJYz4Zb+
+         3n0BJZ3wsr76P0rMjki6XEx+yYEdi/96fqqaUj/FAKrMsoHBZl31FJxOWCPMnYaaqP6l
+         btrA==
+X-Gm-Message-State: AOJu0Ywgqrddol6FBdF2XKK23DCUCEF5GVQ+vmFiCAVrXZ07CliAzSWQ
+	vdaoirK5ByzbCz3DJr0bROqRJWTa33UqBdrVRlFZLIwAfUDmJbamdRoJlm5wnsBvtE2XYABi3Aa
+	WXUfHGj4/j8jWe4Ha1uriEC66bjRJr2vx3g8hzM9Svc50T53iuOE=
+X-Gm-Gg: Acq92OGfJhe6A7Iz7/+ZlYAsLJIc+ZQCtmsM0BF/ztVcruFk8UKjsCQMEH0FLTYC/B9
+	ERAUWvuRzAUgDksfG9xrRGgNjwrgVQMLsfWYnHWpTRj9vDJyMSCivqrE6LKMDQNIEeYJcS5Y/rm
+	ovS08XE7lBjk4X0tnBIq1/GGF0DtTSZsrnher4PfbNTWn4Sbw1qYlP6+8H9VKJtt5sVQfZGnmmj
+	lxp/dH6YueCmhQrN/V5piCLE6PumtxnZU9ptiDq1FGG8oB/b0AKPKsSwS8F40hmYi13+U/HSbFF
+	DMTgdl4JPefGfbsGbEUTWP1qmVL6erFODEGB
+X-Received: by 2002:a05:6122:1690:b0:575:56fe:574d with SMTP id
+ 71dfb90a1353d-5bb6c19b853mr6362218e0c.12.1781528363632; Mon, 15 Jun 2026
+ 05:59:23 -0700 (PDT)
+MIME-Version: 1.0
+References: <CAOObP6+9f-TfYoOmNKjXe99uEgUWHZQRjx+pUKXRwfizJim-xw@mail.gmail.com>
+In-Reply-To: <CAOObP6+9f-TfYoOmNKjXe99uEgUWHZQRjx+pUKXRwfizJim-xw@mail.gmail.com>
+From: Presidente Comitato Genitori Liceo da Vinci <presidente.comitato.genitori@liceodavinci.tv>
+Date: Mon, 15 Jun 2026 14:59:12 +0200
+X-Gm-Features: AVVi8CdMiju6R4NSXXv6IENZPcW9_tObndbmblug6CVKFPFicnRgOetH2cPNyII
+Message-ID: <CAEznyed+mMTjdq5w1RyccL3j17SjDdMXbYcKW5X=wgNxg4AE4A@mail.gmail.com>
+Subject: Fwd: Testi compatibili - Dipartimento di Italiano
+To: andrbuso@gmail.com
+Content-Type: multipart/alternative; boundary="000000000000459cea06544a650d"
+
+--000000000000459cea06544a650d
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+---------- Forwarded message ---------
+Da: Marialaura Marra <marialaura.marra@liceodavinci.tv>
+Date: lun 15 giu 2026 alle ore 14:30
+Subject: Testi compatibili - Dipartimento di Italiano
+To: <presidente.comitato.genitori@liceodavinci.tv>
+
+
+Gent.le Comitato dei Genitori,
+il Dipartimento di Lettere pu=C3=B2 segnalare alcune compatibilit=C3=A0 sol=
+o in
+riferimento al testo di epica, che si presenta in varie edizioni, tutte
+accettabili.
+
+Elenco di seguito i riferimenti:
+
+- Il nuovo Narrami, o Musa, seconda edizione, Mondadori Scuola, ISBN  978
+88 247 44805
+- Il nuovo Narrami, o Musa, prima edizione, 2014, Mondadori Scuola, ISBN
+9788824731874
+
+Cordiali saluti
+Prof.ssa Marialaura Marra
+
+Email: marialaura.marra@liceodavinci.tv
+Docente presso il liceo scientifico statale Leonardo da Vinci =E2=80=93 TVP=
+S01000X
+Viale Europa, 32 =E2=80=93 31100 Treviso =E2=80=93 0422.23927
+www.liceodavinci.edu.it
+
+--000000000000459cea06544a650d
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><br><br><div class=3D"gmail_quote gmail_quote_container"><=
+div dir=3D"ltr" class=3D"gmail_attr">---------- Forwarded message ---------=
+<br>Da: <strong class=3D"gmail_sendername" dir=3D"auto">Marialaura Marra</s=
+trong> <span dir=3D"auto">&lt;<a href=3D"mailto:marialaura.marra@liceodavin=
+ci.tv">marialaura.marra@liceodavinci.tv</a>&gt;</span><br>Date: lun 15 giu =
+2026 alle ore 14:30<br>Subject: Testi compatibili - Dipartimento di Italian=
+o<br>To:  &lt;<a href=3D"mailto:presidente.comitato.genitori@liceodavinci.t=
+v">presidente.comitato.genitori@liceodavinci.tv</a>&gt;<br></div><br><br><d=
+iv dir=3D"ltr"><div>Gent.le Comitato dei Genitori,</div><div>il Dipartiment=
+o di Lettere pu=C3=B2 segnalare alcune compatibilit=C3=A0 solo in riferimen=
+to al testo di epica, che si presenta in varie edizioni, tutte accettabili.=
+=C2=A0</div><div><br></div><div>Elenco di seguito i riferimenti:</div><div>=
+<font size=3D"1"><br></font></div><div>- Il nuovo Narrami, o Musa, seconda =
+edizione, Mondadori Scuola, ISBN=C2=A0 978 88 247 44805</div><div>- Il nuov=
+o Narrami, o Musa, prima edizione, 2014, Mondadori Scuola, ISBN=C2=A0=C2=A0=
+<span style=3D"color:rgb(52,58,63);font-family:__Raleway_203061,__Raleway_F=
+allback_203061,sans-serif;font-size:14px;letter-spacing:0.1px">978882473187=
+4</span></div><div><span style=3D"color:rgb(52,58,63);font-family:__Raleway=
+_203061,__Raleway_Fallback_203061,sans-serif;font-size:14px;letter-spacing:=
+0.1px"><br></span></div><div><span style=3D"color:rgb(52,58,63);font-family=
+:__Raleway_203061,__Raleway_Fallback_203061,sans-serif;font-size:14px;lette=
+r-spacing:0.1px">Cordiali saluti</span></div><div>Prof.ssa Marialaura Marra=
+</div><div><div dir=3D"ltr" class=3D"gmail_signature" data-smartmail=3D"gma=
+il_signature"><div dir=3D"ltr"><div><br></div><div>Email: <a href=3D"mailto=
+:marialaura.marra@liceodavinci.tv" target=3D"_blank">marialaura.marra@liceo=
+davinci.tv</a></div><div>Docente presso il liceo scientifico statale Leonar=
+do da Vinci =E2=80=93 TVPS01000X</div><div>Viale Europa, 32 =E2=80=93 31100=
+ Treviso =E2=80=93 0422.23927</div><div><a href=3D"http://www.liceodavinci.=
+edu.it" target=3D"_blank">www.liceodavinci.edu.it</a></div></div></div></di=
+v></div>
+</div></div>
+
+--000000000000459cea06544a650d--
