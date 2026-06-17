@@ -1,82 +1,82 @@
-isbn;titolo_manoscritto;titolo_libraccio;autori;editore;materia;classi;indirizzo;prezzo_listino;prezzo_mercatino;flag;stato_lookup
-9788858353011;Verso la storia della letteratura;Verso la storia della letteratura. I testi delle origini, i contesti, l'analisi, il metodo. Per le Scuole superiori;Simonetta Damele, Tiziano Franzi;Loescher;Antologia;2A 2D 2E 2F;Tradizionale;7.70;2.35;gia_in_uso;OK
-9788858335000;Riflessi;Riflessi. Narrativa, poesia, teatro: le forme, i generi, la scrittura;Simonetta Damele, Tiziano Franzi;Loescher;Antologia;2A 2D 2E 2F;Tradizionale;20.50;8.75;;OK
-9788848266246;Quae manent. Grammatica;Quae manent. Grammatica;Tantucci, Roncoroni, Cappelletto;Poseidonia Scuola;Latino;2A 2D 2E 2F;Tradizionale;19.70;8.35;;OK
-9788848266321;Quae manent. Laboratorio 2;Quae manent. Laboratorio. Vol. 2;Tantucci, Roncoroni, Cappelletto;Poseidonia Scuola;Latino;2A 2D 2E 2F;Tradizionale;28.20;12.60;;OK
-9788869105470;Lontani vicini vol.2;Lontani vicini. Dall'impero romano all'alto Medioevo. Vol. 2;Bettini, Lentano, Puliga;Bruno Mondadori;Geostoria;2A 2D 2E 2F;Tradizionale;32.40;14.70;;OK
-9781035141654;The Yellow Grammar Book 2025;The yellow grammar book 2025. Vol. unico;Macmillan;Macmillan;Inglese-Grammatica;2A 2D 2E 2F;Tradizionale;34.50;15.75;nuova_adozione;OK
-9780194158077;Insight Intermediate Combopack;Insight. Intermediate. Combo pack. Student Book & Workbook, Skills trainer;;Oxford University Press;Inglese-Triennio;2A 2D 2E 2F;Tradizionale;36.70;16.85;;OK
-9788849421675;Colori della matematica vol.2;Colori della matematica. Quaderno. Ediz. blu. Vol. 2;Leonardo Sasso, Claudio Zanone;Petrini;Matematica;2A 2D 2E 2F;Tradizionale;36.90;16.95;;OK
-9788893790567;Biologia 1 biennio;Biologia. Per il 1° biennio;Freeman, Quillin, Allison;Pearson Science;Biologia;2A 2D 2E 2F;Tradizionale;28.40;12.70;;OK
-9788842117452;A passo d'arte 2;A passo d'arte. Arte ieri oggi. Vol. 2: Dal tardoantico al gotico internazionale;Giuseppe Nifosì;Laterza;Arte;2A 2D 2E 2F;Tradizionale;26.90;11.95;;OK
-9788808550071;Itinerario nell'arte ed. arancione vol.2;Itinerario nell'arte. Ediz. arancione. Vol. 2: Dall'arte paleocristiana a Giotto;Cricco, Di Teodoro;Zanichelli;Arte;2C 2G;Tradizionale;23.90;10.45;;OK
-9788808537416;Fisica e realta blu vol.3;Fisica e realtà.blu. Vol. 3: Induzione e onde elettromagnetiche, relatività e quanti;Claudio Romeni;Zanichelli;Fisica;5G 5L 5D;Sc. Applicate;38.50;17.75;;OK
-9788808641489;Itinerario nell'arte vol.5;Itinerario nell'arte. Ediz. arancione. Vol. 5: Dall'Art Nouveau ai giorni nostri;Cricco, Di Teodoro;Zanichelli;Arte;5G;Sc. Applicate;32.70;14.85;;OK
-9788830220676;Milleduemilatrenta vol.3;MilleDuemilaTrenta. Vol. 3;Valerio Castronovo;La Nuova Italia;Storia;5I 5F;Sportivo;39.80;18.40;;OK
-9788842676201;Il portico dipinto vol.3;Il portico dipinto. Fare filosofia ora. Vol. 3;Gentile, Ronga, Bertelli;Il Capitello;Filosofia;5I 5F 5E;Sportivo;42.70;19.85;;OK
-9788808933959;Le scienze della terra (montagna innevata);Le scienze della Terra. Tettonica delle placche, Interazioni tra geosfere;Alfonso Bosellini;Zanichelli;Scienze;5I 5A;Sportivo;12.80;4.90;;OK
-9788861604414;Le regole del gioco vol.2;Le regole del gioco. Diritto ed Economia dello sport. Vol. 2;Maria Rita Cattani;Paramond;Diritto ed Economia;5I;Sportivo;27.80;12.40;;OK
-9788857791562;Storia e storiografia vol.1;Storia e storiografia. Vol. 1: Dall'anno Mille alla Rivoluzione inglese;Desideri, Codovini;D'Anna;Storia;3 (quinte);Tradizionale;32.90;14.95;;OK
-9788839566836;E tempo di filosofia vol.1;È tempo di filosofia. Vol. 1: Dalle origini alla scolastica;Abbagnano, Fornero, Burghi;Paravia;Filosofia;quinte;Tradizionale;32.90;14.95;nuova_adozione;OK
-9788857790466;Competenze motorie;Competenze motorie;Edo Zocca, Antonella Sbragi;D'Anna;Scienze Motorie;quinte;Tradizionale;24.90;10.95;gia_in_uso;OK
-9781108457682;English Grammar in Use;English grammar in use. Book without answers;Raymond Murphy;Cambridge;Inglese-Grammatica;quinte;Tradizionale;36.80;16.90;gia_in_uso;OK
-9788861619111;Lifelines Compact ed. rossa vol.1;Lifelines compact. Ediz. rossa. Vol. 1;Mauro Spicci, Timothy Alan Shaw;Lang;Inglese-Letteratura;quinte;Tradizionale;33.10;15.05;nuova_adozione;OK
-9788808978929;Matematica manuale blu 2.0 conf.3;Manuale blu 2.0 di matematica. Confezione 3;Bergamini, Barozzi, Trifone;Zanichelli;Matematica;quinte;Tradizionale;40.20;18.60;nuova_edizione;OK
-9788808807625;La fisica di Cutnell e Johnson vol.1;La fisica di Cutnell e Johnson. Vol. 1: Meccanica e termodinamica;Cutnell, Johnson, Young;Zanichelli;Fisica;quinte;Tradizionale;33.90;15.45;;OK
-9788893798228;Il Campbell 2 biennio;Il Campbell. Corso di Biologia. Per il secondo biennio;Taylor, Simon, Dickey;Linx;Biologia;quinte;Tradizionale;38.80;17.90;;OK
-9788808423962;Le scienze della terra (vulcano);Le scienze della Terra. Minerali e rocce, Vulcani, Terremoti;Alfonso Bosellini;Zanichelli;Scienze;quinte;Tradizionale;20.00;8.50;;OK
-9788842117469;A passo d'arte vol.3;A passo d'arte. Vol. 3: Dal rinascimento al manierismo;Giuseppe Nifosì;Laterza;Arte;quinte;Tradizionale;30.90;13.95;;OK
-9788838338700;Homo sum civis sum vol.1;Homo sum civis sum. Vol. 1;Maurizio Bettini, Mario Lentano;Sansoni;Latino;3E 3F 3H 3C;Tradizionale;32.80;14.90;;OK
-9788830230415;Non c'e futuro senza memoria vol.1;Non c'è futuro senza memoria. Vol. 1: Dall'anno Mille alla fine del Seicento;Roberto Balzani;La Nuova Italia;Storia;3F 3H 3C 3I 3K;Tradizionale;32.50;14.75;nuova_adozione;OK
-9788869646171;Dal pensiero alle parole (vol.A-B);Dal pensiero alle parole. Vol. A-B: Morfosintassi, comunicazione, lessico-Scrittura;Claudia Savigliano;Garzanti Scuola;Grammatica;1A 1C 1D 1E 1F;Tradizionale;37.25;17.12;;OK
-9788858353004;Le stelle ad una ad una;Le stelle ad una ad una. Narrativa. Poesia. Teatro. Scrittura;Simonetta Damele, Tiziano Franzi;Loescher;Antologia;1A 1C 1D 1E 1F;Tradizionale;20.10;8.55;nuova_adozione;OK
-9788824762700;Narrami o musa;Narrami, o Musa. Volume unico;Daniela Ciocca, Tina Ferri;Mondadori Scuola;Epica;1A 1C 1D 1E 1F;Tradizionale;32.80;14.90;;OK
-9788848266284;Quae manent laboratorio vol.1;Quae manent. Laboratorio. Vol. 1;Tantucci, Roncoroni, Cappelletto;Poseidonia Scuola;Latino;1A 1C 1D 1E 1F;Tradizionale;28.60;12.80;;OK
-9788869105463;Lontani vicini vol.1;Lontani vicini. Dalla Preistoria all'età di Cesare. Vol. 1;Bettini, Lentano, Puliga;Bruno Mondadori;Geostoria;1A 1C 1D 1E 1F;Tradizionale;33.50;15.25;;OK
-9788891941442;Real Focus B1/B1+;Real Focus B1/B1+ with Entry book;Sue Kay;Pearson;Inglese-Biennio;1A 1C 1D 1E 1F;Tradizionale;35.00;16.00;nuova_adozione;OK
-9788849421668;Colori matematica vol.1 unico;Colori della matematica. Quaderno. Ediz. blu. Vol. 1;Leonardo Sasso, Claudio Zanone;Petrini;Matematica;1A 1C 1D 1E 1F;Tradizionale;36.35;16.68;;OK
-9788808799869;La fisica. volume unico;La fisica. Volume unico. Le misure, l'equilibrio, il moto, il calore, la luce;Cutnell, Johnson, Young;Zanichelli;Fisica;1A 1C 1D 1E 1F;Tradizionale;34.90;15.95;;OK
-9788808599872;Chimica;Chimica: concetti e modelli. Volume unico. Dalla materia all'elettrochimica;Valitutti, Amadio, Falasca;Zanichelli;Chimica;1A 1C 1D 1E 1F;Tradizionale;49.60;23.30;;OK
-9788808444608;Il Bosellini. primo biennio;Il Bosellini. La Terra come pianeta. Idrosfera e geomorfologia. Ediz. compatta;Alfonso Bosellini;Zanichelli;Scienze;1A 1C 1D 1E 1F;Tradizionale;18.80;7.90;nuova_edizione;OK
-9788842117445;Storia dell'arte vol.1;A passo d'arte. Vol. 1: Dalla preistoria all'arte romana;Giuseppe Nifosì;Laterza;Arte;1A 1C 1D 1E 1F;Tradizionale;31.90;14.45;;OK
-9788836019083;Teknoai, C, C++;Teknoai linguaggio C e C++. Dal coding all'intelligenza artificiale;Camagni, Nikolassy;Hoepli;Informatica;1B 1G 1L 1H 1N;Sc. Applicate;25.20;11.10;consigliato;OK
-9788857794914;Sportivamente ed. verde;Sportivamente. Ediz. Verde. Competenze, benessere e cultura sportiva;Del Nista, Tasselli;D'Anna;Scienze Motorie;1I 1K;Sportivo;25.70;11.35;nuova_adozione;OK
-9788839304131;Discipline sportive;Discipline sportive. Vol. unico. Con Progressioni didattiche;Lovecchio, Merati, Vago;Marietti Scuola;Discipline Sportive;1I 1K;Sportivo;20.95;8.97;;OK
-9788858362006;Le ragioni del pensiero;Le ragioni del pensiero. Ediz. Rossa. Vol. 1: Dalle origini al Medioevo;Cioffi, Luppi, Zanette;Loescher;Filosofia;3B 3L 3H 3N;Sc. Applicate;29.90;13.45;nuova_adozione;OK
-9788836013401;Informatica e applicazioni vol.3;Informatica e applicazioni. Linguaggio Java. Vol. 3;Camagni, Nikolassy;Hoepli;Informatica;3B 3L 3H 3N;Sc. Applicate;20.90;8.95;nuova_adozione;OK
-9788808231857;Itinerario nell'arte vol.3 ed. arancione;Itinerario nell'arte. Edizione arancione. Vol. 3: Dal Gotico Internazionale al Manierismo;Cricco, Di Teodoro;Zanichelli;Arte;3G 3C;Sc. Applicate;31.40;14.20;;OK
-9788861604391;Le regole del gioco vol.1;Le regole del gioco. Diritto ed Economia dello sport. Vol. 1;Maria Rita Cattani;Paramond;Diritto ed Economia;3I 3K;Sportivo;38.70;17.85;;OK
-9788858356029;Leggere e scrivere il mondo vol.2A;Leggere e scrivere il mondo. Ediz. Blu. Vol. 2A: Dal Barocco al Neoclassicismo;Bologna, Rocchi, Rossi;Loescher;Antologia;4A 4D;Tradizionale;27.30;12.15;;OK
-9788858356036;Leggere e scrivere il mondo vol.2B;Leggere e scrivere il mondo. Ediz. Blu. Vol. 2B: Il Romanticismo: verso la modernità;Bologna, Rocchi, Rossi;Loescher;Antologia;4A 4D;Tradizionale;23.20;10.10;;OK
-9788838338748;Homo sum civis sum vol.3;Homo sum civis sum. Laboratorio di traduzione. Vol. 3;Maurizio Bettini, Mario Lentano;Sansoni;Latino;5E 5F 5C;Tradizionale;34.60;15.80;consigliato;OK
-9788858339527;Prospettive del pensiero vol.3A-3B;Prospettive del pensiero. Vol. 3A-3B;Ruffaldi, Nicola, Terravecchia;Loescher;Filosofia;5B 5H;Sc. Applicate;53.00;25.00;;OK
-9788823379916;Informatica bit x bit vol.3;Informatica BIT a BIT. Vol. 3;Giuliana Barberis, Emil Dari;Tramontana;Informatica;5B 5H;Sc. Applicate;25.30;11.15;nuova_adozione;OK
-9788808507167;Manuale blu 2.0 matematica vol.5;Manuale blu 2.0 di matematica. Vol. 5;Bergamini, Barozzi, Trifone;Zanichelli;Matematica;5A;Sc. Applicate;38.10;17.55;vecchia_edizione;OK
-9788808914057;Il nuovo Amaldi per i licei scientifici.blu vol.3;Il nuovo Amaldi per i licei scientifici.blu. Vol. 3: Induzione e onde elettromagnetiche, relatività e quanti;Ugo Amaldi;Zanichelli;Fisica;5A;Sc. Applicate;36.90;16.95;;OK
-9788808862129;Il carbonio, gli enzimi, il DNA;Il carbonio, gli enzimi, il DNA. Chimica organica, polimeri, biochimica e biotecnologie 2.0;Hillis, Heller e altri;Zanichelli;Chimica;5A;Sc. Applicate;45.20;21.10;;OK
-9788808503251;Le scienze della terra (iceberg);Le scienze della Terra. Tettonica delle placche, Atmosfera, Clima. Ediz. S;Alfonso Bosellini;Zanichelli;Scienze;5A;Sc. Applicate;16.20;6.60;;OK
-9788842117483;A passo d'arte vol.5;A passo d'arte. Vol. 5: Dal tardo ottocento al XXI secolo;Giuseppe Nifosì;Laterza;Arte;5A;Sc. Applicate;33.90;15.45;;OK
-9788839566874;E tempo di filosofia vol.3;È tempo di filosofia. Vol. 3: Da Schopenhauer alle nuove frontiere del pensiero;Abbagnano, Fornero, Burghi;Paravia;Filosofia;5C 5D;Tradizionale;40.90;18.95;nuova_adozione;OK
-9788805080533;Tria corda vol.2;Tria corda. Letteratura e cultura latina. Vol. 2;Diotti, Dossi, Signoracci;SEI;Latino;quarte;Tradizionale;27.80;12.40;;OK
-9788857791579;Storia e storiografia vol.2;Storia e storiografia. Vol. 2: Dall'ancien régime alle soglie del Novecento;Desideri, Codovini;D'Anna;Storia;quarte;Tradizionale;35.20;16.10;;OK
-9788839566850;E tempo di filosofia vol.2;È tempo di filosofia. Vol. 2: Dall'Umanesimo a Hegel;Abbagnano, Fornero, Burghi;Paravia;Filosofia;quarte;Tradizionale;39.90;18.45;nuova_adozione;OK
-9788808575944;Performer Heritage vol.2;Performer Heritage. Vol. 2: From the Victorian Age to the Present Age;Spiazzi, Tavella, Layton;Zanichelli;Inglese-Letteratura;quarte;Tradizionale;34.60;15.80;;OK
-9788808369802;Manuale blu 2.0 matematica conf.4;Manuale blu 2.0 di matematica. Confezione 4;Bergamini, Barozzi, Trifone;Zanichelli;Matematica;quarte;Tradizionale;39.40;18.20;nuova_edizione;OK
-9788808518200;La fisica di Cutnell e Johnson vol.2;La fisica di Cutnell e Johnson. Vol. 2: Onde, campo elettrico e magnetico;Cutnell, Young, Johnson;Zanichelli;Fisica;quarte;Tradizionale;30.90;13.95;;OK
-9788842117476;A passo d'arte vol.4;A passo d'arte. Vol. 4: Dal naturalismo seicentesco all'impressionismo;Giuseppe Nifosì;Laterza;Arte;quarte;Tradizionale;30.90;13.95;;OK
-9788869106460;Ingenio vol.1;Ingenio. Lezioni di latino. Ediz. compatta. Vol. 1;Diotti, Ciuffarella;Bruno Mondadori;Latino;4C 4E 4F;Tradizionale;41.60;19.30;gia_in_uso;OK
-9788838338717;Homo sum civis sum vol.2;Homo sum civis sum. Vol. 2;Maurizio Bettini, Mario Lentano;Sansoni;Latino;4C 4E 4F;Tradizionale;26.00;11.50;;OK
-9788830220669;Milleduemilatrenta vol.2;MilleDuemilaTrenta. Vol. 2;Valerio Castronovo;La Nuova Italia;Storia;4F 4I;Tradizionale;36.70;16.85;;OK
-9788808699749;Corso di informatica vol.1;Corso di informatica. Vol. 1: Algoritmi e linguaggio C++;Formichi, Meini, Venuti;Zanichelli;Informatica;2B 2L 2M 2N;Sc. Applicate;33.00;15.00;consigliato;OK
-9788857792668;Physical Education and Sports in English;Physical education and sports in English. Percorsi CLIL;Antonella Sbragi, Massimo Gulisano;D'Anna;Scienze Motorie;2I 2K;Sportivo;6.60;1.80;;OK
-9788858356005;Leggere e scrivere il mondo vol.1A;Leggere e scrivere il mondo. Ediz. Blu. Vol. 1A: Dalle Origini a Boccaccio;Bologna, Rocchi, Rossi;Loescher;Antologia;3A 3D;Tradizionale;24.50;10.75;;OK
-9788858356012;Leggere e scrivere il mondo vol.1B;Leggere e scrivere il mondo. Ediz. Blu. Vol. 1B: Umanesimo, Rinascimento, Manierismo;Bologna, Rocchi, Rossi;Loescher;Antologia;3A 3D;Tradizionale;24.90;10.95;;OK
-9788805080526;Tria corda vol.1;Tria corda. Letteratura e cultura latina. Vol. 1;Diotti, Dossi, Signoracci;SEI;Latino;3A 3D;Tradizionale;31.70;14.35;;OK
-9788858339510;Prospettive del pensiero 2A/2B;Prospettive del pensiero. Vol. 2A-2B;Ruffaldi, Nicola, Terravecchia;Loescher;Filosofia;4B 4L 4M 4N;Sc. Applicate;43.00;20.00;;OK
-9788829864362;Informatica app. 2 biennio;Informatica App. Per il 2° biennio;Piero Gallo, Pasquale Sirsi;Minerva Scuola;Informatica;4B 4L 4M 4N;Sc. Applicate;35.60;16.30;;OK
-9788808623409;Itinerario nell'arte ed. arancione vol.4;Itinerario nell'arte. Versione arancione. Vol. 4: Dal Barocco al Postimpressionismo;Cricco, Di Teodoro;Zanichelli;Arte;4G;Sc. Applicate;29.40;13.20;;OK
-9788842676195;Il portico dipinto vol.2;Il portico dipinto. Fare filosofia ora. Vol. 2;Gentile, Ronga, Bertelli;Il Capitello;Filosofia;4I;Sportivo;41.40;19.20;;OK
-9788857791418;Il palazzo di Atlante 3A;Il palazzo di Atlante. Vol. 3A: Dall'Italia unita al primo Novecento;Bruscagli, Tellini;D'Anna;Letteratura italiana;5A;Tradizionale;37.50;17.25;;OK
-9788857791425;Il palazzo di Atlante 3B;Il palazzo di Atlante. Vol. 3B: Dal secondo Novecento ai giorni nostri;Bruscagli, Tellini;D'Anna;Letteratura italiana;5A;Tradizionale;27.80;12.40;;OK
-9788800346320;Letteratura e cultura latina vol.3;Letteratura e cultura latina. Vol. 3: L'età imperiale;Conte, Pianezzola;Mondadori Education;Latino;5A;Tradizionale;34.20;15.60;consigliato;OK
-9788857791586;Storia e storiografia vol.3;Storia e storiografia. Vol. 3: Dalla Belle époque a oggi;Desideri, Codovini;D'Anna;Storia;5A;Tradizionale;43.50;20.25;;OK
+"isbn","titolo_manoscritto","titolo_libraccio","autori","editore","materia","classi","indirizzo","prezzo_listino","prezzo_mercatino","flag","stato_lookup"
+"9788858353011","Verso la storia della letteratura","Verso la storia della letteratura. I testi delle origini, i contesti, l'analisi, il metodo. Per le Scuole superiori","Simonetta Damele, Tiziano Franzi","Loescher","Antologia","2A 2D 2E 2F","Tradizionale","7.70","2.35","gia_in_uso","OK"
+"9788858335000","Riflessi","Riflessi. Narrativa, poesia, teatro: le forme, i generi, la scrittura","Simonetta Damele, Tiziano Franzi","Loescher","Antologia","2A 2D 2E 2F","Tradizionale","20.50","8.75","","OK"
+"9788848266246","Quae manent. Grammatica","Quae manent. Grammatica","Tantucci, Roncoroni, Cappelletto","Poseidonia Scuola","Latino","2A 2D 2E 2F","Tradizionale","19.70","8.35","","OK"
+"9788848266321","Quae manent. Laboratorio 2","Quae manent. Laboratorio. Vol. 2","Tantucci, Roncoroni, Cappelletto","Poseidonia Scuola","Latino","2A 2D 2E 2F","Tradizionale","28.20","12.60","","OK"
+"9788869105470","Lontani vicini vol.2","Lontani vicini. Dall'impero romano all'alto Medioevo. Vol. 2","Bettini, Lentano, Puliga","Bruno Mondadori","Geostoria","2A 2D 2E 2F","Tradizionale","32.40","14.70","","OK"
+"9781035141654","The Yellow Grammar Book 2025","The yellow grammar book 2025. Vol. unico","Macmillan","Macmillan","Inglese-Grammatica","2A 2D 2E 2F","Tradizionale","34.50","15.75","nuova_adozione","OK"
+"9780194158077","Insight Intermediate Combopack","Insight. Intermediate. Combo pack. Student Book & Workbook, Skills trainer","","Oxford University Press","Inglese-Triennio","2A 2D 2E 2F","Tradizionale","36.70","16.85","","OK"
+"9788849421675","Colori della matematica vol.2","Colori della matematica. Quaderno. Ediz. blu. Vol. 2","Leonardo Sasso, Claudio Zanone","Petrini","Matematica","2A 2D 2E 2F","Tradizionale","36.90","16.95","","OK"
+"9788893790567","Biologia 1 biennio","Biologia. Per il 1° biennio","Freeman, Quillin, Allison","Pearson Science","Biologia","2A 2D 2E 2F","Tradizionale","28.40","12.70","","OK"
+"9788842117452","A passo d'arte 2","A passo d'arte. Arte ieri oggi. Vol. 2: Dal tardoantico al gotico internazionale","Giuseppe Nifosì","Laterza","Arte","2A 2D 2E 2F","Tradizionale","26.90","11.95","","OK"
+"9788808550071","Itinerario nell'arte ed. arancione vol.2","Itinerario nell'arte. Ediz. arancione. Vol. 2: Dall'arte paleocristiana a Giotto","Cricco, Di Teodoro","Zanichelli","Arte","2C 2G","Tradizionale","23.90","10.45","","OK"
+"9788808537416","Fisica e realta blu vol.3","Fisica e realtà.blu. Vol. 3: Induzione e onde elettromagnetiche, relatività e quanti","Claudio Romeni","Zanichelli","Fisica","5G 5L 5D","Sc. Applicate","38.50","17.75","","OK"
+"9788808641489","Itinerario nell'arte vol.5","Itinerario nell'arte. Ediz. arancione. Vol. 5: Dall'Art Nouveau ai giorni nostri","Cricco, Di Teodoro","Zanichelli","Arte","5G","Sc. Applicate","32.70","14.85","","OK"
+"9788830220676","Milleduemilatrenta vol.3","MilleDuemilaTrenta. Vol. 3","Valerio Castronovo","La Nuova Italia","Storia","5I 5F","Sportivo","39.80","18.40","","OK"
+"9788842676201","Il portico dipinto vol.3","Il portico dipinto. Fare filosofia ora. Vol. 3","Gentile, Ronga, Bertelli","Il Capitello","Filosofia","5I 5F 5E","Sportivo","42.70","19.85","","OK"
+"9788808933959","Le scienze della terra (montagna innevata)","Le scienze della Terra. Tettonica delle placche, Interazioni tra geosfere","Alfonso Bosellini","Zanichelli","Scienze","5I 5A","Sportivo","12.80","4.90","","OK"
+"9788861604414","Le regole del gioco vol.2","Le regole del gioco. Diritto ed Economia dello sport. Vol. 2","Maria Rita Cattani","Paramond","Diritto ed Economia","5I","Sportivo","27.80","12.40","","OK"
+"9788857791562","Storia e storiografia vol.1","Storia e storiografia. Vol. 1: Dall'anno Mille alla Rivoluzione inglese","Desideri, Codovini","D'Anna","Storia","3 (quinte)","Tradizionale","32.90","14.95","","OK"
+"9788839566836","E tempo di filosofia vol.1","È tempo di filosofia. Vol. 1: Dalle origini alla scolastica","Abbagnano, Fornero, Burghi","Paravia","Filosofia","quinte","Tradizionale","32.90","14.95","nuova_adozione","OK"
+"9788857790466","Competenze motorie","Competenze motorie","Edo Zocca, Antonella Sbragi","D'Anna","Scienze Motorie","quinte","Tradizionale","24.90","10.95","gia_in_uso","OK"
+"9781108457682","English Grammar in Use","English grammar in use. Book without answers","Raymond Murphy","Cambridge","Inglese-Grammatica","quinte","Tradizionale","36.80","16.90","gia_in_uso","OK"
+"9788861619111","Lifelines Compact ed. rossa vol.1","Lifelines compact. Ediz. rossa. Vol. 1","Mauro Spicci, Timothy Alan Shaw","Lang","Inglese-Letteratura","quinte","Tradizionale","33.10","15.05","nuova_adozione","OK"
+"9788808978929","Matematica manuale blu 2.0 conf.3","Manuale blu 2.0 di matematica. Confezione 3","Bergamini, Barozzi, Trifone","Zanichelli","Matematica","quinte","Tradizionale","40.20","18.60","nuova_edizione","OK"
+"9788808807625","La fisica di Cutnell e Johnson vol.1","La fisica di Cutnell e Johnson. Vol. 1: Meccanica e termodinamica","Cutnell, Johnson, Young","Zanichelli","Fisica","quinte","Tradizionale","33.90","15.45","","OK"
+"9788893798228","Il Campbell 2 biennio","Il Campbell. Corso di Biologia. Per il secondo biennio","Taylor, Simon, Dickey","Linx","Biologia","quinte","Tradizionale","38.80","17.90","","OK"
+"9788808423962","Le scienze della terra (vulcano)","Le scienze della Terra. Minerali e rocce, Vulcani, Terremoti","Alfonso Bosellini","Zanichelli","Scienze","quinte","Tradizionale","20.00","8.50","","OK"
+"9788842117469","A passo d'arte vol.3","A passo d'arte. Vol. 3: Dal rinascimento al manierismo","Giuseppe Nifosì","Laterza","Arte","quinte","Tradizionale","30.90","13.95","","OK"
+"9788838338700","Homo sum civis sum vol.1","Homo sum civis sum. Vol. 1","Maurizio Bettini, Mario Lentano","Sansoni","Latino","3E 3F 3H 3C","Tradizionale","32.80","14.90","","OK"
+"9788830230415","Non c'e futuro senza memoria vol.1","Non c'è futuro senza memoria. Vol. 1: Dall'anno Mille alla fine del Seicento","Roberto Balzani","La Nuova Italia","Storia","3F 3H 3C 3I 3K","Tradizionale","32.50","14.75","nuova_adozione","OK"
+"9788869646171","Dal pensiero alle parole (vol.A-B)","Dal pensiero alle parole. Vol. A-B: Morfosintassi, comunicazione, lessico-Scrittura","Claudia Savigliano","Garzanti Scuola","Grammatica","1A 1C 1D 1E 1F","Tradizionale","37.25","17.12","","OK"
+"9788858353004","Le stelle ad una ad una","Le stelle ad una ad una. Narrativa. Poesia. Teatro. Scrittura","Simonetta Damele, Tiziano Franzi","Loescher","Antologia","1A 1C 1D 1E 1F","Tradizionale","20.10","8.55","nuova_adozione","OK"
+"9788824762700","Narrami o musa","Narrami, o Musa. Volume unico","Daniela Ciocca, Tina Ferri","Mondadori Scuola","Epica","1A 1C 1D 1E 1F","Tradizionale","32.80","14.90","","OK"
+"9788848266284","Quae manent laboratorio vol.1","Quae manent. Laboratorio. Vol. 1","Tantucci, Roncoroni, Cappelletto","Poseidonia Scuola","Latino","1A 1C 1D 1E 1F","Tradizionale","28.60","12.80","","OK"
+"9788869105463","Lontani vicini vol.1","Lontani vicini. Dalla Preistoria all'età di Cesare. Vol. 1","Bettini, Lentano, Puliga","Bruno Mondadori","Geostoria","1A 1C 1D 1E 1F","Tradizionale","33.50","15.25","","OK"
+"9788891941442","Real Focus B1/B1+","Real Focus B1/B1+ with Entry book","Sue Kay","Pearson","Inglese-Biennio","1A 1C 1D 1E 1F","Tradizionale","35.00","16.00","nuova_adozione","OK"
+"9788849421668","Colori matematica vol.1 unico","Colori della matematica. Quaderno. Ediz. blu. Vol. 1","Leonardo Sasso, Claudio Zanone","Petrini","Matematica","1A 1C 1D 1E 1F","Tradizionale","36.35","16.68","","OK"
+"9788808799869","La fisica. volume unico","La fisica. Volume unico. Le misure, l'equilibrio, il moto, il calore, la luce","Cutnell, Johnson, Young","Zanichelli","Fisica","1A 1C 1D 1E 1F","Tradizionale","34.90","15.95","","OK"
+"9788808599872","Chimica","Chimica: concetti e modelli. Volume unico. Dalla materia all'elettrochimica","Valitutti, Amadio, Falasca","Zanichelli","Chimica","1A 1C 1D 1E 1F","Tradizionale","49.60","23.30","","OK"
+"9788808444608","Il Bosellini. primo biennio","Il Bosellini. La Terra come pianeta. Idrosfera e geomorfologia. Ediz. compatta","Alfonso Bosellini","Zanichelli","Scienze","1A 1C 1D 1E 1F","Tradizionale","18.80","7.90","nuova_edizione","OK"
+"9788842117445","Storia dell'arte vol.1","A passo d'arte. Vol. 1: Dalla preistoria all'arte romana","Giuseppe Nifosì","Laterza","Arte","1A 1C 1D 1E 1F","Tradizionale","31.90","14.45","","OK"
+"9788836019083","Teknoai, C, C++","Teknoai linguaggio C e C++. Dal coding all'intelligenza artificiale","Camagni, Nikolassy","Hoepli","Informatica","1B 1G 1L 1H 1N","Sc. Applicate","25.20","11.10","consigliato","OK"
+"9788857794914","Sportivamente ed. verde","Sportivamente. Ediz. Verde. Competenze, benessere e cultura sportiva","Del Nista, Tasselli","D'Anna","Scienze Motorie","1I 1K","Sportivo","25.70","11.35","nuova_adozione","OK"
+"9788839304131","Discipline sportive","Discipline sportive. Vol. unico. Con Progressioni didattiche","Lovecchio, Merati, Vago","Marietti Scuola","Discipline Sportive","1I 1K","Sportivo","20.95","8.97","","OK"
+"9788858362006","Le ragioni del pensiero","Le ragioni del pensiero. Ediz. Rossa. Vol. 1: Dalle origini al Medioevo","Cioffi, Luppi, Zanette","Loescher","Filosofia","3B 3L 3H 3N","Sc. Applicate","29.90","13.45","nuova_adozione","OK"
+"9788836013401","Informatica e applicazioni vol.3","Informatica e applicazioni. Linguaggio Java. Vol. 3","Camagni, Nikolassy","Hoepli","Informatica","3B 3L 3H 3N","Sc. Applicate","20.90","8.95","nuova_adozione","OK"
+"9788808231857","Itinerario nell'arte vol.3 ed. arancione","Itinerario nell'arte. Edizione arancione. Vol. 3: Dal Gotico Internazionale al Manierismo","Cricco, Di Teodoro","Zanichelli","Arte","3G 3C","Sc. Applicate","31.40","14.20","","OK"
+"9788861604391","Le regole del gioco vol.1","Le regole del gioco. Diritto ed Economia dello sport. Vol. 1","Maria Rita Cattani","Paramond","Diritto ed Economia","3I 3K","Sportivo","38.70","17.85","","OK"
+"9788858356029","Leggere e scrivere il mondo vol.2A","Leggere e scrivere il mondo. Ediz. Blu. Vol. 2A: Dal Barocco al Neoclassicismo","Bologna, Rocchi, Rossi","Loescher","Antologia","4A 4D","Tradizionale","27.30","12.15","","OK"
+"9788858356036","Leggere e scrivere il mondo vol.2B","Leggere e scrivere il mondo. Ediz. Blu. Vol. 2B: Il Romanticismo: verso la modernità","Bologna, Rocchi, Rossi","Loescher","Antologia","4A 4D","Tradizionale","23.20","10.10","","OK"
+"9788838338748","Homo sum civis sum vol.3","Homo sum civis sum. Laboratorio di traduzione. Vol. 3","Maurizio Bettini, Mario Lentano","Sansoni","Latino","5E 5F 5C","Tradizionale","34.60","15.80","consigliato","OK"
+"9788858339527","Prospettive del pensiero vol.3A-3B","Prospettive del pensiero. Vol. 3A-3B","Ruffaldi, Nicola, Terravecchia","Loescher","Filosofia","5B 5H","Sc. Applicate","53.00","25.00","","OK"
+"9788823379916","Informatica bit x bit vol.3","Informatica BIT a BIT. Vol. 3","Giuliana Barberis, Emil Dari","Tramontana","Informatica","5B 5H","Sc. Applicate","25.30","11.15","nuova_adozione","OK"
+"9788808507167","Manuale blu 2.0 matematica vol.5","Manuale blu 2.0 di matematica. Vol. 5","Bergamini, Barozzi, Trifone","Zanichelli","Matematica","5A","Sc. Applicate","38.10","17.55","vecchia_edizione","OK"
+"9788808914057","Il nuovo Amaldi per i licei scientifici.blu vol.3","Il nuovo Amaldi per i licei scientifici.blu. Vol. 3: Induzione e onde elettromagnetiche, relatività e quanti","Ugo Amaldi","Zanichelli","Fisica","5A","Sc. Applicate","36.90","16.95","","OK"
+"9788808862129","Il carbonio, gli enzimi, il DNA","Il carbonio, gli enzimi, il DNA. Chimica organica, polimeri, biochimica e biotecnologie 2.0","Hillis, Heller e altri","Zanichelli","Chimica","5A","Sc. Applicate","45.20","21.10","","OK"
+"9788808503251","Le scienze della terra (iceberg)","Le scienze della Terra. Tettonica delle placche, Atmosfera, Clima. Ediz. S","Alfonso Bosellini","Zanichelli","Scienze","5A","Sc. Applicate","16.20","6.60","","OK"
+"9788842117483","A passo d'arte vol.5","A passo d'arte. Vol. 5: Dal tardo ottocento al XXI secolo","Giuseppe Nifosì","Laterza","Arte","5A","Sc. Applicate","33.90","15.45","","OK"
+"9788839566874","E tempo di filosofia vol.3","È tempo di filosofia. Vol. 3: Da Schopenhauer alle nuove frontiere del pensiero","Abbagnano, Fornero, Burghi","Paravia","Filosofia","5C 5D","Tradizionale","40.90","18.95","nuova_adozione","OK"
+"9788805080533","Tria corda vol.2","Tria corda. Letteratura e cultura latina. Vol. 2","Diotti, Dossi, Signoracci","SEI","Latino","quarte","Tradizionale","27.80","12.40","","OK"
+"9788857791579","Storia e storiografia vol.2","Storia e storiografia. Vol. 2: Dall'ancien régime alle soglie del Novecento","Desideri, Codovini","D'Anna","Storia","quarte","Tradizionale","35.20","16.10","","OK"
+"9788839566850","E tempo di filosofia vol.2","È tempo di filosofia. Vol. 2: Dall'Umanesimo a Hegel","Abbagnano, Fornero, Burghi","Paravia","Filosofia","quarte","Tradizionale","39.90","18.45","nuova_adozione","OK"
+"9788808575944","Performer Heritage vol.2","Performer Heritage. Vol. 2: From the Victorian Age to the Present Age","Spiazzi, Tavella, Layton","Zanichelli","Inglese-Letteratura","quarte","Tradizionale","34.60","15.80","","OK"
+"9788808369802","Manuale blu 2.0 matematica conf.4","Manuale blu 2.0 di matematica. Confezione 4","Bergamini, Barozzi, Trifone","Zanichelli","Matematica","quarte","Tradizionale","39.40","18.20","nuova_edizione","OK"
+"9788808518200","La fisica di Cutnell e Johnson vol.2","La fisica di Cutnell e Johnson. Vol. 2: Onde, campo elettrico e magnetico","Cutnell, Young, Johnson","Zanichelli","Fisica","quarte","Tradizionale","30.90","13.95","","OK"
+"9788842117476","A passo d'arte vol.4","A passo d'arte. Vol. 4: Dal naturalismo seicentesco all'impressionismo","Giuseppe Nifosì","Laterza","Arte","quarte","Tradizionale","30.90","13.95","","OK"
+"9788869106460","Ingenio vol.1","Ingenio. Lezioni di latino. Ediz. compatta. Vol. 1","Diotti, Ciuffarella","Bruno Mondadori","Latino","4C 4E 4F","Tradizionale","41.60","19.30","gia_in_uso","OK"
+"9788838338717","Homo sum civis sum vol.2","Homo sum civis sum. Vol. 2","Maurizio Bettini, Mario Lentano","Sansoni","Latino","4C 4E 4F","Tradizionale","26.00","11.50","","OK"
+"9788830220669","Milleduemilatrenta vol.2","MilleDuemilaTrenta. Vol. 2","Valerio Castronovo","La Nuova Italia","Storia","4F 4I","Tradizionale","36.70","16.85","","OK"
+"9788808699749","Corso di informatica vol.1","Corso di informatica. Vol. 1: Algoritmi e linguaggio C++","Formichi, Meini, Venuti","Zanichelli","Informatica","2B 2L 2M 2N","Sc. Applicate","33.00","15.00","consigliato","OK"
+"9788857792668","Physical Education and Sports in English","Physical education and sports in English. Percorsi CLIL","Antonella Sbragi, Massimo Gulisano","D'Anna","Scienze Motorie","2I 2K","Sportivo","6.60","1.80","","OK"
+"9788858356005","Leggere e scrivere il mondo vol.1A","Leggere e scrivere il mondo. Ediz. Blu. Vol. 1A: Dalle Origini a Boccaccio","Bologna, Rocchi, Rossi","Loescher","Antologia","3A 3D","Tradizionale","24.50","10.75","","OK"
+"9788858356012","Leggere e scrivere il mondo vol.1B","Leggere e scrivere il mondo. Ediz. Blu. Vol. 1B: Umanesimo, Rinascimento, Manierismo","Bologna, Rocchi, Rossi","Loescher","Antologia","3A 3D","Tradizionale","24.90","10.95","","OK"
+"9788805080526","Tria corda vol.1","Tria corda. Letteratura e cultura latina. Vol. 1","Diotti, Dossi, Signoracci","SEI","Latino","3A 3D","Tradizionale","31.70","14.35","","OK"
+"9788858339510","Prospettive del pensiero 2A/2B","Prospettive del pensiero. Vol. 2A-2B","Ruffaldi, Nicola, Terravecchia","Loescher","Filosofia","4B 4L 4M 4N","Sc. Applicate","43.00","20.00","","OK"
+"9788829864362","Informatica app. 2 biennio","Informatica App. Per il 2° biennio","Piero Gallo, Pasquale Sirsi","Minerva Scuola","Informatica","4B 4L 4M 4N","Sc. Applicate","35.60","16.30","","OK"
+"9788808623409","Itinerario nell'arte ed. arancione vol.4","Itinerario nell'arte. Versione arancione. Vol. 4: Dal Barocco al Postimpressionismo","Cricco, Di Teodoro","Zanichelli","Arte","4G","Sc. Applicate","29.40","13.20","","OK"
+"9788842676195","Il portico dipinto vol.2","Il portico dipinto. Fare filosofia ora. Vol. 2","Gentile, Ronga, Bertelli","Il Capitello","Filosofia","4I","Sportivo","41.40","19.20","","OK"
+"9788857791418","Il palazzo di Atlante 3A","Il palazzo di Atlante. Vol. 3A: Dall'Italia unita al primo Novecento","Bruscagli, Tellini","D'Anna","Letteratura italiana","5A","Tradizionale","37.50","17.25","","OK"
+"9788857791425","Il palazzo di Atlante 3B","Il palazzo di Atlante. Vol. 3B: Dal secondo Novecento ai giorni nostri","Bruscagli, Tellini","D'Anna","Letteratura italiana","5A","Tradizionale","27.80","12.40","","OK"
+"9788800346320","Letteratura e cultura latina vol.3","Letteratura e cultura latina. Vol. 3: L'età imperiale","Conte, Pianezzola","Mondadori Education","Latino","5A","Tradizionale","34.20","15.60","consigliato","OK"
+"9788857791586","Storia e storiografia vol.3","Storia e storiografia. Vol. 3: Dalla Belle époque a oggi","Desideri, Codovini","D'Anna","Storia","5A","Tradizionale","43.50","20.25","","OK"
