@@ -86,9 +86,10 @@ $categories = $catMgr->GetCategories();
 $(document).ready(function() {
   let verifiedItems = [];
 
-  // Get CSRF token
+  // Get CSRF token (iniettato lato server: non dipende da un meta tag che il
+  // template potrebbe non emettere)
   function getCsrfToken() {
-    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    return '<?php echo CSRF::getTokenForAjax(); ?>';
   }
 
   // Parser di una riga CSV standard: separatore virgola, campi opzionalmente
