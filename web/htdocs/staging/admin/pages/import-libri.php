@@ -509,6 +509,10 @@ $(document).ready(function() {
       data: { op: 'visible_products', isbns: JSON.stringify(isbns), csrf_token: getCsrfToken() },
       success: function(resp) {
         $btn.prop('disabled', false);
+        if (resp && resp.error) {
+          alert('Errore: ' + resp.error);
+          return;
+        }
         const rows = (resp && resp.results) ? resp.results : [];
         const hasList = resp && resp.has_list;
         const tbody = $('#visible-tbody');

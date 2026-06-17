@@ -14,6 +14,8 @@ CSRF::validateAjaxOrDie();
 
 header('Content-type: application/json');
 
+try {
+
 $op = isset($_POST['op']) ? $_POST['op'] : '';
 
 if ($op === 'lookup') {
@@ -229,5 +231,9 @@ if ($op === 'import') {
 }
 
 echo json_encode(['error' => 'Operazione non valida']);
+
+} catch (Throwable $e) {
+  echo json_encode(['error' => $e->getMessage()]);
+}
 exit;
 ?>
