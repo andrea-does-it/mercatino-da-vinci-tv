@@ -97,6 +97,28 @@ $(document).ready(function() {
     return out;
   }
 
+  // Mappa la materia AIE (es. "STORIA DELL'ARTE - CORSI") al nome della categoria
+  // del sito. L'ordine dei controlli e' significativo (es. ARTE prima di STORIA,
+  // SCIENZE MOTORIE prima di SCIENZE, GEOSTORIA prima di STORIA).
+  function materiaToCategoria(materia) {
+    const m = (materia || '').toUpperCase();
+    if (m.indexOf('ARTE') !== -1) return 'Arte';
+    if (m.indexOf('DIRITTO') !== -1) return 'Diritto';
+    if (m.indexOf('DISCIPLINE SPORTIVE') !== -1) return 'Discipline Sportive';
+    if (m.indexOf('FILOSOFIA') !== -1) return 'Filosofia';
+    if (m.indexOf('FISICA') !== -1) return 'Fisica';
+    if (m.indexOf('GEOSTORIA') !== -1) return 'Geostoria';
+    if (m.indexOf('INFORMATICA') !== -1 || m.indexOf('TECNOLOGIE INFORMATICHE') !== -1) return 'Informatica';
+    if (m.indexOf('INGLESE') !== -1) return 'Inglese';
+    if (m.indexOf('ITALIANO') !== -1) return 'Italiano';
+    if (m.indexOf('LATINO') !== -1) return 'Latino';
+    if (m.indexOf('MATEMATICA') !== -1) return 'Matematica';
+    if (m.indexOf('SCIENZE MOTORIE') !== -1 || m.indexOf('MOTORIA') !== -1) return 'Motoria';
+    if (m.indexOf('SCIENZE') !== -1 || m.indexOf('BIOLOGIA') !== -1 || m.indexOf('CHIMICA') !== -1) return 'Scienze';
+    if (m.indexOf('STORIA') !== -1) return 'Storia';
+    return '';
+  }
+
   // Converte una stringa numerica (anche con virgola decimale) in numero o null.
   function toNum(v) {
     if (v === undefined || v === null) return null;
@@ -339,14 +361,9 @@ $(document).ready(function() {
 
       let categoryOptions = '<option value="0">-- Seleziona categoria --</option>';
       const categories = <?php echo json_encode($categories); ?>;
-      const mat = (item.materia || '').toLowerCase();
+      const targetCat = materiaToCategoria(item.materia);  // nome categoria sito mappato dalla materia
       categories.forEach(function(cat) {
-        const cname = (cat.name || '').toLowerCase();
-        // preselezione: la categoria combacia con la materia del CSV
-        let sel = '';
-        if (mat && cname && (mat.indexOf(cname) !== -1 || cname.indexOf(mat) !== -1)) {
-          sel = ' selected';
-        }
+        const sel = (targetCat && cat.name && cat.name.toLowerCase() === targetCat.toLowerCase()) ? ' selected' : '';
         categoryOptions += '<option value="' + cat.id + '"' + sel + '>' + esc_html(cat.name) + '</option>';
       });
 
