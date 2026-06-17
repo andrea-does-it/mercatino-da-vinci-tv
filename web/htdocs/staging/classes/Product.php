@@ -53,6 +53,7 @@ class Product {
   public $name;
   public $autori;
   public $price;
+  public $prezzo_listino;
   public $category_id;
   public $data_inizio_sconto;
   public $data_fine_sconto;
@@ -97,7 +98,7 @@ class ProductManager extends DBManager {
 
   public function __construct(){
     parent::__construct();
-    $this->columns = array( 'id', 'name', 'price', 'category_id', 'sconto', 'data_inizio_sconto', 'data_fine_sconto', 'qta', 'ISBN', 'autori', 'editore', 'nota_volumi', 'fl_esaurimento' );
+    $this->columns = array( 'id', 'name', 'price', 'prezzo_listino', 'category_id', 'sconto', 'data_inizio_sconto', 'data_fine_sconto', 'qta', 'ISBN', 'autori', 'editore', 'nota_volumi', 'fl_esaurimento' );
     $this->tableName = 'product';
   }
   
@@ -389,5 +390,17 @@ class ProductManager extends DBManager {
       }
 
       return $productsObjArr;
+  }
+
+  /**
+   * Find a product by ISBN
+   * @param string $isbn ISBN to search
+   * @return object|null Product object or null if not found
+   */
+  public function findByISBN($isbn) {
+    $isbn = preg_replace('/[^0-9Xx]/', '', (string)$isbn);
+    if ($isbn === '') return null;
+    $rows = $this->db->prepare("SELECT * FROM product WHERE ISBN = ? LIMIT 1", [$isbn]);
+    return ($rows && count($rows) > 0) ? (object)$rows[0] : null;
   }
 }
