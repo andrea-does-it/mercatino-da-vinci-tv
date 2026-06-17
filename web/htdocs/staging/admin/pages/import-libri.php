@@ -28,6 +28,20 @@ $categories = $catMgr->GetCategories();
   </div>
 </div>
 
+<div class="card mb-3 mt-3">
+  <div class="card-body">
+    <h5 class="card-title">Libri attualmente visibili nello shop (nascosto = 0) <span id="visible-count" class="badge badge-secondary"></span></h5>
+    <p class="text-muted mb-2">Anteprima dei libri ora visibili. Se hai già caricato/verificato un elenco, quelli che verrebbero <strong>nascosti</strong> dalla sincronizzazione sono evidenziati in rosso.</p>
+    <button id="btn-show-visible" class="btn btn-info mb-2">Mostra libri attualmente visibili</button>
+    <table id="visible-table" class="table table-sm table-hover" style="display:none;">
+      <thead>
+        <tr><th>ISBN</th><th>Titolo</th><th>Categoria</th><th>Qta</th><th>Esito sincronizzazione</th></tr>
+      </thead>
+      <tbody id="visible-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
 <div id="results-section" style="display:none;">
   <div class="card mb-3">
     <div class="card-body">
@@ -478,6 +492,53 @@ $(document).ready(function() {
       error: function() {
         $('#import-progress').hide();
         $('#import-results').html('<div class="alert alert-danger">Errore durante l\'importazione</div>').show();
+      }
+    });
+  });
+
+  // Mostra i libri attualmente visibili (nascosto=0); se c'è un elenco caricato,
+  // evidenzia quali verrebbero nascosti dalla sincronizzazione.
+  $('#btn-show-visible').on('click', function() {
+    const isbns = verifiedItems.filter(function(i) { return !i.error; }).map(function(i) { return i.isbn; });
+    const $btn = $(this);
+    $btn.prop('disabled', true);
+    $.ajax({
+      url: '<?php echo ROOT_URL; ?>api/admin/import-libri.php',
+      method: 'POST',
+      dataType: 'json',
+      data: { op: 'visible_products', isbns: JSON.stringify(isbns), csrf_token: getCsrfToken() },
+      success: function(resp) {
+        $btn.prop('disabled', false);
+        const rows = (resp && resp.results) ? resp.results : [];
+        const hasList = resp && resp.has_list;
+        const tbody = $('#visible-tbody');
+        tbody.empty();
+        let hideCount = 0;
+        rows.forEach(function(r) {
+          let esito = '-';
+          if (hasList) {
+            esito = r.would_hide
+              ? '<span class="badge badge-danger">verrà nascosto</span>'
+              : '<span class="badge badge-success">resta visibile</span>';
+          }
+          if (r.would_hide) hideCount++;
+          const trClass = r.would_hide ? ' class="table-danger"' : '';
+          tbody.append('<tr' + trClass + '>' +
+            '<td>' + esc_html(r.isbn) + '</td>' +
+            '<td>' + esc_html(r.name) + '</td>' +
+            '<td>' + esc_html(r.category) + '</td>' +
+            '<td>' + r.qta + '</td>' +
+            '<td>' + esito + '</td>' +
+            '</tr>');
+        });
+        let badge = rows.length + ' visibili';
+        if (hasList) badge += ' · ' + hideCount + ' verranno nascosti';
+        $('#visible-count').text(badge);
+        $('#visible-table').show();
+      },
+      error: function() {
+        $btn.prop('disabled', false);
+        alert('Errore nel recupero dei libri visibili');
       }
     });
   });

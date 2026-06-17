@@ -412,6 +412,27 @@ class ProductManager extends DBManager {
   }
 
   /**
+   * Elenco dei prodotti attualmente visibili nello shop (nascosto = 0),
+   * con il nome della categoria. Usato per l'anteprima prima della sincronizzazione.
+   */
+  public function GetVisibleProducts() {
+    $rows = $this->db->prepare(
+      "SELECT p.id, p.ISBN, p.name, p.qta, c.name AS category
+       FROM product p
+       LEFT JOIN category c ON c.id = p.category_id
+       WHERE p.nascosto = 0
+       ORDER BY c.name, p.name"
+    );
+    $out = [];
+    if ($rows) {
+      foreach ($rows as $r) {
+        $out[] = (object)$r;
+      }
+    }
+    return $out;
+  }
+
+  /**
    * Sincronizza la visibilita' nello shop con l'elenco di ISBN fornito:
    * rende visibili (nascosto=0) i prodotti il cui ISBN e' nell'elenco e
    * nasconde (nascosto=1) tutti gli altri.

@@ -79,6 +79,39 @@ if ($op === 'check') {
   exit;
 }
 
+if ($op === 'visible_products') {
+  // Elenco dei libri attualmente visibili (nascosto=0). Se viene passato un elenco
+  // di ISBN, marca quali verrebbero nascosti dalla sincronizzazione (non in elenco).
+  $listIsbns = isset($_POST['isbns']) ? json_decode($_POST['isbns'], true) : [];
+  $set = [];
+  if (is_array($listIsbns)) {
+    foreach ($listIsbns as $i) {
+      $i = preg_replace('/[^0-9Xx]/', '', (string)$i);
+      if ($i !== '') {
+        $set[$i] = true;
+      }
+    }
+  }
+  $hasList = count($set) > 0;
+
+  $mgr = new ProductManager();
+  $products = $mgr->GetVisibleProducts();
+  $rows = [];
+  foreach ($products as $p) {
+    $isbnNorm = preg_replace('/[^0-9Xx]/', '', (string)$p->ISBN);
+    $rows[] = [
+      'id'         => (int)$p->id,
+      'isbn'       => $p->ISBN,
+      'name'       => $p->name,
+      'category'   => isset($p->category) ? $p->category : '',
+      'qta'        => (int)$p->qta,
+      'would_hide' => $hasList ? !isset($set[$isbnNorm]) : false,
+    ];
+  }
+  echo json_encode(['results' => $rows, 'has_list' => $hasList]);
+  exit;
+}
+
 if ($op === 'sync_visibility') {
   // Nasconde dallo shop i libri il cui ISBN NON e' nell'elenco fornito,
   // e rende visibili quelli presenti nell'elenco.
