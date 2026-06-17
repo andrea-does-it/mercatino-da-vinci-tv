@@ -366,7 +366,12 @@ $(document).ready(function() {
 
   function escCsv(str) {
     if (!str) return '';
-    return String(str).replace(/"/g, '""');
+    str = String(str).replace(/"/g, '""');
+    // CSV formula injection protection: prepend apostrophe if starts with special chars
+    if (/^[=+@\-\t\r]/.test(str)) {
+      str = "'" + str;
+    }
+    return str;
   }
 });
 </script>

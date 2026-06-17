@@ -70,8 +70,8 @@ if ($op === 'import') {
   foreach ($items as $item) {
     $isbn = isset($item['isbn']) ? trim($item['isbn']) : '';
     $name = isset($item['name']) ? trim($item['name']) : '';
-    $authors = isset($item['authors']) ? $item['authors'] : '';
-    $publisher = isset($item['publisher']) ? $item['publisher'] : '';
+    $authors = isset($item['authors']) ? esc(trim($item['authors'])) : '';
+    $publisher = isset($item['publisher']) ? esc(trim($item['publisher'])) : '';
     $list_price = isset($item['list_price']) ? (float)$item['list_price'] : null;
     $prezzo_mercatino = isset($item['prezzo_mercatino']) ? (float)$item['prezzo_mercatino'] : null;
     $category_id = isset($item['category_id']) ? (int)$item['category_id'] : 0;
@@ -124,17 +124,24 @@ if ($op === 'import') {
         mkdir($dir, 0777, true);
       }
 
-      // Download cover
-      $path = $dir . '/' . $imgId . '.jpg';
-      $ok = BookLookup::downloadCover($isbn, $path);
+      // Download cover and process images
+      try {
+        $path = $dir . '/' . $imgId . '.jpg';
+        $ok = BookLookup::downloadCover($isbn, $path);
 
-      if ($ok) {
-        ImageUtilities::wallpaper($path);
-        ImageUtilities::thumbnail($path);
-        $itemResult['cover'] = true;
-      } else {
-        // Delete image record if download failed
+        if ($ok) {
+          // Process images with wallpaper and thumbnail
+          ImageUtilities::wallpaper($path);
+          ImageUtilities::thumbnail($path);
+          $itemResult['cover'] = true;
+        } else {
+          // Delete image record if download failed
+          $imgMgr->delete($imgId);
+        }
+      } catch (Exception $imgException) {
+        // Delete image record if processing failed
         $imgMgr->delete($imgId);
+        // Product remains valid, just without cover
       }
 
       array_push($results, $itemResult);
