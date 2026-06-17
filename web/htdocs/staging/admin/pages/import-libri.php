@@ -86,26 +86,40 @@ $(document).ready(function() {
       const lines = csv.trim().split('\n');
       let isbns = [];
 
-      // Try to parse as CSV with header
-      if (lines.length > 0) {
-        const headerLower = lines[0].toLowerCase();
-        const isIsbnFirstColumn = headerLower.includes('isbn');
+      // Parser CSV standard: separatore virgola, campi opzionalmente racchiusi tra
+      // doppi apici (con "" come apice interno). Trova la colonna 'isbn' dall'intestazione.
+      const parseLine = function(line) {
+        const out = [];
+        let cur = '', inQ = false;
+        for (let k = 0; k < line.length; k++) {
+          const ch = line[k];
+          if (ch === '"') {
+            if (inQ && line[k + 1] === '"') { cur += '"'; k++; }
+            else { inQ = !inQ; }
+          } else if (ch === ',' && !inQ) {
+            out.push(cur); cur = '';
+          } else {
+            cur += ch;
+          }
+        }
+        out.push(cur);
+        return out;
+      };
 
-        let startIdx = isIsbnFirstColumn ? 1 : 0;
-        if (startIdx === 0) {
-          // No header, treat all lines as ISBNs
+      if (lines.length > 0) {
+        const header = parseLine(lines[0].replace(/\r$/, '')).map(c => c.trim().toLowerCase());
+        let isbnCol = header.indexOf('isbn');
+        let startIdx = 1;          // salta l'intestazione
+        if (isbnCol === -1) {       // nessuna intestazione: prima colonna = ISBN
+          isbnCol = 0;
           startIdx = 0;
-        } else {
-          startIdx = 1; // Skip header
         }
 
         for (let i = startIdx; i < lines.length; i++) {
-          const line = lines[i].trim();
+          const line = lines[i].replace(/\r$/, '').trim();
           if (line === '') continue;
-
-          // Extract first column (ISBN)
-          const cols = line.split(',');
-          const isbn = cols[0].trim().replace(/['"]/g, '');
+          const cols = parseLine(line);
+          const isbn = (cols[isbnCol] || '').replace(/[^0-9Xx]/g, ''); // tiene solo cifre/X
           if (isbn) isbns.push(isbn);
         }
       }
