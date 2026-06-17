@@ -67,6 +67,12 @@ $categories = $catMgr->GetCategories();
   </div>
 
   <div class="form-group">
+    <div class="form-check mb-2">
+      <input class="form-check-input" type="checkbox" id="update-existing">
+      <label class="form-check-label" for="update-existing">
+        Aggiorna i dati dei libri <strong>già presenti</strong> dal file (titolo, autore, editore, prezzo) invece di saltarli
+      </label>
+    </div>
     <button id="btn-import" class="btn btn-success">Importa selezionati</button>
     <button id="btn-export" class="btn btn-secondary">Esporta CSV</button>
     <button id="btn-sync-visibility" class="btn btn-warning">Nascondi dalla vendita i libri non in questa lista</button>
@@ -417,6 +423,8 @@ $(document).ready(function() {
   // Import selected
   $('#btn-import').on('click', function() {
     const itemsToImport = [];
+    const updateExisting = $('#update-existing').is(':checked');
+    let categoryMissing = false;
 
     $('.import-checkbox:checked').each(function() {
       const idx = parseInt($(this).attr('data-index'));
@@ -426,8 +434,11 @@ $(document).ready(function() {
       const prezzo_mercatino = parseFloat(row.find('.prezzo-mercatino').val()) || null;
       const category_id = parseInt(row.find('.categoria-select').val()) || 0;
 
-      if (category_id === 0) {
+      // La categoria è obbligatoria solo per i libri NUOVI; per gli aggiornamenti
+      // dei libri già presenti la categoria esistente viene preservata.
+      if (!item.exists && category_id === 0) {
         alert('Seleziona una categoria per ISBN ' + item.isbn);
+        categoryMissing = true;
         return false;
       }
 
@@ -442,6 +453,10 @@ $(document).ready(function() {
         qta: 0
       });
     });
+
+    if (categoryMissing) {
+      return;
+    }
 
     if (itemsToImport.length === 0) {
       alert('Seleziona almeno un libro da importare');
@@ -460,6 +475,7 @@ $(document).ready(function() {
       data: {
         op: 'import',
         items: JSON.stringify(itemsToImport),
+        update_existing: updateExisting ? '1' : '0',
         csrf_token: csrfToken
       },
       success: function(resp) {
@@ -474,6 +490,9 @@ $(document).ready(function() {
             if (res.error) {
               statusClass = 'danger';
               statusText = 'ERRORE: ' + res.error;
+            } else if (res.updated) {
+              statusClass = 'info';
+              statusText = 'AGGIORNATO (ID: ' + res.product_id + ')';
             } else if (res.skipped) {
               statusClass = 'warning';
               statusText = 'SALTATO (già esistente, ID: ' + res.product_id + ')';

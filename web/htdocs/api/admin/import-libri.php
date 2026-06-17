@@ -139,6 +139,10 @@ if ($op === 'import') {
   $mgr = new ProductManager();
   $imgMgr = new ProductImageManager();
 
+  // se true, per i libri gia' presenti aggiorna i dati dal file (titolo, autore,
+  // editore, prezzo) invece di saltarli
+  $updateExisting = isset($_POST['update_existing']) && ($_POST['update_existing'] === '1' || $_POST['update_existing'] === 1 || $_POST['update_existing'] === true);
+
   $results = [];
 
   foreach ($items as $item) {
@@ -157,7 +161,8 @@ if ($op === 'import') {
       'product_id' => null,
       'cover' => false,
       'error' => null,
-      'skipped' => false
+      'skipped' => false,
+      'updated' => false
     ];
 
     try {
@@ -165,7 +170,18 @@ if ($op === 'import') {
       $existing = $mgr->findByISBN($isbn);
       if ($existing !== null) {
         $itemResult['product_id'] = (int)$existing->id;
-        $itemResult['skipped'] = true;
+        if ($updateExisting) {
+          // aggiorna i dati dal file, preservando categoria/qta/visibilita' ecc.
+          $existing->name = $name;
+          $existing->autori = $authors;
+          $existing->editore = $publisher;
+          $existing->price = $prezzo_mercatino;
+          $existing->prezzo_listino = $list_price;
+          $mgr->update($existing, (int)$existing->id);
+          $itemResult['updated'] = true;
+        } else {
+          $itemResult['skipped'] = true;
+        }
         array_push($results, $itemResult);
         continue;
       }
