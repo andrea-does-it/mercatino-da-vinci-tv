@@ -79,6 +79,20 @@ if ($op === 'check') {
   exit;
 }
 
+if ($op === 'sync_visibility') {
+  // Nasconde dallo shop i libri il cui ISBN NON e' nell'elenco fornito,
+  // e rende visibili quelli presenti nell'elenco.
+  $isbns = isset($_POST['isbns']) ? json_decode($_POST['isbns'], true) : [];
+  if (!is_array($isbns) || count($isbns) === 0) {
+    echo json_encode(['error' => 'Elenco ISBN non fornito']);
+    exit;
+  }
+  $mgr = new ProductManager();
+  $res = $mgr->SyncVisibilityByISBN($isbns);
+  echo json_encode($res);
+  exit;
+}
+
 if ($op === 'import') {
   $items = isset($_POST['items']) ? json_decode($_POST['items'], true) : [];
 

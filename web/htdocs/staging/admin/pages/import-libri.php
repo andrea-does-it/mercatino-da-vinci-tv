@@ -55,6 +55,7 @@ $categories = $catMgr->GetCategories();
   <div class="form-group">
     <button id="btn-import" class="btn btn-success">Importa selezionati</button>
     <button id="btn-export" class="btn btn-secondary">Esporta CSV</button>
+    <button id="btn-sync-visibility" class="btn btn-warning">Nascondi dalla vendita i libri non in questa lista</button>
   </div>
 
   <div id="import-progress" style="display:none;" class="alert alert-info">
@@ -460,6 +461,43 @@ $(document).ready(function() {
       error: function() {
         $('#import-progress').hide();
         $('#import-results').html('<div class="alert alert-danger">Errore durante l\'importazione</div>').show();
+      }
+    });
+  });
+
+  // Sincronizza visibilità: nasconde dallo shop i libri non presenti in questo elenco
+  $('#btn-sync-visibility').on('click', function() {
+    const isbns = verifiedItems.filter(function(i) { return !i.error; }).map(function(i) { return i.isbn; });
+    if (isbns.length === 0) {
+      alert('Nessun libro valido in elenco.');
+      return;
+    }
+    if (!confirm('Verranno NASCOSTI dalla vendita tutti i libri del catalogo il cui ISBN non è tra i ' +
+        isbns.length + ' di questo elenco, e resi visibili quelli presenti.\n\nProcedere?')) {
+      return;
+    }
+    const csrfToken = getCsrfToken();
+    const $btn = $(this);
+    $btn.prop('disabled', true);
+    $.ajax({
+      url: '<?php echo ROOT_URL; ?>api/admin/import-libri.php',
+      method: 'POST',
+      dataType: 'json',
+      data: { op: 'sync_visibility', isbns: JSON.stringify(isbns), csrf_token: csrfToken },
+      success: function(resp) {
+        $btn.prop('disabled', false);
+        if (resp && resp.error) {
+          alert('Errore: ' + resp.error);
+          return;
+        }
+        alert('Visibilità aggiornata.\n' +
+          'Visibili nello shop: ' + resp.visibili + '\n' +
+          'Nascosti: ' + resp.nascosti + '\n' +
+          'Totale catalogo: ' + resp.totale + ' (elenco: ' + resp.in_elenco + ' ISBN)');
+      },
+      error: function() {
+        $btn.prop('disabled', false);
+        alert('Errore durante la sincronizzazione della visibilità');
       }
     });
   });
