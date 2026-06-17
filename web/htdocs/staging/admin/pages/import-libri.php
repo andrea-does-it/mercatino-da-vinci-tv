@@ -23,6 +23,7 @@ $categories = $catMgr->GetCategories();
       <label for="isbn-file">Oppure carica file CSV (separatore virgola). Se contiene le colonne titolo/prezzo, la tabella viene compilata direttamente dal file; se contiene solo gli ISBN, premi "Verifica" per recuperare i dati da Libraccio.</label>
       <input type="file" id="isbn-file" class="form-control-file" accept=".csv">
     </div>
+    <div id="csv-info" class="alert alert-info" style="display:none;"></div>
     <button id="btn-verify" class="btn btn-primary">Verifica</button>
   </div>
 </div>
@@ -30,7 +31,7 @@ $categories = $catMgr->GetCategories();
 <div id="results-section" style="display:none;">
   <div class="card mb-3">
     <div class="card-body">
-      <h5 class="card-title">Risultati Verifica</h5>
+      <h5 class="card-title">Risultati Verifica <span id="results-count" class="badge badge-secondary"></span></h5>
       <table id="results-table" class="table table-hover">
         <thead>
           <tr>
@@ -167,9 +168,11 @@ $(document).ready(function() {
 
       const items = [];
       const isbnsOnly = [];
+      let dataLines = 0;   // righe dati non vuote presenti nel file
       for (let i = startIdx; i < lines.length; i++) {
         const line = lines[i].replace(/\r$/, '').trim();
         if (line === '') continue;
+        dataLines++;
         const cols = parseCsvLine(line);
         const isbn = (cols[isbnCol] || '').replace(/[^0-9Xx]/g, '');
         if (!isbn) continue;
@@ -199,6 +202,18 @@ $(document).ready(function() {
       }
 
       $('#isbn-textarea').val(isbnsOnly.join('\n'));
+
+      // Conteggio di controllo: righe lette dal file vs caricate
+      const loaded = rich ? items.length : isbnsOnly.length;
+      const skipped = dataLines - loaded;
+      let info = 'File: <strong>' + dataLines + '</strong> righe dati · caricate <strong>' + loaded + '</strong>';
+      if (skipped > 0) {
+        info += ' · <span class="text-danger">' + skipped + ' scartate</span> (ISBN o titolo mancante)';
+      }
+      if (!rich) {
+        info += ' — CSV con soli ISBN: premi "Verifica" per recuperare i dati.';
+      }
+      $('#csv-info').html(info).show();
 
       if (rich && items.length > 0) {
         // Mostra subito la tabella dai dati del CSV (con verifica presenza a DB),
@@ -349,6 +364,19 @@ $(document).ready(function() {
 
       tbody.append(row);
     });
+
+    // Conteggio totale con dettaglio (confrontabile col contenuto del file)
+    const total = verifiedItems.length;
+    const nuovi = verifiedItems.filter(function(i) { return !i.error && !i.exists; }).length;
+    const giaDB = verifiedItems.filter(function(i) { return !i.error && i.exists; }).length;
+    const errori = verifiedItems.filter(function(i) { return i.error; }).length;
+    let countTxt = total + ' libri';
+    const extra = [];
+    if (nuovi) extra.push(nuovi + ' nuovi');
+    if (giaDB) extra.push(giaDB + ' già a DB');
+    if (errori) extra.push(errori + ' errori');
+    if (extra.length) countTxt += ' (' + extra.join(', ') + ')';
+    $('#results-count').text(countTxt);
 
     $('#results-section').show();
   }
