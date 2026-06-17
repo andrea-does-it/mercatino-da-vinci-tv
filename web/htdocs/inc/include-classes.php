@@ -19,6 +19,7 @@
   require_once ROOT_PATH . 'classes/utilities/PdfUtilities.php';
   require_once ROOT_PATH . 'classes/utilities/Utilities.php';
   require_once ROOT_PATH . 'classes/utilities/UrlUtilities.php';
+  require_once ROOT_PATH . 'classes/utilities/BookLookup.php';
   require_once ROOT_PATH . 'classes/NewsManager.php';
   require_once ROOT_PATH . 'classes/DownloadManager.php';
   require_once ROOT_PATH . 'classes/SalesTransaction.php';

@@ -15,6 +15,7 @@
     <li class="list-group-item"><a href="<?php echo ROOT_URL; ?>admin/?page=sales-transactions" class="underline">Gestione Vendite &raquo;</a></li>
     <li class="list-group-item"><a href="<?php echo ROOT_URL; ?>admin/?page=seller-refunds" class="underline">Rimborsi Venditori &raquo;</a></li>
     <li class="list-group-item"><a href="<?php echo ROOT_URL; ?>admin/?page=products-list" class="underline">Gestione Prodotti &raquo;</a></li>
+    <li class="list-group-item"><a href="<?php echo ROOT_URL; ?>admin/?page=import-libri" class="underline">Import Libri &raquo;</a></li>
     <li class="list-group-item"><a href="<?php echo ROOT_URL; ?>admin/?page=category-list" class="underline">Gestione Categorie &raquo;</a></li>
     <li class="list-group-item"><a href="<?php echo ROOT_URL; ?>admin/?page=shipment-list" class="underline">Gestione Spedizioni &raquo;</a></li>
     <li class="list-group-item"><a href="<?php echo ROOT_URL; ?>admin/?page=users-list" class="underline">Gestione Utenti &raquo;</a></li>

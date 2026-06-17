@@ -53,6 +53,7 @@ class Product {
   public $name;
   public $autori;
   public $price;
+  public $prezzo_listino;
   public $category_id;
   public $data_inizio_sconto;
   public $data_fine_sconto;
@@ -62,6 +63,7 @@ class Product {
   public $editore;
   public $nota_volumi;
   public $fl_esaurimento;
+  public $nascosto = 0; // 1 = escluso dalla vendita (non visibile nello shop)
 
   public function __construct($id, $name, $price, $category_id, $sconto = 0, $data_inizio_sconto = NULL, $data_fine_sconto = NULL, $qta = 1, $ISBN, $autori, $editore, $nota_volumi = '', $fl_esaurimento = 0){
     $this->id = (int)$id;
@@ -97,7 +99,7 @@ class ProductManager extends DBManager {
 
   public function __construct(){
     parent::__construct();
-    $this->columns = array( 'id', 'name', 'price', 'category_id', 'sconto', 'data_inizio_sconto', 'data_fine_sconto', 'qta', 'ISBN', 'autori', 'editore', 'nota_volumi', 'fl_esaurimento' );
+    $this->columns = array( 'id', 'name', 'price', 'prezzo_listino', 'category_id', 'sconto', 'data_inizio_sconto', 'data_fine_sconto', 'qta', 'ISBN', 'autori', 'editore', 'nota_volumi', 'fl_esaurimento', 'nascosto' );
     $this->tableName = 'product';
   }
   
@@ -161,9 +163,9 @@ class ProductManager extends DBManager {
     return $this->_getProducts($categoryId);
   }
 
-  private function _getProducts($categoryId = 0, $productId = 0, $search = '', $limit = '') {
+  private function _getProducts($categoryId = 0, $productId = 0, $search = '', $limit = '', $onlyVisible = false) {
 
-    $products = $this->_getProductsQuery($categoryId, $productId, $search, $limit);
+    $products = $this->_getProductsQuery($categoryId, $productId, $search, $limit, $onlyVisible);
     
     $urlUtilities = new UrlUtilities('shop');
 
@@ -210,7 +212,7 @@ class ProductManager extends DBManager {
 
   public function SearchProducts($search) {
 
-    $products = $this->_getProducts(0, 0, $search, 5);
+    $products = $this->_getProducts(0, 0, $search, 5, true);
     if (!$products) {
       return [];
     }
@@ -252,7 +254,7 @@ class ProductManager extends DBManager {
       );
   }
 
-  private function _getProductsQuery($categoryId = 0, $productId = 0, $search = '', $limit = '') {
+  private function _getProductsQuery($categoryId = 0, $productId = 0, $search = '', $limit = '', $onlyVisible = false) {
       $params = [];
       $conditions = [];
 
@@ -271,6 +273,10 @@ class ProductManager extends DBManager {
           $searchTerm = '%' . $search . '%';
           $params[] = $searchTerm;
           $params[] = $searchTerm;
+      }
+
+      if ($onlyVisible) {
+          $conditions[] = "p.nascosto = 0";
       }
 
       $whereClause = count($conditions) > 0 ? 'WHERE ' . implode(' AND ', $conditions) : '';
@@ -309,12 +315,13 @@ class ProductManager extends DBManager {
    */
   public function GetProductsCount($categoryId = 0) {
       $params = [];
-      $whereClause = "";
+      $conditions = ["p.nascosto = 0"]; // shop: esclude i libri nascosti
 
       if ($categoryId > 0) {
-          $whereClause = "WHERE p.category_id = ?";
+          $conditions[] = "p.category_id = ?";
           $params[] = (int)$categoryId;
       }
+      $whereClause = "WHERE " . implode(" AND ", $conditions);
 
       $query = "
           SELECT COUNT(*) as total
@@ -337,12 +344,13 @@ class ProductManager extends DBManager {
    */
   public function GetProductsPaginated($categoryId = 0, $offset = 0, $limit = 12) {
       $params = [];
-      $whereClause = "";
+      $conditions = ["p.nascosto = 0"]; // shop: esclude i libri nascosti
 
       if ($categoryId > 0) {
-          $whereClause = "WHERE p.category_id = ?";
+          $conditions[] = "p.category_id = ?";
           $params[] = (int)$categoryId;
       }
+      $whereClause = "WHERE " . implode(" AND ", $conditions);
 
       $params[] = (int)$offset;
       $params[] = (int)$limit;
@@ -389,5 +397,79 @@ class ProductManager extends DBManager {
       }
 
       return $productsObjArr;
+  }
+
+  /**
+   * Find a product by ISBN
+   * @param string $isbn ISBN to search
+   * @return object|null Product object or null if not found
+   */
+  public function findByISBN($isbn) {
+    $isbn = preg_replace('/[^0-9Xx]/', '', (string)$isbn);
+    if ($isbn === '') return null;
+    $rows = $this->db->prepare("SELECT * FROM product WHERE ISBN = ? LIMIT 1", [$isbn]);
+    return ($rows && count($rows) > 0) ? (object)$rows[0] : null;
+  }
+
+  /**
+   * Elenco dei prodotti attualmente visibili nello shop (nascosto = 0),
+   * con il nome della categoria. Usato per l'anteprima prima della sincronizzazione.
+   */
+  public function GetVisibleProducts() {
+    $rows = $this->db->prepare(
+      "SELECT p.id, p.ISBN, p.name, p.qta, c.name AS category
+       FROM product p
+       LEFT JOIN category c ON c.id = p.category_id
+       WHERE p.nascosto = 0
+       ORDER BY c.name, p.name"
+    );
+    $out = [];
+    if ($rows) {
+      foreach ($rows as $r) {
+        $out[] = (object)$r;
+      }
+    }
+    return $out;
+  }
+
+  /**
+   * Sincronizza la visibilita' nello shop con l'elenco di ISBN fornito:
+   * rende visibili (nascosto=0) i prodotti il cui ISBN e' nell'elenco e
+   * nasconde (nascosto=1) tutti gli altri.
+   * Ritorna i conteggi risultanti, oppure ['error'=>...] se l'elenco e' vuoto.
+   */
+  public function SyncVisibilityByISBN($isbns) {
+    $clean = [];
+    foreach ((array)$isbns as $i) {
+      $i = preg_replace('/[^0-9Xx]/', '', (string)$i);
+      if ($i !== '') {
+        $clean[$i] = true;
+      }
+    }
+    $clean = array_keys($clean);
+    if (count($clean) === 0) {
+      return ['error' => 'Elenco ISBN vuoto: operazione annullata'];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($clean), '?'));
+    // nascondi i libri NON presenti nell'elenco
+    $this->db->execute("UPDATE product SET nascosto = 1 WHERE ISBN NOT IN ($placeholders)", $clean);
+    // rendi visibili i libri presenti nell'elenco
+    $this->db->execute("UPDATE product SET nascosto = 0 WHERE ISBN IN ($placeholders)", $clean);
+
+    $rows = $this->db->prepare(
+      "SELECT
+         SUM(CASE WHEN nascosto = 1 THEN 1 ELSE 0 END) AS nascosti,
+         SUM(CASE WHEN nascosto = 0 THEN 1 ELSE 0 END) AS visibili,
+         COUNT(*) AS totale
+       FROM product"
+    );
+    $row = ($rows && count($rows) > 0) ? $rows[0] : ['nascosti' => 0, 'visibili' => 0, 'totale' => 0];
+    return [
+      'nascosti'  => (int)$row['nascosti'],
+      'visibili'  => (int)$row['visibili'],
+      'totale'    => (int)$row['totale'],
+      'in_elenco' => count($clean),
+    ];
   }
 }
