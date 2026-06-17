@@ -54,6 +54,31 @@ if ($op === 'lookup') {
   exit;
 }
 
+if ($op === 'check') {
+  // Verifica rapida presenza a DB di una lista di ISBN (nessun lookup Libraccio).
+  $isbns = isset($_POST['isbns']) ? json_decode($_POST['isbns'], true) : [];
+  if (!is_array($isbns)) {
+    echo json_encode(['error' => 'isbns non forniti']);
+    exit;
+  }
+  $mgr = new ProductManager();
+  $results = [];
+  foreach ($isbns as $isbn) {
+    $isbn = trim((string)$isbn);
+    if ($isbn === '') {
+      continue;
+    }
+    $existing = $mgr->findByISBN($isbn);
+    $results[] = [
+      'isbn' => $isbn,
+      'exists' => $existing !== null,
+      'existing_id' => $existing !== null ? (int)$existing->id : null,
+    ];
+  }
+  echo json_encode(['results' => $results]);
+  exit;
+}
+
 if ($op === 'import') {
   $items = isset($_POST['items']) ? json_decode($_POST['items'], true) : [];
 

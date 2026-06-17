@@ -20,7 +20,7 @@ $categories = $catMgr->GetCategories();
       <textarea id="isbn-textarea" class="form-control" rows="6" placeholder="9788812345678&#10;9788887654321"></textarea>
     </div>
     <div class="form-group">
-      <label for="isbn-file">Oppure carica file CSV (colonna 'isbn'):</label>
+      <label for="isbn-file">Oppure carica file CSV (separatore virgola). Se contiene le colonne titolo/prezzo, la tabella viene compilata direttamente dal file; se contiene solo gli ISBN, premi "Verifica" per recuperare i dati da Libraccio.</label>
       <input type="file" id="isbn-file" class="form-control-file" accept=".csv">
     </div>
     <button id="btn-verify" class="btn btn-primary">Verifica</button>
@@ -75,6 +75,59 @@ $(document).ready(function() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
   }
 
+  // Parser di una riga CSV standard: separatore virgola, campi opzionalmente
+  // racchiusi tra doppi apici (con "" come apice interno).
+  function parseCsvLine(line) {
+    const out = [];
+    let cur = '', inQ = false;
+    for (let k = 0; k < line.length; k++) {
+      const ch = line[k];
+      if (ch === '"') {
+        if (inQ && line[k + 1] === '"') { cur += '"'; k++; }
+        else { inQ = !inQ; }
+      } else if (ch === ',' && !inQ) {
+        out.push(cur); cur = '';
+      } else {
+        cur += ch;
+      }
+    }
+    out.push(cur);
+    return out;
+  }
+
+  // Converte una stringa numerica (anche con virgola decimale) in numero o null.
+  function toNum(v) {
+    if (v === undefined || v === null) return null;
+    v = String(v).trim().replace(',', '.');
+    if (v === '') return null;
+    const n = parseFloat(v);
+    return isNaN(n) ? null : n;
+  }
+
+  // Verifica in blocco la presenza a DB degli ISBN già caricati in verifiedItems,
+  // poi mostra la tabella (i dati provengono dal CSV, niente lookup Libraccio).
+  function checkExistenceAndDisplay() {
+    const isbns = verifiedItems.map(function(i) { return i.isbn; });
+    $.ajax({
+      url: '<?php echo ROOT_URL; ?>api/admin/import-libri.php',
+      method: 'POST',
+      dataType: 'json',
+      data: { op: 'check', isbns: JSON.stringify(isbns), csrf_token: getCsrfToken() },
+      success: function(resp) {
+        if (resp && resp.results) {
+          const map = {};
+          resp.results.forEach(function(r) { map[r.isbn] = r; });
+          verifiedItems.forEach(function(it) {
+            const m = map[it.isbn];
+            if (m) { it.exists = m.exists; it.existing_id = m.existing_id; }
+          });
+        }
+        displayResults();
+      },
+      error: function() { displayResults(); }
+    });
+  }
+
   // Load CSV file
   $('#isbn-file').on('change', function(e) {
     const file = e.target.files[0];
@@ -84,47 +137,71 @@ $(document).ready(function() {
     reader.onload = function(event) {
       const csv = event.target.result;
       const lines = csv.trim().split('\n');
-      let isbns = [];
+      if (lines.length === 0) return;
 
-      // Parser CSV standard: separatore virgola, campi opzionalmente racchiusi tra
-      // doppi apici (con "" come apice interno). Trova la colonna 'isbn' dall'intestazione.
-      const parseLine = function(line) {
-        const out = [];
-        let cur = '', inQ = false;
-        for (let k = 0; k < line.length; k++) {
-          const ch = line[k];
-          if (ch === '"') {
-            if (inQ && line[k + 1] === '"') { cur += '"'; k++; }
-            else { inQ = !inQ; }
-          } else if (ch === ',' && !inQ) {
-            out.push(cur); cur = '';
-          } else {
-            cur += ch;
-          }
+      const header = parseCsvLine(lines[0].replace(/\r$/, '')).map(function(c) { return c.trim().toLowerCase(); });
+      const colIdx = function(names) {
+        for (let n = 0; n < names.length; n++) {
+          const i = header.indexOf(names[n]);
+          if (i !== -1) return i;
         }
-        out.push(cur);
-        return out;
+        return -1;
       };
 
-      if (lines.length > 0) {
-        const header = parseLine(lines[0].replace(/\r$/, '')).map(c => c.trim().toLowerCase());
-        let isbnCol = header.indexOf('isbn');
-        let startIdx = 1;          // salta l'intestazione
-        if (isbnCol === -1) {       // nessuna intestazione: prima colonna = ISBN
-          isbnCol = 0;
-          startIdx = 0;
-        }
+      let isbnCol = colIdx(['isbn']);
+      let startIdx = 1;            // salta l'intestazione
+      if (isbnCol === -1) {        // nessuna intestazione riconosciuta: prima colonna = ISBN
+        isbnCol = 0;
+        startIdx = 0;
+      }
 
-        for (let i = startIdx; i < lines.length; i++) {
-          const line = lines[i].replace(/\r$/, '').trim();
-          if (line === '') continue;
-          const cols = parseLine(line);
-          const isbn = (cols[isbnCol] || '').replace(/[^0-9Xx]/g, ''); // tiene solo cifre/X
-          if (isbn) isbns.push(isbn);
+      // Colonne dati (nomi alternativi gestiti)
+      const cTitle = colIdx(['titolo', 'titolo_libraccio', 'titolo_manoscritto', 'title', 'name']);
+      const cAuthors = colIdx(['autori', 'authors']);
+      const cPublisher = colIdx(['editore', 'publisher']);
+      const cListPrice = colIdx(['prezzo_listino', 'list_price']);
+      const cMerc = colIdx(['prezzo_mercatino']);
+      const cMateria = colIdx(['materia']);
+      // CSV "ricco" = ha intestazione e una colonna titolo: usiamo direttamente i dati del file
+      const rich = (startIdx === 1 && cTitle !== -1);
+
+      const items = [];
+      const isbnsOnly = [];
+      for (let i = startIdx; i < lines.length; i++) {
+        const line = lines[i].replace(/\r$/, '').trim();
+        if (line === '') continue;
+        const cols = parseCsvLine(line);
+        const isbn = (cols[isbnCol] || '').replace(/[^0-9Xx]/g, '');
+        if (!isbn) continue;
+        isbnsOnly.push(isbn);
+        if (rich) {
+          const lp = cListPrice !== -1 ? toNum(cols[cListPrice]) : null;
+          let pm = cMerc !== -1 ? toNum(cols[cMerc]) : null;
+          if (pm === null && lp !== null) pm = Math.round((lp / 2 - 1.50) * 100) / 100;
+          items.push({
+            isbn: isbn,
+            title: cTitle !== -1 ? (cols[cTitle] || '') : '',
+            authors: cAuthors !== -1 ? (cols[cAuthors] || '') : '',
+            publisher: cPublisher !== -1 ? (cols[cPublisher] || '') : '',
+            list_price: lp,
+            prezzo_mercatino: pm,
+            materia: cMateria !== -1 ? (cols[cMateria] || '') : '',
+            cover_url: 'https://www.libraccio.it/images/' + isbn + '_0_500_0_75.jpg',
+            exists: false,
+            existing_id: null,
+            warnings: []
+          });
         }
       }
 
-      $('#isbn-textarea').val(isbns.join('\n'));
+      $('#isbn-textarea').val(isbnsOnly.join('\n'));
+
+      if (rich && items.length > 0) {
+        // Mostra subito la tabella dai dati del CSV (con verifica presenza a DB),
+        // senza dover interrogare Libraccio.
+        verifiedItems = items;
+        checkExistenceAndDisplay();
+      }
     };
     reader.readAsText(file);
   });
@@ -227,6 +304,11 @@ $(document).ready(function() {
         warnings = '<br><small class="text-muted">' + item.warnings.join(', ') + '</small>';
       }
 
+      let materiaHtml = '';
+      if (item.materia) {
+        materiaHtml = '<br><small class="text-muted">Materia: ' + esc_html(item.materia) + '</small>';
+      }
+
       let disabled = '';
       let checked = '';
       if (item.error) {
@@ -237,13 +319,20 @@ $(document).ready(function() {
 
       let categoryOptions = '<option value="0">-- Seleziona categoria --</option>';
       const categories = <?php echo json_encode($categories); ?>;
+      const mat = (item.materia || '').toLowerCase();
       categories.forEach(function(cat) {
-        categoryOptions += '<option value="' + cat.id + '">' + esc_html(cat.name) + '</option>';
+        const cname = (cat.name || '').toLowerCase();
+        // preselezione: la categoria combacia con la materia del CSV
+        let sel = '';
+        if (mat && cname && (mat.indexOf(cname) !== -1 || cname.indexOf(mat) !== -1)) {
+          sel = ' selected';
+        }
+        categoryOptions += '<option value="' + cat.id + '"' + sel + '>' + esc_html(cat.name) + '</option>';
       });
 
       const row = '<tr>' +
         '<td>' + coverHtml + '</td>' +
-        '<td>' + esc_html(item.title) + warnings + '</td>' +
+        '<td>' + esc_html(item.title) + materiaHtml + warnings + '</td>' +
         '<td>' + esc_html(item.authors) + '</td>' +
         '<td>' + esc_html(item.publisher) + '</td>' +
         '<td>€ ' + (item.list_price !== null ? item.list_price.toFixed(2) : '-') + '</td>' +
