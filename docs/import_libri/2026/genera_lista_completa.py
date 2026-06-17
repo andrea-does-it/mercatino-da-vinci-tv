@@ -20,6 +20,19 @@ def clean(s):
     s = s.replace("C'E'", "C'\xc8") # C'E' -> C'È
     return s.strip()
 
+# titolo: la colonna product.name e' VARCHAR(100). Accorcia rimuovendo i marcatori
+# rumorosi e troncando a 100 su confine di parola.
+NOISE = ['(LDM)', '(LD)', 'CON MUSEO DIGITALE', 'CON E-BOOK', 'CON ESPANSIONE ONLINE',
+         'CON CONTENUTO DIGITALE', 'PER LE SCUOLE SUPERIORI', 'PER IL LICEO SCIENTIFICO']
+def short_title(t, maxlen=100):
+    s = clean(t)
+    for n in NOISE:
+        s = re.sub(r'\s*-?\s*' + re.escape(n), '', s, flags=re.IGNORECASE)
+    s = re.sub(r'\s{2,}', ' ', s).strip(' -')
+    if len(s) > maxlen:
+        s = s[:maxlen].rsplit(' ', 1)[0].rstrip(' -,.')
+    return s
+
 def norm(x):
     s = str(x).strip()
     if re.match(r'^\d+\.0$', s):
@@ -105,7 +118,7 @@ out = []
 for isbn in sorted(books, key=lambda i: (books[i]['materia'], books[i]['titolo'])):
     b = books[isbn]; pl = b['prezzo']
     pm = round(pl/2 - 1.50, 2) if pl is not None else ''
-    out.append({'isbn': isbn, 'titolo': b['titolo'], 'volume': b['volume'], 'autori': b['autori'],
+    out.append({'isbn': isbn, 'titolo': short_title(b['titolo']), 'volume': b['volume'], 'autori': b['autori'],
                 'editore': b['editore'], 'materia': b['materia'],
                 'prezzo_listino': ('%.2f' % pl) if pl is not None else '',
                 'prezzo_mercatino': ('%.2f' % pm) if pm != '' else '',

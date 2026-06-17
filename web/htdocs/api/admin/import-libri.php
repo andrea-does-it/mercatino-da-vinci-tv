@@ -143,9 +143,10 @@ if ($op === 'import') {
 
   foreach ($items as $item) {
     $isbn = isset($item['isbn']) ? trim($item['isbn']) : '';
-    $name = isset($item['name']) ? trim($item['name']) : '';
-    $authors = isset($item['authors']) ? esc(trim($item['authors'])) : '';
-    $publisher = isset($item['publisher']) ? esc(trim($item['publisher'])) : '';
+    // name/autori/editore: la colonna e' VARCHAR(100) -> tronca per sicurezza
+    $name = isset($item['name']) ? mb_substr(trim($item['name']), 0, 100) : '';
+    $authors = isset($item['authors']) ? esc(mb_substr(trim($item['authors']), 0, 100)) : '';
+    $publisher = isset($item['publisher']) ? esc(mb_substr(trim($item['publisher']), 0, 100)) : '';
     $list_price = isset($item['list_price']) ? (float)$item['list_price'] : null;
     $prezzo_mercatino = isset($item['prezzo_mercatino']) ? (float)$item['prezzo_mercatino'] : null;
     $category_id = isset($item['category_id']) ? (int)$item['category_id'] : 0;
