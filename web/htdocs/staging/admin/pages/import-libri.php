@@ -33,6 +33,7 @@ $categories = $catMgr->GetCategories();
     <h5 class="card-title">Libri attualmente visibili nello shop (nascosto = 0) <span id="visible-count" class="badge badge-secondary"></span></h5>
     <p class="text-muted mb-2">Anteprima dei libri ora visibili. Se hai già caricato/verificato un elenco, quelli che verrebbero <strong>nascosti</strong> dalla sincronizzazione sono evidenziati in rosso.</p>
     <button id="btn-show-visible" class="btn btn-info mb-2">Mostra libri attualmente visibili</button>
+    <button id="btn-export-visible" class="btn btn-secondary mb-2" style="display:none;">Esporta CSV</button>
     <table id="visible-table" class="table table-sm table-hover" style="display:none;">
       <thead>
         <tr><th>ISBN</th><th>Titolo</th><th>Categoria</th><th>Qta</th><th>Esito sincronizzazione</th></tr>
@@ -57,7 +58,7 @@ $categories = $catMgr->GetCategories();
             <th>Prezzo Mercatino</th>
             <th>Stato</th>
             <th>Categoria</th>
-            <th>Importa</th>
+            <th>Importa<br><input type="checkbox" id="check-all-import" title="Seleziona/deseleziona tutti"></th>
           </tr>
         </thead>
         <tbody id="results-tbody">
@@ -91,6 +92,8 @@ $categories = $catMgr->GetCategories();
 <script>
 $(document).ready(function() {
   let verifiedItems = [];
+  let visibleItems = [];
+  let visibleHasList = false;
 
   // Get CSRF token (iniettato lato server: non dipende da un meta tag che il
   // template potrebbe non emettere)
@@ -535,6 +538,8 @@ $(document).ready(function() {
         }
         const rows = (resp && resp.results) ? resp.results : [];
         const hasList = resp && resp.has_list;
+        visibleItems = rows;
+        visibleHasList = hasList;
         const tbody = $('#visible-tbody');
         tbody.empty();
         let hideCount = 0;
@@ -559,6 +564,7 @@ $(document).ready(function() {
         if (hasList) badge += ' · ' + hideCount + ' verranno nascosti';
         $('#visible-count').text(badge);
         $('#visible-table').show();
+        $('#btn-export-visible').toggle(rows.length > 0);
       },
       error: function(xhr) {
         $btn.prop('disabled', false);
@@ -566,6 +572,32 @@ $(document).ready(function() {
         alert('Errore nel recupero dei libri visibili\nStato HTTP: ' + (xhr ? xhr.status : '?') + '\nRisposta:\n' + body);
       }
     });
+  });
+
+  // Esporta CSV della griglia "libri attualmente visibili"
+  $('#btn-export-visible').on('click', function() {
+    if (!visibleItems.length) { return; }
+    let csv = 'isbn,titolo,categoria,qta,esito_sincronizzazione\n';
+    visibleItems.forEach(function(r) {
+      let esito = '-';
+      if (visibleHasList) { esito = r.would_hide ? 'verra nascosto' : 'resta visibile'; }
+      csv += '"' + escCsv(r.isbn) + '",' +
+        '"' + escCsv(r.name) + '",' +
+        '"' + escCsv(r.category) + '",' +
+        r.qta + ',' +
+        '"' + esito + '"\n';
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.setAttribute('href', URL.createObjectURL(blob));
+    link.setAttribute('download', 'libri-visibili-' + new Date().getTime() + '.csv');
+    link.click();
+  });
+
+  // Selezione massiva della lista da importare (checkbox in intestazione)
+  $('#check-all-import').on('change', function() {
+    const c = $(this).is(':checked');
+    $('.import-checkbox:not(:disabled)').prop('checked', c);
   });
 
   // Sincronizza visibilità: nasconde dallo shop i libri non presenti in questo elenco
