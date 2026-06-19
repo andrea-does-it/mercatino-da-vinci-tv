@@ -1,0 +1,11 @@
+-- Corrective migration: make donate_books NULLABLE (DEFAULT 0).
+--
+-- The first version of 202606190001 created donate_books as NOT NULL, but
+-- DBManager->create() casts the whole User object to an INSERT and the property
+-- is uninitialized (NULL) at user-creation time, so registration failed with
+-- "Column 'donate_books' cannot be null". This aligns donate_books with the
+-- existing consent columns (privacy_consent, newsletter_consent), which are
+-- nullable with DEFAULT 0.
+--
+-- Run this where 202606190001 was already applied with NOT NULL (e.g. staging).
+ALTER TABLE `user` MODIFY `donate_books` TINYINT(1) DEFAULT 0;
