@@ -50,8 +50,8 @@
 
         if ($transactionId) {
           log_activity($loggedInUser->id, 'admin_sale_created', 'transaction_id: ' . $transactionId);
-          // Redirect to view page
-          $redirectUrl = ROOT_URL . 'admin/?page=sales-transaction-view&id=' . $transactionId . '&msg=created';
+          // Redirect to the confirmation receipt
+          $redirectUrl = ROOT_URL . 'admin/?page=sales-transaction-receipt&id=' . $transactionId . '&msg=created';
           echo "<script>window.location.href = '" . esc_html($redirectUrl) . "';</script>";
           exit;
         } else {

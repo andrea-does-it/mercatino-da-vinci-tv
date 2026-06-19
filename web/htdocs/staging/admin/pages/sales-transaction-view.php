@@ -254,6 +254,9 @@
       <i class="fas fa-undo"></i> Rimborsa Tutta la Vendita
     </button>
     <?php endif; ?>
+    <a href="<?php echo ROOT_URL; ?>admin/?page=sales-transaction-receipt&id=<?php echo (int)$transaction->id; ?>" class="btn btn-outline-primary">
+      <i class="fas fa-receipt"></i> Ricevuta
+    </a>
     <a href="<?php echo ROOT_URL; ?>admin/?page=sales-transaction-new" class="btn btn-success">
       <i class="fas fa-plus"></i> Nuova Vendita
     </a>
