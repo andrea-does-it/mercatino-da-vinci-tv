@@ -26,6 +26,19 @@ if (isset($_POST['update_newsletter'])) {
     }
 }
 
+// Handle donate-books preference update
+if (isset($_POST['update_donate_books'])) {
+    if (!CSRF::validateToken()) {
+        $alertMsg = 'csrf_error';
+    } else {
+        $donate = isset($_POST['donate_books']) ? 1 : 0;
+        $userMgr->updateDonateBooks($loggedInUser->id, $donate);
+        log_activity($loggedInUser->id, 'donate_books_update', 'donate: ' . $donate);
+        $alertMsg = 'consent_updated';
+        $consent = $userMgr->getConsent($loggedInUser->id);
+    }
+}
+
 // Data export is now handled by api/user/export-data.php
 
 // Handle activity log deletion (GDPR Art. 17)
@@ -102,6 +115,21 @@ if (isset($_POST['request_deletion'])) {
                     <?php endif; ?>
                 </td>
             </tr>
+            <tr>
+                <th>Donazione libri invenduti</th>
+                <td>
+                    <?php if ($consent && $consent['donate_books']): ?>
+                        <span class="badge badge-success">Attiva</span>
+                    <?php else: ?>
+                        <span class="badge badge-secondary">Non attiva</span>
+                    <?php endif; ?>
+                </td>
+                <td class="text-muted small">
+                    <?php if ($consent && $consent['donate_books_date']): ?>
+                        Data: <?php echo date('d/m/Y H:i', strtotime($consent['donate_books_date'])); ?>
+                    <?php endif; ?>
+                </td>
+            </tr>
         </table>
     </div>
 </div>
@@ -122,6 +150,32 @@ if (isset($_POST['request_deletion'])) {
                 </label>
             </div>
             <button type="submit" name="update_newsletter" class="btn btn-primary">
+                <i class="fas fa-save"></i> Salva Preferenze
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Donate Unsold Books Preference -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-gift"></i> Donazione Libri Invenduti</h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">
+            Se attivi questa opzione, al termine del mercatino i tuoi libri rimasti invenduti
+            saranno donati al Comitato Genitori invece di esserti restituiti.
+        </p>
+        <form method="post">
+            <?php csrf_field(); ?>
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="donate_books" name="donate_books"
+                    <?php echo ($consent && $consent['donate_books']) ? 'checked' : ''; ?>>
+                <label class="form-check-label" for="donate_books">
+                    Desidero donare i libri invenduti al Comitato Genitori
+                </label>
+            </div>
+            <button type="submit" name="update_donate_books" class="btn btn-primary">
                 <i class="fas fa-save"></i> Salva Preferenze
             </button>
         </form>
