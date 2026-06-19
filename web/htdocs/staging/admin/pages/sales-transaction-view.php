@@ -265,7 +265,7 @@
 
 <div class="alert alert-info mt-4">
   <i class="fas fa-info-circle"></i>
-  <strong>Nota:</strong> Quando un articolo viene rimborsato, il libro torna automaticamente nello stato "da vendere" e sar&agrave; nuovamente disponibile per la vendita nella pagina "Libri da Vendere".
+  <strong>Nota:</strong> Quando un articolo viene rimborsato, il libro torna automaticamente nello stato "da vendere" e sar&agrave; nuovamente disponibile registrando una nuova vendita dalla pagina "Nuova Vendita".
 </div>
 
 <!-- Refund Modal -->
