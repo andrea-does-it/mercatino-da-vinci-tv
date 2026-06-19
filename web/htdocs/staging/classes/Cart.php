@@ -685,7 +685,7 @@ class OrderManager extends DBManager {
     public function sendAcceptanceEmail($orderId, $email, $first_name, $last_name, $pratica, $orderItems, $orderTotal) {
       $to = $email;
       $subject = "Richiesta N. " . $orderId . " è stata accettata";
-      $message = "<h2>La sua Richiesta è stata accettata e le è stato assegnato il seguente numero di Pratica " . $pratica . "</h2>";
+      $message = "<h2>La tua Richiesta è stata accettata e ti è stato assegnato il seguente numero di Pratica " . $pratica . "</h2>";
 
       $style = "style='border: 1px solid black; border-collapse: collapse; padding: 8px;'";
       $tableStyle = "style='border: 1px solid black; border-collapse: collapse; width: 100%;'";
