@@ -12,6 +12,10 @@
 
   $salesMgr = new SalesTransactionManager();
   $paymentMethods = SalesTransactionManager::getPaymentMethods();
+  // PayPal non e' un metodo di pagamento utilizzabile alla cassa del mercatino:
+  // lo rimuoviamo solo dal menu di creazione vendita (resta nel mapping per la
+  // visualizzazione/filtri di eventuali transazioni storiche).
+  unset($paymentMethods['paypal']);
 
   $errors = false;
   $paymentMethod = isset($_POST['payment_method']) ? esc($_POST['payment_method']) : 'cash';
