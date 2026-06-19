@@ -32,7 +32,7 @@
 
 ?>
 
-<h1>Elenco Libri da Vendere</h1>
+<h1>Elenco Libri Disponibili per Acquisto</h1>
 
 <?php if (count($orderItems4) > 0) : ?>
 <table id="table" class="table table-hover">
