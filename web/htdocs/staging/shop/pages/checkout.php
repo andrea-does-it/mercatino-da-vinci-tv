@@ -97,7 +97,7 @@ $style = "style='border: 1px solid black; border-collapse: collapse;'";
 $br = "<br>";
 
 if ($error == false) {
-  $message = "<h2>Grazie per la richiesta di vendita dei suoi libri</h2>" . $br ;
+  $message = "<h2>Grazie per la richiesta di vendita dei tuoi libri</h2>" . $br ;
 } else {
   $message = "<h2>Si è verificato un errore durante la procedura di invio.</h2>" . $br ;
   $message .= "<p>La richiesta è stata annullata.</p>" . $br ;
