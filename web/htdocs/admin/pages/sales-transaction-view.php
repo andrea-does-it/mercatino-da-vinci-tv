@@ -4,6 +4,9 @@
     die;
   }
 
+  // Access control: reachable only via admin/index.php, which restricts to
+  // user_type 'admin' or 'pwuser'. Sellers (user_type 'regular') cannot operate sales.
+
   global $loggedInUser;
   global $alertMsg;
 
@@ -251,6 +254,9 @@
       <i class="fas fa-undo"></i> Rimborsa Tutta la Vendita
     </button>
     <?php endif; ?>
+    <a href="<?php echo ROOT_URL; ?>admin/?page=sales-transaction-receipt&id=<?php echo (int)$transaction->id; ?>" class="btn btn-outline-primary">
+      <i class="fas fa-receipt"></i> Ricevuta
+    </a>
     <a href="<?php echo ROOT_URL; ?>admin/?page=sales-transaction-new" class="btn btn-success">
       <i class="fas fa-plus"></i> Nuova Vendita
     </a>
@@ -259,7 +265,7 @@
 
 <div class="alert alert-info mt-4">
   <i class="fas fa-info-circle"></i>
-  <strong>Nota:</strong> Quando un articolo viene rimborsato, il libro torna automaticamente nello stato "da vendere" e sar&agrave; nuovamente disponibile per la vendita nella pagina "Libri da Vendere".
+  <strong>Nota:</strong> Quando un articolo viene rimborsato, il libro torna automaticamente nello stato "da vendere" e sar&agrave; nuovamente disponibile registrando una nuova vendita dalla pagina "Nuova Vendita".
 </div>
 
 <!-- Refund Modal -->

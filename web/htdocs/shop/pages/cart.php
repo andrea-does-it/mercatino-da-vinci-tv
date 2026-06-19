@@ -95,7 +95,9 @@
       </ul>
       <hr class="mb-4">
 
-      <div class="form-group">
+      <!-- Campo "Metodo di Spedizione" nascosto: il mercatino non prevede spedizione.
+           Il select resta nel DOM (value "0") per non rompere il JS che lo referenzia. -->
+      <div class="form-group" style="display:none;">
         <label for="shipmentMethods">Metodo di Spedizione</label>
         <select name="shipmentMethods" id="shipmentMethods" type="text" class="form-control" value="0">
           <option value="0"> - Scegli una modalità di spedizione - </option>
@@ -271,8 +273,9 @@ function confirmPayment(e, confirmed){
 }
 
 function isShippingSelected(e) {
-  var selectedShipmentMethod = $document.find('#shipmentMethods').val();
-  return selectedShipmentMethod != "0";
+  // Il campo "Metodo di Spedizione" e' nascosto: la spedizione non e' richiesta,
+  // quindi la conferma dell'ordine non viene bloccata.
+  return true;
 }
 
 function updateShipmentPrice(e) {

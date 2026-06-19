@@ -41,6 +41,12 @@
 
 ?>
 
+<div class="alert alert-warning">
+  <i class="fas fa-exclamation-triangle"></i>
+  Questa pagina fa parte della vecchia gestione vendite ed è stata sostituita da
+  <a href="<?php echo ROOT_URL; ?>admin/?page=sales-transactions">Gestione Vendite</a>.
+</div>
+
 <h1>Elenco Libri Venduti</h1>
 
 <?php if (count($orderItems2) > 0) : ?>

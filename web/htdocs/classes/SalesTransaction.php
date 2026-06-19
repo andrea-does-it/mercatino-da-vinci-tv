@@ -364,6 +364,25 @@ class SalesTransactionManager extends DBManager {
     }
 
     /**
+     * Resolve the operator's display name.
+     * @param int|null $operatorId
+     * @return string "First Last" or empty string
+     */
+    public function getOperatorName($operatorId) {
+        if (!$operatorId) {
+            return '';
+        }
+        $result = $this->db->prepare(
+            "SELECT first_name, last_name FROM user WHERE id = ?",
+            [(int)$operatorId]
+        );
+        if ($result && count($result) > 0) {
+            return trim($result[0]['first_name'] . ' ' . $result[0]['last_name']);
+        }
+        return '';
+    }
+
+    /**
      * Get all transactions with pagination
      * @param int $offset
      * @param int $limit

@@ -97,7 +97,7 @@ $style = "style='border: 1px solid black; border-collapse: collapse;'";
 $br = "<br>";
 
 if ($error == false) {
-  $message = "<h2>Grazie per la richiesta di vendita dei suoi libri</h2>" . $br ;
+  $message = "<h2>Grazie per la richiesta di vendita dei tuoi libri</h2>" . $br ;
 } else {
   $message = "<h2>Si è verificato un errore durante la procedura di invio.</h2>" . $br ;
   $message .= "<p>La richiesta è stata annullata.</p>" . $br ;
@@ -125,6 +125,7 @@ if ($error == false) {
   $shippingAddressStr .= "<strong>Città: Treviso </strong>" . $br;
   $message .= $shippingAddressStr . $br;
   $message .= $br . "Segui le info sul nostro sito per le date in cui poter consegnare i libri da mettere in vendita.";
+  $message .= $br . "Ti aspettiamo al mercatino per l'acquisizione dei libri che hai messo in vendita.";
 }
 
 send_mail($to, $subject, $message);
@@ -147,7 +148,8 @@ $htmlBody .= "</table>";
 
 <?php if ($error == false) : ?>
 <h1>Grazie per aver inviato dei libri da vendere</h1>
-<p class="lead">Di seguito un riepilogo. Riceverà una mail con i dettagli della richiesta</p>
+<p class="lead">Di seguito un riepilogo. Riceverai una mail con i dettagli della richiesta</p>
+<p class="lead font-weight-bold text-danger">Se non ricevi il messaggio email controlla la cartella SPAM</p>
 <a class="back underline" href="<?php echo ROOT_URL . "shop/?page=view-order&id=$orderId" ?>">Visualizza Richiesta &raquo;</a><br>
 
 <br>

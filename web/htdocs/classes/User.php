@@ -13,6 +13,10 @@
     public $student_class;
     public $privacy_consent;
     public $newsletter_consent;
+    // Default 0: DBManager->create() casts the whole object to an INSERT, and the
+    // donate_books column is NOT NULL — an uninitialized (null) property would break
+    // user registration. The registration opt-in upgrades this to 1 afterwards.
+    public $donate_books = 0;
 
     public function __construct($id, $first_name, $last_name, $email, $user_type, $profile_id = null) {
       $this->id = (int)$id;
@@ -64,7 +68,7 @@
         return ROOT_URL . "auth?page=reset-password&guid=" . urlencode($guid);
     }
 
-    public function register($first_name, $last_name, $email, $password, $profile_id, $privacy_consent = true, $newsletter_consent = false, $student_first_name = '', $student_last_name = '', $student_class = ''){
+    public function register($first_name, $last_name, $email, $password, $profile_id, $privacy_consent = true, $newsletter_consent = false, $student_first_name = '', $student_last_name = '', $student_class = '', $donate_books = false){
       $user = new User(0, $first_name, $last_name, $email, 'regular', $profile_id);
       $userId = $this->_createUser($user, $password);
 
@@ -73,6 +77,9 @@
         $this->saveConsent($userId, $privacy_consent, $newsletter_consent);
         if ($student_first_name !== '' || $student_last_name !== '' || $student_class !== '') {
           $this->saveStudentInfo($userId, $student_first_name, $student_last_name, $student_class);
+        }
+        if ($donate_books) {
+          $this->updateDonateBooks($userId, 1);
         }
       }
 
@@ -179,9 +186,27 @@
         );
     }
 
+    public function updateDonateBooks($userId, $consent) {
+        $this->db->execute(
+            "UPDATE {$this->tableName} SET donate_books = ?, donate_books_date = NOW() WHERE id = ?",
+            [(int)$consent, (int)$userId]
+        );
+    }
+
+    public function getDonateBooks($userId) {
+        $result = $this->db->prepare(
+            "SELECT donate_books FROM {$this->tableName} WHERE id = ?",
+            [(int)$userId]
+        );
+        if (count($result) > 0) {
+            return (int)$result[0]['donate_books'];
+        }
+        return 0;
+    }
+
     public function getConsent($userId) {
         $result = $this->db->prepare(
-            "SELECT privacy_consent, newsletter_consent, privacy_consent_date, newsletter_consent_date FROM {$this->tableName} WHERE id = ?",
+            "SELECT privacy_consent, newsletter_consent, privacy_consent_date, newsletter_consent_date, donate_books, donate_books_date FROM {$this->tableName} WHERE id = ?",
             [(int)$userId]
         );
         if (count($result) > 0) {

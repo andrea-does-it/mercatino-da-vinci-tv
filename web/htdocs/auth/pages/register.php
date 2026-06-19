@@ -42,6 +42,7 @@ if (isset($_POST['register'])) {
   $privacy_consent = isset($_POST['privacy_consent']) ? true : false;
   $rules_consent = isset($_POST['rules_consent']) ? true : false;
   $newsletter_consent = isset($_POST['newsletter_consent']) ? true : false;
+  $donate_books = isset($_POST['donate_books']) ? true : false;
 
   if (!$privacy_consent) {
     $params = http_build_query([
@@ -180,7 +181,7 @@ if (isset($_POST['register'])) {
     }
 
     if (!$errors) {
-      $userId = $userMgr->register($nome, $cognome, $email, $password, 1, $privacy_consent, $newsletter_consent, $student_first_name, $student_last_name, $student_class);
+      $userId = $userMgr->register($nome, $cognome, $email, $password, 1, $privacy_consent, $newsletter_consent, $student_first_name, $student_last_name, $student_class, $donate_books);
       if ($userId > 0){
         // Save IBAN if provided
         if ($iban != '') {
@@ -331,6 +332,15 @@ $student_class = isset($_GET['student_class']) ? htmlspecialchars($_GET['student
       <input type="checkbox" class="form-check-input" id="newsletter_consent" name="newsletter_consent">
       <label class="form-check-label" for="newsletter_consent">
         Desidero ricevere comunicazioni e newsletter dal Comitato Genitori (facoltativo).
+      </label>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <div class="form-check">
+      <input type="checkbox" class="form-check-input" id="donate_books" name="donate_books">
+      <label class="form-check-label" for="donate_books">
+        Desidero donare i libri invenduti al Comitato Genitori (facoltativo).
       </label>
     </div>
   </div>
