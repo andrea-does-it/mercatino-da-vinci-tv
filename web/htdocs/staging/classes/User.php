@@ -13,7 +13,10 @@
     public $student_class;
     public $privacy_consent;
     public $newsletter_consent;
-    public $donate_books;
+    // Default 0: DBManager->create() casts the whole object to an INSERT, and the
+    // donate_books column is NOT NULL — an uninitialized (null) property would break
+    // user registration. The registration opt-in upgrades this to 1 afterwards.
+    public $donate_books = 0;
 
     public function __construct($id, $first_name, $last_name, $email, $user_type, $profile_id = null) {
       $this->id = (int)$id;
