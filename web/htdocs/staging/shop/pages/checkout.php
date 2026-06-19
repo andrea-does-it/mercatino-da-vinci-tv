@@ -148,7 +148,8 @@ $htmlBody .= "</table>";
 
 <?php if ($error == false) : ?>
 <h1>Grazie per aver inviato dei libri da vendere</h1>
-<p class="lead">Di seguito un riepilogo. Riceverà una mail con i dettagli della richiesta</p>
+<p class="lead">Di seguito un riepilogo. Riceverai una mail con i dettagli della richiesta</p>
+<p class="lead font-weight-bold text-danger">Se non ricevi il messaggio email controlla la cartella SPAM</p>
 <a class="back underline" href="<?php echo ROOT_URL . "shop/?page=view-order&id=$orderId" ?>">Visualizza Richiesta &raquo;</a><br>
 
 <br>
