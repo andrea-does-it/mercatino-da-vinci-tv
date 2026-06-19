@@ -72,5 +72,56 @@ class PdfUtilities extends Fpdf {
     $this->Output();
   }
 
+  public function printSalesTransactionReceipt($transaction, $items, $operatorName = '') {
+    $conv = function ($s) { return iconv('UTF-8', 'windows-1252', (string)$s); };
+    $eur  = $conv('€ ');
+
+    $this->AddPage('P');
+
+    // Heading
+    $this->SetFont('Arial', 'B', 18);
+    $this->Cell(0, 12, $conv(SITE_NAME . ' - Ricevuta vendita N. ' . $transaction->id), 0, 1, 'C');
+
+    if (!empty($transaction->refunded_at)) {
+      $this->SetFont('Arial', 'B', 12);
+      $this->Cell(0, 8, $conv('VENDITA RIMBORSATA'), 0, 1, 'C');
+    }
+    $this->Ln(2);
+
+    // Meta line
+    $this->SetFont('Arial', '', 11);
+    $date = $transaction->created_at ? date('d/m/Y H:i', strtotime($transaction->created_at)) : '';
+    $this->Cell(0, 7, $conv('Data: ' . $date), 0, 1, 'L');
+    $this->Cell(0, 7, $conv('Pagamento: ' . $transaction->payment_method), 0, 1, 'L');
+    if ($operatorName !== '') {
+      $this->Cell(0, 7, $conv('Operatore: ' . $operatorName), 0, 1, 'L');
+    }
+    if (!empty($transaction->description)) {
+      $this->Cell(0, 7, $conv('Cliente/Note: ' . $transaction->description), 0, 1, 'L');
+    }
+    $this->Ln(2);
+
+    // Items table header
+    $this->SetFont('Arial', 'B', 11);
+    $this->Cell(20, 8, $conv('Pratica'), 1, 0, 'C');
+    $this->Cell(120, 8, $conv('Titolo'), 1, 0, 'L');
+    $this->Cell(40, 8, $conv('Prezzo'), 1, 1, 'C');
+
+    // Items
+    $this->SetFont('Arial', '', 11);
+    foreach ($items as $row) {
+      $this->Cell(20, 8, $conv($row->pratica), 1, 0, 'C');
+      $this->Cell(120, 8, $conv($row->product_name), 1, 0, 'L');
+      $this->Cell(40, 8, $eur . number_format((float)$row->price, 2, ',', '.'), 1, 1, 'R');
+    }
+
+    // Total
+    $this->SetFont('Arial', 'B', 12);
+    $this->Cell(140, 9, $conv('Totale incassato'), 1, 0, 'R');
+    $this->Cell(40, 9, $eur . number_format((float)$transaction->total_amount, 2, ',', '.'), 1, 1, 'R');
+
+    $this->Output();
+  }
+
 }
 
