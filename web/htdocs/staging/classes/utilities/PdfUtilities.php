@@ -76,17 +76,24 @@ class PdfUtilities extends Fpdf {
     $conv = function ($s) { return iconv('UTF-8', 'windows-1252', (string)$s); };
     $eur  = $conv('€ ');
 
+    // Explicit, comfortable margins so headings never clip on long site names.
+    $this->SetMargins(15, 12, 15);
     $this->AddPage('P');
+    // Usable content width (page width minus left/right margins). The items table
+    // column widths below (20 + 120 + 40) sum to this value.
+    $usable = $this->w - $this->lMargin - $this->rMargin;
 
-    // Heading
-    $this->SetFont('Arial', 'B', 18);
-    $this->Cell(0, 12, $conv(SITE_NAME . ' - Ricevuta vendita N. ' . $transaction->id), 0, 1, 'C');
+    // Heading on two lines; the site name wraps (MultiCell) instead of overflowing.
+    $this->SetFont('Arial', 'B', 14);
+    $this->MultiCell($usable, 8, $conv(SITE_NAME), 0, 'C');
+    $this->SetFont('Arial', 'B', 13);
+    $this->Cell($usable, 9, $conv('Ricevuta vendita N. ' . $transaction->id), 0, 1, 'C');
 
     if (!empty($transaction->refunded_at)) {
       $this->SetFont('Arial', 'B', 12);
-      $this->Cell(0, 8, $conv('VENDITA RIMBORSATA'), 0, 1, 'C');
+      $this->Cell($usable, 8, $conv('VENDITA RIMBORSATA'), 0, 1, 'C');
     }
-    $this->Ln(2);
+    $this->Ln(3);
 
     // Meta line
     $this->SetFont('Arial', '', 11);
