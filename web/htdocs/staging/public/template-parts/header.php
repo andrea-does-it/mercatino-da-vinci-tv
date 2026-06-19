@@ -121,15 +121,9 @@ $urlUtilities = new UrlUtilities('public');
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=dashboard">Cruscotto</a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=orders-list">Gestione Pratiche</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=libri_da_vendere">Libri da Vendere</a>
-              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=calcolo_vendita">Riepilogo Vendita</a>
-              <div class="dropdown-divider"></div>              
-              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=incasso_vendita">Incasso Vendita</a>
-              <div class="dropdown-divider"></div>              
-              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=libri_venduti">Libri Venduti</a>
+              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=sales-transactions">Gestione Vendite</a>
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=libri_per_pratica">Libri per Pratica</a>
-              <div class="dropdown-divider"></div>           
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=category-list">Gestione Materie</a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=product">Aggiungi Libro</a>
@@ -162,15 +156,8 @@ $urlUtilities = new UrlUtilities('public');
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Gestione</a>
             <div class="dropdown-menu" aria-labelledby="dropdown01">
-
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=orders-list">Gestione Pratiche</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=libri_da_vendere">Libri da Vendere</a>
-              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=calcolo_vendita">Riepilogo Vendita</a>
-              <div class="dropdown-divider"></div>              
-              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=incasso_vendita">Incasso Vendita</a>
-              <div class="dropdown-divider"></div>              
-              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=libri_venduti">Libri Venduti</a>
+              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=sales-transactions">Gestione Vendite</a>
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=libri_per_pratica">Libri per Pratica</a>
             </div>
           </li>
