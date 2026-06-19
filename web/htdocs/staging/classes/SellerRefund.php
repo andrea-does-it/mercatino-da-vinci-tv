@@ -87,12 +87,20 @@ class SellerRefundManager extends DBManager {
             return $existing;
         }
 
+        // Seed the donation flag from the seller's standing profile preference.
+        $userMgr = new UserManager();
+        $donateDefault = $userMgr->getDonateBooks($userId);
+
         // Create new record
         $data = [
             'user_id' => (int)$userId,
             'year' => (int)$year,
-            'status' => 'pending'
+            'status' => 'pending',
+            'donate_unsold' => $donateDefault
         ];
+        if ($donateDefault) {
+            $data['donate_unsold_set_at'] = date('Y-m-d H:i:s');
+        }
         $id = $this->db->insert_one($this->tableName, $data);
         return $this->getById($id);
     }
@@ -376,13 +384,19 @@ class SellerRefundManager extends DBManager {
         $sellers = $this->getSellersWithoutRefundRecord($year);
         $count = 0;
 
+        $userMgr = new UserManager();
         foreach ($sellers as $seller) {
+            $donateDefault = $userMgr->getDonateBooks($seller->user_id);
             $data = [
                 'user_id' => (int)$seller->user_id,
                 'year' => (int)$year,
                 'amount_owed' => (float)$seller->total_owed,
-                'status' => 'pending'
+                'status' => 'pending',
+                'donate_unsold' => $donateDefault
             ];
+            if ($donateDefault) {
+                $data['donate_unsold_set_at'] = date('Y-m-d H:i:s');
+            }
             $this->db->insert_one($this->tableName, $data);
             $count++;
         }
