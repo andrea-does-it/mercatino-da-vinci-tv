@@ -163,7 +163,11 @@
  
  
       <?php else : ?>
-        <a class="btn btn-primary btn-block" href="<?php echo ROOT_URL . 'auth?page=register' ?>">Registrati per per mettere in vendita dei libri</a>
+        <?php if (SiteSettings::registrationsEnabled()) : ?>
+          <a class="btn btn-primary btn-block" href="<?php echo ROOT_URL . 'auth?page=register' ?>">Registrati per per mettere in vendita dei libri</a>
+        <?php else : ?>
+          <div class="alert alert-info">Le registrazioni apriranno non appena sarà pronta la lista dei libri in vendita. Torna a trovarci a breve.</div>
+        <?php endif; ?>
       <?php endif ; ?>
   <?php else : ?>
     <p class="lead">Nessun elemento nel carrello...</p>

@@ -23,6 +23,13 @@
 
   // Handle add to cart form submission
   if (isset($_POST['add_to_cart'])) {
+    // Block adding to cart while the marketplace is not yet open.
+    if (!SiteSettings::cartEnabled()) {
+      $alertMsg = 'cart_closed';
+      echo "<script>location.href='".ROOT_URL."shop/?page=view-product&id=".$id."&msg=$alertMsg';</script>";
+      exit;
+    }
+
     if ($isOutOfStock) {
       $alertMsg = 'product_unavailable';
       echo "<script>location.href='".ROOT_URL."shop/?page=view-product&id=".$id."&msg=$alertMsg';</script>";
@@ -120,7 +127,11 @@
 <?php endif ?>
 
   <p class="lead p-3">
-    <?php if (!$isOutOfStock) : ?>
+    <?php if (!SiteSettings::cartEnabled()) : ?>
+      <div class="alert alert-info">
+        <strong>Le vendite non sono ancora aperte.</strong> Non è ancora possibile mettere in vendita i libri: le vendite apriranno appena sarà pronta la lista dei libri.
+      </div>
+    <?php elseif (!$isOutOfStock) : ?>
       <form method="post">
         <input data-id="<?php echo esc_html($product->id); ?>" name="add_to_cart" type="submit" class="btn btn-primary btn-lg" value="Aggiungi Libro da Vendere">
       </form>

@@ -270,6 +270,18 @@ if ($alertMsg != '') {
       $msgBody = 'Il registro attività è stato eliminato correttamente.';
       break;
 
+    case 'registrations_closed':
+      $cssClass = 'alert-info';
+      $msgHeading = 'Registrazioni temporaneamente chiuse';
+      $msgBody = 'Le registrazioni apriranno non appena sarà pronta la lista dei libri in vendita. Torna a trovarci a breve.';
+      break;
+
+    case 'cart_closed':
+      $cssClass = 'alert-info';
+      $msgHeading = 'Vendite non ancora aperte';
+      $msgBody = 'Non è ancora possibile mettere in vendita i libri. Le vendite apriranno appena sarà pronta la lista dei libri.';
+      break;
+
   }
 
 }

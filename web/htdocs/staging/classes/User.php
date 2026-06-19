@@ -13,7 +13,6 @@
     public $student_class;
     public $privacy_consent;
     public $newsletter_consent;
-    public $created_at;
 
     public function __construct($id, $first_name, $last_name, $email, $user_type, $profile_id = null) {
       $this->id = (int)$id;

@@ -24,7 +24,10 @@
     <p class="lead">• favorire la conoscenza presso i Genitori del Piano dell’Offerta Formativa dell’Istituto e di verificare la sua efficacia e attualità educativa. </p>
     <p class="lead"></p>
     <p class="lead text-danger font-weight-bold">Clicca sul bottone se vuoi mettere in vendita libri per il mercatino del libro usato.</p>
-    <a href="<?php echo ROOT_URL . 'shop/?page=products-list'; ?>" class="btn btn-primary btn-lg mb-5 mt-3">Vai al Mercatino &raquo;</a>
+    <div class="mb-5 mt-3 d-flex flex-wrap" style="gap:12px;">
+      <a href="<?php echo ROOT_URL . '_tutorials/1-registrazione.html'; ?>" class="btn btn-outline-info btn-lg">Guarda come registrarsi</a>
+      <a href="<?php echo ROOT_URL . 'shop/?page=products-list'; ?>" class="btn btn-primary btn-lg">Vai al Mercatino &raquo;</a>
+    </div>
 
   </div>
 

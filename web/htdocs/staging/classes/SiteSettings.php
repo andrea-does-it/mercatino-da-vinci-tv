@@ -90,4 +90,18 @@ class SiteSettings {
     public static function totalMarkup() {
         return self::sellerDeduction() + self::buyerMarkup();
     }
+
+    /**
+     * Whether new account registrations are currently allowed.
+     */
+    public static function registrationsEnabled() {
+        return self::get('registrations_enabled', '1') === '1';
+    }
+
+    /**
+     * Whether adding books to the cart is currently allowed.
+     */
+    public static function cartEnabled() {
+        return self::get('cart_enabled', '1') === '1';
+    }
 }

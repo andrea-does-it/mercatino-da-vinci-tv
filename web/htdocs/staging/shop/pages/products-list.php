@@ -12,6 +12,13 @@
   }
 
   if (isset($_POST['add_to_cart'])) {
+    // Block adding to cart while the marketplace is not yet open.
+    if (!SiteSettings::cartEnabled()) {
+      $alertMsg = 'cart_closed';
+      echo "<script>location.href='".ROOT_URL."shop/?page=products-list&msg=$alertMsg';</script>";
+      exit;
+    }
+
     $productId = trim($_POST['id']);
 
     if (!is_numeric($productId)) {
@@ -57,6 +64,12 @@
 ?>
 
 <h1>Lista Libri Adottati</h1>
+
+<?php if (!SiteSettings::cartEnabled()) : ?>
+<div class="alert alert-info">
+  <strong>Le vendite non sono ancora aperte.</strong> Non è ancora possibile mettere in vendita i libri: le vendite apriranno appena sarà pronta la lista dei libri. Puoi comunque consultare l'elenco qui sotto.
+</div>
+<?php endif; ?>
 
 <p>
   <a href="<?php echo ROOT_URL; ?>public/docs/regolamento-mercatino-libri-usati-da-vinci.pdf" target="_blank" class="btn btn-outline-secondary btn-sm">
@@ -131,7 +144,11 @@
         <div class="card-footer">
           <div class="btn-group d-flex" role="group">
             <button class="btn btn-secondary btn-sm rounded-0" onclick="location.href='<?php echo $product->url; ?>'">Vedi</button>
-            <?php if (!$isOutOfStock) : ?>
+            <?php if (!SiteSettings::cartEnabled()) : ?>
+              <button class="btn btn-secondary btn-sm btn-block rounded-0 flex-grow-1" disabled>
+                Vendite non aperte
+              </button>
+            <?php elseif (!$isOutOfStock) : ?>
               <form method="post" class="flex-grow-1">
                 <input type="hidden" name="id" value="<?php echo esc_html($product->id); ?>">
                 <input data-id="<?php echo esc_html($product->id); ?>" name="add_to_cart" type="submit" class="btn btn-primary btn-sm btn-block rounded-0" value="Aggiungi Libro da Vendere">

@@ -74,7 +74,9 @@ if (isset($_GET['msg']) && !isset($_POST['login'])) {
     <input name="password" id="password" type="password" class="form-control" required>
   </div>
   <input class="btn btn-primary right" type="submit" value="Login" name="login">
+  <?php if (SiteSettings::registrationsEnabled()) : ?>
   <a class="underline" href="<?php echo ROOT_URL; ?>auth?page=register">Non hai un account? Registrati</a>
   <br>
+  <?php endif; ?>
   <a class="underline" href="<?php echo ROOT_URL; ?>auth?page=forgot-password">Hai dimenticato la password?</a>
 </form>

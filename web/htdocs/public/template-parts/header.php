@@ -151,6 +151,8 @@ $urlUtilities = new UrlUtilities('public');
               <div class="dropdown-divider"></div>
           <!--<a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=upgrade">Aggiornamento DB</a>
               <div class="dropdown-divider"></div>-->
+              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>_tutorials/3-libri-in-entrata.php">📖 Tutorial Presa in Carico</a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>auth?page=logout">Logout</a>
             </div>
           </li>
@@ -172,6 +174,8 @@ $urlUtilities = new UrlUtilities('public');
               <div class="dropdown-divider"></div>              
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=libri_venduti">Libri Venduti</a>
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>admin/?page=libri_per_pratica">Libri per Pratica</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>_tutorials/3-libri-in-entrata.php">📖 Tutorial Presa in Carico</a>
             </div>
           </li>
         </ul>
@@ -190,6 +194,8 @@ $urlUtilities = new UrlUtilities('public');
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>user?page=libri_da_vendere">Libri Disponibili per Acquisto</a>
               <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>_tutorials/2-vendita-libri.php">📖 Tutorial: Vendere i libri</a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>user?page=privacy"><i class="fas fa-shield-alt"></i> Gestione Privacy</a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="<?php echo ROOT_URL; ?>auth?page=logout">Logout</a>
@@ -203,7 +209,7 @@ $urlUtilities = new UrlUtilities('public');
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Area Riservata</a>
             <div class="dropdown-menu" aria-labelledby="dropdown01">
-              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>auth/index.php?page=login">Login / Registrazione</a>
+              <a class="dropdown-item" href="<?php echo ROOT_URL; ?>auth/index.php?page=login"><?php echo SiteSettings::registrationsEnabled() ? 'Login / Registrazione' : 'Login'; ?></a>
             </div>
           </li>
         </ul>

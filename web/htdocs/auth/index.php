@@ -20,6 +20,13 @@ if ($loggedInUser && $page != 'logout') {
     header('Location: ' . ROOT_URL);
     exit;
 }
+
+// Block new registrations (form display and submission) when disabled.
+// Login for existing users stays available.
+if ($page === 'register' && !SiteSettings::registrationsEnabled()) {
+    header('Location: ' . ROOT_URL . 'auth?page=login&msg=registrations_closed');
+    exit;
+}
 ?>
 
 <?php include 'template-parts/header.php'; ?>
