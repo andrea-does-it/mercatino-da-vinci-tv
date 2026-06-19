@@ -125,6 +125,7 @@ if ($error == false) {
   $shippingAddressStr .= "<strong>Città: Treviso </strong>" . $br;
   $message .= $shippingAddressStr . $br;
   $message .= $br . "Segui le info sul nostro sito per le date in cui poter consegnare i libri da mettere in vendita.";
+  $message .= $br . "Ti aspettiamo al mercatino per l'acquisizione dei libri che hai messo in vendita.";
 }
 
 send_mail($to, $subject, $message);
