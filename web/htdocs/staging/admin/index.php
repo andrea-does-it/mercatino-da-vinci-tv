@@ -23,7 +23,7 @@ $allowedPages = [
     'news-management', 'orders-list', 'orders-list_old', 'process-order',
     'process-order_old', 'process-order2', 'product', 'product_old',
     'products-list', 'profile', 'profiles-list', 'sales-transactions',
-    'sales-transaction-new', 'sales-transaction-view', 'seller-refunds',
+    'sales-transaction-new', 'sales-transaction-view', 'sales-transaction-receipt', 'seller-refunds',
     'seller-refund-view', 'seller-refund-newsletter', 'seller-refund-report', 'shipment', 'shipment-list',
     'site_utils', 'special-treatment', 'special-treatments-list', 'upgrade', 'user', 'users-list'
 ];
