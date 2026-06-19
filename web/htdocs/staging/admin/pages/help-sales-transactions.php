@@ -28,6 +28,18 @@
   </div>
 </div>
 
+<div class="card mb-4">
+  <div class="card-header bg-warning text-dark">
+    <i class="fas fa-lock"></i> Accesso Riservato
+  </div>
+  <div class="card-body">
+    <p>
+      La funzionalit&agrave; di <strong>Gestione Vendite</strong> &egrave; riservata agli <strong>amministratori</strong> e agli <strong>operatori esperti</strong> (user_type <code>admin</code> o <code>pwuser</code>).
+      I venditori ordinari (user_type <code>regular</code>) non hanno accesso a questa area e non possono creare, modificare o gestire transazioni di vendita.
+    </p>
+  </div>
+</div>
+
 <!-- Section: Daily Summary -->
 <div class="card mb-4">
   <div class="card-header"><i class="fas fa-chart-line"></i> Riepilogo Giornaliero</div>

@@ -4,6 +4,9 @@
     die;
   }
 
+  // Access control: reachable only via admin/index.php, which restricts to
+  // user_type 'admin' or 'pwuser'. Sellers (user_type 'regular') cannot operate sales.
+
   global $loggedInUser;
   global $alertMsg;
 
