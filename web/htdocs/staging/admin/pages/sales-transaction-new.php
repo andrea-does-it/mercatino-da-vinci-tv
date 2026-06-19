@@ -50,9 +50,12 @@
 
         if ($transactionId) {
           log_activity($loggedInUser->id, 'admin_sale_created', 'transaction_id: ' . $transactionId);
-          // Redirect to the confirmation receipt
-          $redirectUrl = ROOT_URL . 'admin/?page=sales-transaction-receipt&id=' . $transactionId . '&msg=created';
-          echo "<script>window.location.href = '" . esc_html($redirectUrl) . "';</script>";
+          // Redirect to the confirmation receipt.
+          // Note: the URL is emitted as a JavaScript string literal, so it must NOT be
+          // HTML-escaped (esc_html/htmlspecialchars would turn '&' into '&amp;', breaking
+          // the query-string separators so $_GET['id'] would never be set).
+          $redirectUrl = ROOT_URL . 'admin/?page=sales-transaction-receipt&id=' . (int)$transactionId . '&msg=created';
+          echo "<script>window.location.href = '" . $redirectUrl . "';</script>";
           exit;
         } else {
           $alertMsg = 'err';
