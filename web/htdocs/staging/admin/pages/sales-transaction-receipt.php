@@ -27,6 +27,8 @@
   <div class="alert alert-success">
     <i class="fas fa-check-circle"></i> Vendita registrata correttamente.
   </div>
+  <!-- La vendita e' stata creata: svuota il carrello persistito della pagina "Nuova Vendita". -->
+  <script>try { sessionStorage.removeItem('salesNewCart'); } catch (e) {}</script>
 <?php endif; ?>
 
 <div class="card">

@@ -226,7 +226,15 @@
 
 <script>
 $(document).ready(function() {
+  // Persist the cart in sessionStorage so a server-side search (which reloads the
+  // page via GET) does not wipe the books already selected.
+  const CART_KEY = 'salesNewCart';
   let cart = [];
+  try { cart = JSON.parse(sessionStorage.getItem(CART_KEY)) || []; } catch (e) { cart = []; }
+
+  function saveCart() {
+    try { sessionStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch (e) {}
+  }
 
   function updateCartDisplay() {
     const cartCount = cart.length;
@@ -292,6 +300,7 @@ $(document).ready(function() {
     };
 
     cart.push(item);
+    saveCart();
 
     // Hide the row from available list
     $('#available-' + id).addClass('table-success').find('.add-to-cart').prop('disabled', true).removeClass('btn-success').addClass('btn-secondary').html('<i class="fas fa-check"></i>');
@@ -308,8 +317,18 @@ $(document).ready(function() {
     $('#available-' + item.id).removeClass('table-success').find('.add-to-cart').prop('disabled', false).removeClass('btn-secondary').addClass('btn-success').html('<i class="fas fa-plus"></i>');
 
     cart.splice(index, 1);
+    saveCart();
     updateCartDisplay();
   });
+
+  // Restore the cart UI from any persisted selection (e.g. after a search reload):
+  // re-mark the rows of already-selected books that appear in the current list.
+  cart.forEach(function(item) {
+    $('#available-' + item.id).addClass('table-success').find('.add-to-cart')
+      .prop('disabled', true).removeClass('btn-success').addClass('btn-secondary')
+      .html('<i class="fas fa-check"></i>');
+  });
+  updateCartDisplay();
 
   // Initialize DataTable for available books
   if ($('#availableBooksTable tbody tr').length > 0) {
