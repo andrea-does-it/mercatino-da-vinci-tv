@@ -45,7 +45,10 @@ if (isset($_POST['add'])) {
   // $fl_esaurimento = isset($_POST['fl_esaurimento']) ? 1 : 0;
   $fl_esaurimento = (int)$_POST['fl_esaurimento'];
   $prezzo_listino = (isset($_POST['prezzo_listino']) && $_POST['prezzo_listino'] !== '') ? (float)$_POST['prezzo_listino'] : null;
-  $nascosto = isset($_POST['nascosto']) ? 1 : 0;
+  // Il JS postUnchecked() invia un hidden "nascosto=0" quando la checkbox e'
+  // deselezionata, quindi il campo e' SEMPRE presente: leggiamo il valore (0/1),
+  // non solo isset() (che restituirebbe sempre 1). Coerente con fl_esaurimento.
+  $nascosto = isset($_POST['nascosto']) ? (int)$_POST['nascosto'] : 0;
   $tmpDir = isset($_POST['tmpDir']) ? $_POST['tmpDir'] : NULL;
 
 
@@ -85,7 +88,10 @@ if (isset($_POST['update'])) {
   // $fl_esaurimento = isset($_POST['fl_esaurimento']) ? 1 : 0;
   $fl_esaurimento = (int)$_POST['fl_esaurimento'];
   $prezzo_listino = (isset($_POST['prezzo_listino']) && $_POST['prezzo_listino'] !== '') ? (float)$_POST['prezzo_listino'] : null;
-  $nascosto = isset($_POST['nascosto']) ? 1 : 0;
+  // Il JS postUnchecked() invia un hidden "nascosto=0" quando la checkbox e'
+  // deselezionata, quindi il campo e' SEMPRE presente: leggiamo il valore (0/1),
+  // non solo isset() (che restituirebbe sempre 1). Coerente con fl_esaurimento.
+  $nascosto = isset($_POST['nascosto']) ? (int)$_POST['nascosto'] : 0;
 
   if(isset($_POST['data_inizio_sconto']) && $_POST['data_inizio_sconto'] != ""){$data_inizio_sconto= $_POST['data_inizio_sconto'];}else{$data_inizio_sconto= "NULL";}
   if(isset($_POST['data_fine_sconto']) && $_POST['data_fine_sconto'] != ""){$data_fine_sconto= $_POST['data_fine_sconto'];}else{$data_fine_sconto= "NULL";}
