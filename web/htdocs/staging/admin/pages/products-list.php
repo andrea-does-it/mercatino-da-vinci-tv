@@ -24,6 +24,8 @@ $products = $mgr->getAll();
 ?>
 
 <a href="<?php echo ROOT_URL . 'admin/?page=product'; ?>" class="btn btn-primary mb-3">Aggiungi Libro</a>
+<a href="<?php echo ROOT_URL; ?>api/admin/products-export.php?format=csv" class="btn btn-outline-success mb-3"><i class="fas fa-file-csv"></i> Esporta CSV</a>
+<a href="<?php echo ROOT_URL; ?>api/admin/products-export.php?format=xls" class="btn btn-outline-success mb-3"><i class="fas fa-file-excel"></i> Esporta Excel</a>
 
 <h1>Elenco Libri Adottati</h1>
 
@@ -35,6 +37,9 @@ $products = $mgr->getAll();
       <th scope="col" class="big-screen">Titolo</th>
       <th scope="col" class="big-screen">Cod ISBN</th>
       <th scope="col">Prezzo</th>
+      <th scope="col" class="big-screen">Note Volumi</th>
+      <th scope="col">Esaurimento</th>
+      <th scope="col">Nascosto</th>
       <th scope="col" class="right">Azioni</th>
     </tr>
   </thead>
@@ -78,6 +83,9 @@ $products = $mgr->getAll();
                                 $category=$cat->GetCategory($product->category_id);echo esc_html($category->name); ?></td>-->
         <td class="big-screen"><?php echo esc_html($product->ISBN); ?></td>
         <td>€ <?php echo esc_html($product->price); ?></td>
+        <td class="big-screen"><?php echo esc_html($product->nota_volumi); ?></td>
+        <td><?php echo ($product->fl_esaurimento == 1) ? '<span class="badge badge-warning">In esaurimento</span>' : '<span class="badge badge-light">No</span>'; ?></td>
+        <td><?php echo ($product->nascosto == 1) ? '<span class="badge badge-secondary">Nascosto</span>' : '<span class="badge badge-success">Visibile</span>'; ?></td>
         <td class="col-lg-2">
           <form method="post" class="right">
             <input type="hidden" name="id" value="<?php echo esc_html($product->id); ?>">
