@@ -16,9 +16,10 @@ $format = (isset($_GET['format']) && strtolower($_GET['format']) === 'xls') ? 'x
 
 $mgr = new ProductManager();
 $catMgr = new CategoryManager();
+$imgMgr = new ProductImageManager();
 $products = $mgr->getAll();
 
-$headers = ['ID', 'Titolo', 'ISBN', 'Autori', 'Editore', 'Prezzo', 'Prezzo Listino', 'Note Volumi', 'In esaurimento', 'Nascosto', 'Categoria'];
+$headers = ['ID', 'Titolo', 'ISBN', 'Autori', 'Editore', 'Prezzo', 'Prezzo Listino', 'Note Volumi', 'In esaurimento', 'Nascosto', 'Categoria', 'File Immagini'];
 
 $rows = [];
 foreach ($products as $p) {
@@ -26,6 +27,12 @@ foreach ($products as $p) {
   if (!empty($p->category_id)) {
     $c = $catMgr->GetCategory($p->category_id);
     $catName = isset($c->name) ? $c->name : '';
+  }
+  // Nomi dei file immagine associati (cartella images/<product_id>/): utile per
+  // sapere quali libri hanno una copertina caricata.
+  $imgNames = [];
+  foreach ($imgMgr->getImages($p->id) as $img) {
+    $imgNames[] = $img->id . '.' . $img->image_extension;
   }
   $rows[] = [
     $p->id,
@@ -39,6 +46,7 @@ foreach ($products as $p) {
     ((int)$p->fl_esaurimento === 1) ? 'Si' : 'No',
     ((int)$p->nascosto === 1) ? 'Si' : 'No',
     $catName,
+    implode('; ', $imgNames),
   ];
 }
 
