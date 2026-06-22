@@ -368,6 +368,9 @@ var $document = $(document);
 var $subcatWrapper = $('#subcatWrapper');
 var $selectedSubcatIds = $('#selectedSubcatIds');
 var selectedIds = $selectedSubcatIds.val().split(',');
+// Token CSRF per le chiamate AJAX (upload/cancellazione immagini): senza di esso
+// gli endpoint con CSRF::validateAjaxOrDie() rispondono 403 e l'upload "non fa nulla".
+var csrfToken = '<?php echo CSRF::getTokenForAjax(); ?>';
 
 $document.ready(function() {
 
@@ -460,7 +463,7 @@ function createSubcategoriesList(data){
 function removeTempImages(){
   var tmpDir = $('#tmpDir').val();
     if (tmpDir != null && tmpDir != "") {
-      $.post('../api/admin/delete.php', {action: 'removeTempImages', tmpDir: tmpDir});
+      $.post('../api/admin/delete.php', {action: 'removeTempImages', tmpDir: tmpDir, csrf_token: csrfToken});
     }
 }
 
@@ -484,7 +487,8 @@ function saveImgDetails(e) {
     id: id,
     title: title,
     alt: alt,
-    order:order
+    order:order,
+    csrf_token: csrfToken
   };
   
   $.post('../api/admin/upload.php', postData, response => {
@@ -530,7 +534,7 @@ function deleteFile(e) {
 
   var $target = $(e.target);
   var imageId = $target.attr('data-id');
-  $.post('../api/admin/delete.php', {imageId: imageId}, response => {
+  $.post('../api/admin/delete.php', {imageId: imageId, csrf_token: csrfToken}, response => {
     $target.closest('.product-image').fadeOut('slow', function(){$(this).remove();});
   });
 }
@@ -549,6 +553,7 @@ function uploadFiles() {
 
   form_data.append('productId', productId);
   form_data.append('tmpDir', tmpDir);
+  form_data.append('csrf_token', csrfToken);
 
   $.each($img.prop('files'), function (index, file) {
     form_data.append('file-' + index, file);
