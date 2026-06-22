@@ -30,6 +30,20 @@ $products = $mgr->getAll();
 <h1>Elenco Libri Adottati</h1>
 
 <?php if (count($products) > 0) : ?>
+<div class="form-inline mb-3">
+  <label class="mr-2 font-weight-bold" for="filterEsaurimento">Esaurimento:</label>
+  <select id="filterEsaurimento" class="form-control mr-4">
+    <option value="">Tutti</option>
+    <option value="In esaurimento">In esaurimento</option>
+    <option value="No">No</option>
+  </select>
+  <label class="mr-2 font-weight-bold" for="filterNascosto">Nascosto:</label>
+  <select id="filterNascosto" class="form-control">
+    <option value="">Tutti</option>
+    <option value="Nascosto">Nascosto</option>
+    <option value="Visibile">Visibile</option>
+  </select>
+</div>
 <table id="table" class="table table-hover">
   <thead>
     <tr>
@@ -103,10 +117,18 @@ $products = $mgr->getAll();
 
 <script>
  $(document).ready(function() {
-    $('#table').DataTable({
+    var table = $('#table').DataTable({
       bLengthChange: false,
       pageLength: 10
     });
     $('.dataTables_scrollBody').css('height', '400px');
+
+    // Filtri rapidi sulle colonne Esaurimento (indice 5) e Nascosto (indice 6).
+    $('#filterEsaurimento').on('change', function() {
+      table.column(5).search(this.value).draw();
+    });
+    $('#filterNascosto').on('change', function() {
+      table.column(6).search(this.value).draw();
+    });
 } );
 </script>
