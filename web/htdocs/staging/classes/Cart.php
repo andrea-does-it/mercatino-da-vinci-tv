@@ -319,7 +319,7 @@ class OrderManager extends DBManager {
 
     public function getOrderItems($orderId){
       $result = $this->db->query("
-        SELECT 
+        SELECT
           o.id as order_id
           , o.status as order_status
           , o.numPratica as pratica
@@ -329,6 +329,7 @@ class OrderManager extends DBManager {
           , p.id as product_id
           , p.ISBN as product_ISBN
           , p.nota_volumi as product_nota_volumi
+          , ifnull(p.nascosto, 0) as product_nascosto
           , u.last_name as last_name
           , u.first_name as first_name
           , ifnull(oi.quantity, 0) as quantity
@@ -461,7 +462,8 @@ class OrderManager extends DBManager {
           INNER JOIN user as u
            ON u.id = o.user_id
         WHERE
-        oi.status = 'vendere';
+        oi.status = 'vendere'
+        AND p.nascosto = 0;
       ");
       //var_dump($result); die;
       return $result;
@@ -479,6 +481,7 @@ class OrderManager extends DBManager {
           , p.id as product_id
           , p.ISBN as product_ISBN
           , p.nota_volumi as product_nota_volumi
+          , ifnull(p.nascosto, 0) as product_nascosto
           , ifnull(oi.quantity, 0) as quantity
           , ifnull(oi.single_price, 0) as single_price
           , ifnull(oi.quantity, 0) * ifnull(oi.single_price, 0) as total_price

@@ -58,6 +58,21 @@
   // Handle "Accetta" button
   if (isset($_POST['vendere'])) {
     $id = trim($_POST['item_id']);
+
+    // Guard: un libro nascosto (product.nascosto = 1) non e' vendibile e quindi non
+    // puo' essere accettato. Verrebbe portato in stato 'vendere' ma resterebbe invisibile
+    // alla cassa (sales-transaction-new) e nell'elenco pubblico. Blocco lato server,
+    // a prescindere dall'interfaccia (bottone gia' rimosso per questi libri).
+    $itemToAccept = null;
+    foreach ($orderItems as $oi) {
+      if ((int)$oi['order_item_id'] === (int)$id) { $itemToAccept = $oi; break; }
+    }
+    if ($itemToAccept && !empty($itemToAccept['product_nascosto'])) {
+      $alertMsg = 'hidden_not_acceptable';
+      echo "<script>location.href='".ROOT_URL."admin?page=process-order&id=".$orderId."&msg=".$alertMsg."';</script>";
+      exit;
+    }
+
     $status = 'vendere';
     $orderMgr->updateStatusItem($id, $status);
     log_activity($loggedInUser->id, 'admin_order_item_accept', 'order_id: ' . $orderId . ', item_id: ' . $id);
@@ -87,6 +102,19 @@
   if (isset($_POST['termina_accettazione'])) {
     // Check if all items are in acceptable statuses (vendere or eliminato)
     $orderItems = $orderMgr->getOrderItems($orderId);
+
+    // Guard: nessun libro nascosto (product.nascosto = 1) puo' restare tra gli accettati
+    // ('vendere'), altrimenti la pratica verrebbe chiusa con un libro non vendibile alla
+    // cassa. Intercetta anche il caso in cui un libro sia stato nascosto DOPO l'accettazione
+    // del singolo item: blocca la chiusura finche' l'operatore non lo elimina.
+    foreach ($orderItems as $item) {
+      if ($item['order_item_status'] == 'vendere' && !empty($item['product_nascosto'])) {
+        $alertMsg = 'hidden_in_accepted';
+        echo "<script>location.href='".ROOT_URL."admin?page=process-order&id=".$orderId."&msg=".$alertMsg."';</script>";
+        exit;
+      }
+    }
+
     $allItemsProcessed = true;
     $hasAcceptedItems = false;
     $allItemsRejected = true;
@@ -260,9 +288,15 @@
       <th>Azioni</th>
     </tr>
   <?php foreach ($orderItemsAccettare as $item) : $count++; ?>
-    <tr>
+    <?php $isHidden = !empty($item['product_nascosto']); ?>
+    <tr<?php echo $isHidden ? ' class="table-warning"' : ''; ?>>
       <td class="big-screen"><?php echo $count; ?></td>
-      <td><?php echo esc_html($item['product_name']); ?></td>
+      <td>
+        <?php echo esc_html($item['product_name']); ?>
+        <?php if ($isHidden) : ?>
+          <span class="badge badge-danger ml-1"><i class="fas fa-eye-slash"></i> Libro nascosto &mdash; non vendibile</span>
+        <?php endif; ?>
+      </td>
       <td><?php echo esc_html($item['quantity']); ?></td>
       <td><?php echo esc_html($item['product_ISBN']); ?></td>
       <td><?php echo esc_html($item['product_nota_volumi']); ?></td>
@@ -272,10 +306,14 @@
           <input type="hidden" name="item_id" value="<?php echo esc_html($item['order_item_id']); ?>">
           <input name="delete" type="submit" class="btn btn-outline-danger btn-sm" value="Elimina">
         </form>
+        <?php if ($isHidden) : ?>
+          <span class="text-danger d-inline-block ml-1"><small>Non accettabile: elimina il libro.</small></span>
+        <?php else : ?>
         <form method="post" class="left d-inline">
           <input type="hidden" name="item_id" value="<?php echo esc_html($item['order_item_id']); ?>">
           <input name="vendere" type="submit" class="btn btn-outline-success btn-sm" value="Accetta">
         </form>
+        <?php endif; ?>
       </td>
     </tr>
   <?php endforeach; $count=0; ?>

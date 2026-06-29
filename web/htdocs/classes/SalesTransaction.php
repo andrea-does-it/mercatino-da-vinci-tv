@@ -112,6 +112,7 @@ class SalesTransactionManager extends DBManager {
             INNER JOIN user u ON o.user_id = u.id
             WHERE oi.status = 'vendere'
             AND o.numPratica > 0
+            AND p.nascosto = 0
             $searchCondition
             ORDER BY p.name ASC
         ";

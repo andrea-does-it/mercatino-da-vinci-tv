@@ -282,6 +282,18 @@ if ($alertMsg != '') {
       $msgBody = 'Non è ancora possibile mettere in vendita i libri. Le vendite apriranno appena sarà pronta la lista dei libri.';
       break;
 
+    case 'hidden_not_acceptable':
+      $cssClass = 'alert-danger';
+      $msgHeading = 'LIBRO NON ACCETTABILE';
+      $msgBody = 'Questo libro è nascosto e non è in vendita: non può essere accettato. Eliminalo dalla pratica e comunica al venditore che non può essere ritirato.';
+      break;
+
+    case 'hidden_in_accepted':
+      $cssClass = 'alert-danger';
+      $msgHeading = 'PRATICA NON CHIUDIBILE';
+      $msgBody = 'Tra i libri accettati c\'è un libro nascosto, non vendibile. Eliminalo dalla pratica prima di terminare l\'accettazione.';
+      break;
+
   }
 
 }
