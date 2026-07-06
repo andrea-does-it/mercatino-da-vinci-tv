@@ -400,9 +400,9 @@ $count = 0;
       <th><h4 class="inline right text-danger font-weight-bold">Importo Totale da dare al Venditore</h4></th>
     </tr>
     <tr>
-      <td><h4 class="inline right text-info font-weight-bold"><?php echo esc_html($orderTotalVenduto['total']); ?> €</h4></td>
-      <td><h4 class="inline right text-success font-weight-bold"><?php echo esc_html($orderTotalVenduto['total_com']); ?> €</h4></td>
-      <td><h4 class="inline right text-danger font-weight-bold"><?php echo esc_html($orderTotalVenduto['total_vend']); ?> €</h4></td>
+      <td><h4 class="inline right text-info font-weight-bold"><?php echo esc_html($orderTotalVenduto['total'] ?? 0); ?> €</h4></td>
+      <td><h4 class="inline right text-success font-weight-bold"><?php echo esc_html($orderTotalVenduto['total_com'] ?? 0); ?> €</h4></td>
+      <td><h4 class="inline right text-danger font-weight-bold"><?php echo esc_html($orderTotalVenduto['total_vend'] ?? 0); ?> €</h4></td>
     </tr>
 </table>
 
