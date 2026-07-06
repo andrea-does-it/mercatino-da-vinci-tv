@@ -268,11 +268,9 @@ class ProductManager extends DBManager {
           $params[] = (int)$productId;
       }
 
-      if ($search !== '') {
-          $conditions[] = "(p.name LIKE ? OR c.name LIKE ?)";
-          $searchTerm = '%' . $search . '%';
-          $params[] = $searchTerm;
-          $params[] = $searchTerm;
+      $searchClause = $this->_shopSearchClause($search, $params);
+      if ($searchClause !== null) {
+          $conditions[] = $searchClause;
       }
 
       if ($onlyVisible) {
@@ -313,7 +311,25 @@ class ProductManager extends DBManager {
    * @param int $categoryId The category ID to filter by (0 for all)
    * @return int Total count of products
    */
-  public function GetProductsCount($categoryId = 0) {
+  /**
+   * Costruisce la condizione di ricerca dello shop (titolo, ISBN, materia, autori).
+   * Aggiunge i parametri a $params (per riferimento) e restituisce la clausola SQL,
+   * oppure null se la ricerca e' vuota. La ricerca usa parametri preparati (LIKE ?).
+   */
+  private function _shopSearchClause($search, &$params) {
+      $search = trim((string)$search);
+      if ($search === '') {
+          return null;
+      }
+      $term = '%' . $search . '%';
+      $params[] = $term; // p.name
+      $params[] = $term; // p.ISBN
+      $params[] = $term; // c.name (materia)
+      $params[] = $term; // p.autori
+      return "(p.name LIKE ? OR p.ISBN LIKE ? OR c.name LIKE ? OR p.autori LIKE ?)";
+  }
+
+  public function GetProductsCount($categoryId = 0, $search = '') {
       $params = [];
       $conditions = ["p.nascosto = 0"]; // shop: esclude i libri nascosti
 
@@ -321,6 +337,12 @@ class ProductManager extends DBManager {
           $conditions[] = "p.category_id = ?";
           $params[] = (int)$categoryId;
       }
+
+      $searchClause = $this->_shopSearchClause($search, $params);
+      if ($searchClause !== null) {
+          $conditions[] = $searchClause;
+      }
+
       $whereClause = "WHERE " . implode(" AND ", $conditions);
 
       $query = "
@@ -342,7 +364,7 @@ class ProductManager extends DBManager {
    * @param int $limit Maximum number of records to return
    * @return array Array of product objects
    */
-  public function GetProductsPaginated($categoryId = 0, $offset = 0, $limit = 12) {
+  public function GetProductsPaginated($categoryId = 0, $offset = 0, $limit = 12, $search = '') {
       $params = [];
       $conditions = ["p.nascosto = 0"]; // shop: esclude i libri nascosti
 
@@ -350,6 +372,12 @@ class ProductManager extends DBManager {
           $conditions[] = "p.category_id = ?";
           $params[] = (int)$categoryId;
       }
+
+      $searchClause = $this->_shopSearchClause($search, $params);
+      if ($searchClause !== null) {
+          $conditions[] = $searchClause;
+      }
+
       $whereClause = "WHERE " . implode(" AND ", $conditions);
 
       $params[] = (int)$offset;

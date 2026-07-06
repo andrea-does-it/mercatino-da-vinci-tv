@@ -15,6 +15,15 @@
 
 `order_item.status` lifecycle: `accettare` → `vendere` → `venduto` (or `eliminato`).
 
+**Hidden-book guard (nascosto):** a book with `product.nascosto = 1` is not sellable, so it
+must not be accepted. `process-order.php` enforces this in depth: the "Libri da Accettare"
+row shows a red "Libro nascosto — non vendibile" badge and hides the **Accetta** button
+(only **Elimina** remains); the `vendere` POST handler refuses the transition server-side
+(`hidden_not_acceptable` alert); and **Termina accettazione** is blocked if any `vendere`
+item is hidden (`hidden_in_accepted` alert), catching the case where a book is hidden after
+its item was accepted. `getOrderItems`/`getOrderItemsAccettare` expose `product_nascosto`
+for this. (Sale-side lists already exclude hidden books — see §B and §D.)
+
 ## B. Selling at the till: **sales transactions** (current system)
 Replaces the old "mark each book venduto" flow.
 1. Operator opens **`sales-transaction-new.php`**, searches available books
@@ -55,7 +64,11 @@ Access: sales pages are admin/pwuser (gated by `admin/index.php`); there is **no
 ## D. Products & images
 - Catalog = adopted schoolbooks. Add/edit in `product.php`; list in `products-list.php`
   (columns incl. Note Volumi / Esaurimento / Nascosto; CSV+Excel export; quick filters).
-- `nascosto = 1` hides a product from the shop. `fl_esaurimento` flags low stock.
+- `nascosto = 1` hides a product from the shop **and from the whole sales chain**: it is
+  excluded from `shop/products-list`, the public `libri_da_vendere` list
+  (`OrderManager::getOrderItems4`), and the till's available-books query
+  (`SalesTransactionManager::getAvailableBooksForSale`), and it cannot be accepted in the
+  inbound flow (see §A, hidden-book guard). `fl_esaurimento` flags low stock.
 - **Images**: three coordinated pieces — a `product_images` row, the file
   `images/<product_id>/<image_id>.jpg`, and a generated thumbnail. The supported way to add
   one is the upload control on `product.php` → `api/admin/upload.php` (creates all three).
@@ -68,6 +81,14 @@ Access: sales pages are admin/pwuser (gated by `admin/index.php`); there is **no
   buyer markup), cart, checkout. Cart/registration availability is gated by
   `SiteSettings::cartEnabled()` / `registrationsEnabled()` (marketplace toggles). The
   shipping-method field on the cart is hidden (mercatino has no shipping).
+- **Catalog search** matches **titolo/ISBN/materia/autori** via one shared helper,
+  `ProductManager::_shopSearchClause()`. Two entry points use it:
+  - The `products-list.php` search box submits a GET `?search=` and filters server-side over
+    the whole catalog (`GetProductsCount`/`GetProductsPaginated` `$search` arg); pagination
+    links preserve `search`. (It used to be client-side JS over only the 12 cards on the
+    current page, so off-page books were "not found".)
+  - The navbar live-search (`#search` in `template-parts/header*.php` → `main.js` →
+    `api/shop/search-products.php` → `SearchProducts` → `_getProductsQuery`, 5 suggestions).
 - **Auth**: `auth/pages/register.php` (creates `regular` users; optional newsletter &
   donate-books opt-ins), login, password reset. User types: `regular`/`admin`/`pwuser`.
 - **Emails**: built as inline HTML and sent via `send_mail()` (PHPMailer/SMTP). Main ones:

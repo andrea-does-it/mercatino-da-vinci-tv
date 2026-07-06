@@ -52,15 +52,20 @@
   $page = isset($_GET['paged']) ? intval($_GET['paged']) : 1;
   $itemsPerPage = 12; // Can be adjusted based on preference
   $offset = ($page - 1) * $itemsPerPage;
-  
+
+  // Testo di ricerca (titolo, ISBN, materia, autori). Filtra lato database.
+  $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+  // Frammento da appendere ai link di paginazione per conservare la ricerca.
+  $searchParam = $search !== '' ? '&search=' . urlencode($search) : '';
+
   $pm = new ProductManager();
-  
+
   // Get total number of products for pagination
-  $totalProducts = $pm->GetProductsCount($categoryId);
+  $totalProducts = $pm->GetProductsCount($categoryId, $search);
   $totalPages = ceil($totalProducts / $itemsPerPage);
-  
+
   // Get only products for current page
-  $products = $pm->GetProductsPaginated($categoryId, $offset, $itemsPerPage);
+  $products = $pm->GetProductsPaginated($categoryId, $offset, $itemsPerPage, $search);
 ?>
 
 <h1>Lista Libri Adottati</h1>
@@ -170,10 +175,10 @@
     <ul class="pagination">
       <?php if ($page > 1) : ?>
         <li class="page-item">
-          <a class="page-link" href="<?php echo ROOT_URL . 'shop/?page=products-list&id=' . $categoryId . '&paged=1'; ?>">&laquo;</a>
+          <a class="page-link" href="<?php echo ROOT_URL . 'shop/?page=products-list&id=' . $categoryId . '&paged=1' . $searchParam; ?>">&laquo;</a>
         </li>
         <li class="page-item">
-          <a class="page-link" href="<?php echo ROOT_URL . 'shop/?page=products-list&id=' . $categoryId . '&paged=' . ($page - 1); ?>">&lsaquo;</a>
+          <a class="page-link" href="<?php echo ROOT_URL . 'shop/?page=products-list&id=' . $categoryId . '&paged=' . ($page - 1) . $searchParam; ?>">&lsaquo;</a>
         </li>
       <?php else : ?>
         <li class="page-item disabled">
@@ -200,16 +205,16 @@
       
       for ($i = $startPage; $i <= $endPage; $i++) : ?>
         <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
-          <a class="page-link" href="<?php echo ROOT_URL . 'shop/?page=products-list&id=' . $categoryId . '&paged=' . $i; ?>"><?php echo $i; ?></a>
+          <a class="page-link" href="<?php echo ROOT_URL . 'shop/?page=products-list&id=' . $categoryId . '&paged=' . $i . $searchParam; ?>"><?php echo $i; ?></a>
         </li>
       <?php endfor; ?>
       
       <?php if ($page < $totalPages) : ?>
         <li class="page-item">
-          <a class="page-link" href="<?php echo ROOT_URL . 'shop/?page=products-list&id=' . $categoryId . '&paged=' . ($page + 1); ?>">&rsaquo;</a>
+          <a class="page-link" href="<?php echo ROOT_URL . 'shop/?page=products-list&id=' . $categoryId . '&paged=' . ($page + 1) . $searchParam; ?>">&rsaquo;</a>
         </li>
         <li class="page-item">
-          <a class="page-link" href="<?php echo ROOT_URL . 'shop/?page=products-list&id=' . $categoryId . '&paged=' . $totalPages; ?>">&raquo;</a>
+          <a class="page-link" href="<?php echo ROOT_URL . 'shop/?page=products-list&id=' . $categoryId . '&paged=' . $totalPages . $searchParam; ?>">&raquo;</a>
         </li>
       <?php else : ?>
         <li class="page-item disabled">
@@ -223,19 +228,30 @@
   </nav>
 </div>
 
-<!-- Search functionality -->
-<div class="search-container mt-4 mb-4">
-  <div class="input-group">
-    <input type="text" id="product-search" class="form-control" placeholder="Cerca un libro...">
-    <div class="input-group-append">
-      <button class="btn btn-primary" id="search-button">Cerca</button>
-    </div>
-  </div>
-</div>
-
+<?php elseif ($search !== '') : ?>
+  <p>Nessun libro trovato per la ricerca &laquo;<?php echo esc_html($search); ?>&raquo;. Prova con un altro titolo, ISBN, materia o autore.</p>
 <?php else : ?>
   <p>Nessun libro disponibile...</p>
 <?php endif; ?>
+
+<!-- Ricerca lato server: titolo, ISBN, materia o autore su tutto il catalogo -->
+<div class="search-container mt-4 mb-4">
+  <form method="get" action="<?php echo ROOT_URL; ?>shop/">
+    <input type="hidden" name="page" value="products-list">
+    <?php if ($categoryId > 0) : ?>
+      <input type="hidden" name="id" value="<?php echo (int)$categoryId; ?>">
+    <?php endif; ?>
+    <div class="input-group">
+      <input type="text" name="search" id="product-search" class="form-control" placeholder="Cerca per titolo, ISBN, materia o autore..." value="<?php echo esc_html($search); ?>">
+      <div class="input-group-append">
+        <button class="btn btn-primary" type="submit" id="search-button">Cerca</button>
+        <?php if ($search !== '') : ?>
+          <a class="btn btn-outline-secondary" href="<?php echo ROOT_URL . 'shop/?page=products-list' . ($categoryId > 0 ? '&id=' . (int)$categoryId : ''); ?>">Azzera</a>
+        <?php endif; ?>
+      </div>
+    </div>
+  </form>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -250,33 +266,5 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
-  
-  // Search functionality
-  const searchInput = document.getElementById('product-search');
-  const searchButton = document.getElementById('search-button');
-  
-  if (searchButton && searchInput) {
-    searchButton.addEventListener('click', function() {
-      const searchTerm = searchInput.value.toLowerCase();
-      const cards = document.querySelectorAll('.product-card');
-      
-      cards.forEach(card => {
-        const title = card.querySelector('.card-title').textContent.toLowerCase();
-        const isbn = card.querySelector('.badge-info').textContent.toLowerCase();
-        
-        if (title.includes(searchTerm) || isbn.includes(searchTerm)) {
-          card.closest('.col-lg-4').style.display = '';
-        } else {
-          card.closest('.col-lg-4').style.display = 'none';
-        }
-      });
-    });
-    
-    searchInput.addEventListener('keyup', function(e) {
-      if (e.key === 'Enter') {
-        searchButton.click();
-      }
-    });
-  }
 });
 </script>
