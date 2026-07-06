@@ -335,7 +335,7 @@ $(document).ready(function() {
     $('#availableBooksTable').DataTable({
       paging: false,
       info: false,
-      order: [[1, 'asc']],
+      order: [[0, 'asc'], [1, 'asc']],
       language: {
         search: "Filtra:",
         zeroRecords: "Nessun libro trovato"

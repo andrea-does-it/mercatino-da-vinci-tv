@@ -114,7 +114,7 @@ class SalesTransactionManager extends DBManager {
             AND o.numPratica > 0
             AND p.nascosto = 0
             $searchCondition
-            ORDER BY p.name ASC
+            ORDER BY o.numPratica ASC, p.name ASC
         ";
 
         $results = $this->db->prepare($query, $params);
