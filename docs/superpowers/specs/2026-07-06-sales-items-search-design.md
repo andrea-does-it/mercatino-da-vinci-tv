@@ -49,7 +49,12 @@ WHERE p.ISBN = '...' AND o.numPratica = ...
 ### 2. Tabella risultati
 Colonne: Data/ora vendita, Vendita # (link a `sales-transaction-view&id=`), Libro (titolo),
 ISBN, Pratica (numPratica), Venditore, Prezzo (€), Metodo pagamento (badge come lista
-vendite), Stato (badge Attiva/Rimborsata).
+vendite), Stato (badge Attiva/Rimborsata), Azioni.
+
+- **Azioni:** bottone occhio (`btn-sm btn-info`, icona `fa-eye`) che apre
+  `admin/?page=sales-transaction-view&id=<sales_transaction_id>` — dal dettaglio di ogni
+  riga si arriva sempre alla scheda completa della vendita (stesso pattern della lista
+  vendite). Anche il numero in colonna "Vendita #" è linkato alla stessa pagina.
 
 - Un item è **rimborsato** se `sai.refunded_at IS NOT NULL OR st.refunded_at IS NOT NULL`
   (rimborso parziale o totale); riga evidenziata `table-danger` come nella lista vendite.
