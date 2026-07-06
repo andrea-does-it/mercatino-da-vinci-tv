@@ -114,12 +114,35 @@ class PdfUtilities extends Fpdf {
     $this->Cell(120, 8, $conv('Titolo'), 1, 0, 'L');
     $this->Cell(40, 8, $conv('Prezzo'), 1, 1, 'C');
 
-    // Items
+    // Items — the title is rendered with MultiCell so long titles wrap inside the
+    // 120mm column instead of overflowing into the Prezzo column (FPDF Cell does not
+    // wrap). Pratica and Prezzo are drawn at the row's full computed height so the
+    // three columns stay aligned.
     $this->SetFont('Arial', '', 11);
+    $lineH = 7;
     foreach ($items as $row) {
-      $this->Cell(20, 8, $conv($row->pratica), 1, 0, 'C');
-      $this->Cell(120, 8, $conv($row->product_name), 1, 0, 'L');
-      $this->Cell(40, 8, $eur . number_format((float)$row->price, 2, ',', '.'), 1, 1, 'R');
+      $title   = $conv($row->product_name);
+      $nbLines = max(1, $this->NbLines(120, $title));
+      $rowH    = $nbLines * $lineH;
+
+      // If the row would cross the page bottom, start a new page and re-print the header.
+      if ($this->GetY() + $rowH > $this->PageBreakTrigger) {
+        $this->AddPage($this->CurOrientation);
+        $this->SetFont('Arial', 'B', 11);
+        $this->Cell(20, 8, $conv('Pratica'), 1, 0, 'C');
+        $this->Cell(120, 8, $conv('Titolo'), 1, 0, 'L');
+        $this->Cell(40, 8, $conv('Prezzo'), 1, 1, 'C');
+        $this->SetFont('Arial', '', 11);
+      }
+
+      $x = $this->GetX();
+      $y = $this->GetY();
+
+      $this->Cell(20, $rowH, $conv($row->pratica), 1, 0, 'C');
+      $this->MultiCell(120, $lineH, $title, 1, 'L');
+      $this->SetXY($x + 140, $y);
+      $this->Cell(40, $rowH, $eur . number_format((float)$row->price, 2, ',', '.'), 1, 0, 'R');
+      $this->SetXY($x, $y + $rowH);
     }
 
     // Total
@@ -128,6 +151,60 @@ class PdfUtilities extends Fpdf {
     $this->Cell(40, 9, $eur . number_format((float)$transaction->total_amount, 2, ',', '.'), 1, 1, 'R');
 
     $this->Output();
+  }
+
+  /**
+   * Number of lines a string takes inside a MultiCell of the given width,
+   * replicating FPDF's word-wrap logic. Used to compute row heights so the
+   * other columns in the row can be drawn at the same height.
+   */
+  protected function NbLines($w, $txt) {
+    $cw = &$this->CurrentFont['cw'];
+    if ($w == 0) {
+      $w = $this->w - $this->rMargin - $this->x;
+    }
+    $wmax = ($w - 2 * $this->cMargin) * 1000 / $this->FontSize;
+    $s = str_replace("\r", '', (string)$txt);
+    $nb = strlen($s);
+    if ($nb > 0 && $s[$nb - 1] == "\n") {
+      $nb--;
+    }
+    $sep = -1;
+    $i = 0;
+    $j = 0;
+    $l = 0;
+    $nl = 1;
+    while ($i < $nb) {
+      $c = $s[$i];
+      if ($c == "\n") {
+        $i++;
+        $sep = -1;
+        $j = $i;
+        $l = 0;
+        $nl++;
+        continue;
+      }
+      if ($c == ' ') {
+        $sep = $i;
+      }
+      $l += $cw[$c];
+      if ($l > $wmax) {
+        if ($sep == -1) {
+          if ($i == $j) {
+            $i++;
+          }
+        } else {
+          $i = $sep + 1;
+        }
+        $sep = -1;
+        $j = $i;
+        $l = 0;
+        $nl++;
+      } else {
+        $i++;
+      }
+    }
+    return $nl;
   }
 
 }
