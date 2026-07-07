@@ -97,6 +97,9 @@
 <div class="card mb-4">
   <div class="card-header">
     <i class="fas fa-filter"></i> Filtri
+    <a href="<?php echo ROOT_URL; ?>admin/?page=sales-items-search" class="btn btn-sm btn-outline-primary float-right">
+      <i class="fas fa-search-plus"></i> Ricerca dettagliata
+    </a>
   </div>
   <div class="card-body">
     <form method="get" class="form-inline">
