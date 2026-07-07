@@ -109,11 +109,35 @@
       $mail->Body    = $htmlBody;
 
       $mail->send();
+      log_email_activity('email_sent', $to, $subject);
       return true;
     } catch (PHPMailer\PHPMailer\Exception $e) {
       if (!$debug) {
         $errorMsg = $mail->ErrorInfo;
       }
+      log_email_activity('email_failed', $to, $subject, $mail->ErrorInfo);
       return false;
     }
+  }
+
+  /**
+   * Registra un invio email (riuscito o fallito) nel registro attività.
+   * Il campo detail è lungo max 500 caratteri: l'oggetto va per ultimo
+   * così un eventuale taglio non elimina destinatario e server SMTP.
+   *
+   * @param string      $action  'email_sent' | 'email_failed'
+   * @param string      $to      Indirizzo destinatario
+   * @param string      $subject Oggetto dell'email
+   * @param string|null $error   Messaggio d'errore SMTP (solo per i fallimenti)
+   */
+  function log_email_activity($action, $to, $subject, $error = null) {
+    global $loggedInUser;
+
+    $detail = 'a: ' . $to . '; smtp: ' . SMTP_HOST;
+    if ($error !== null && $error !== '') {
+      $detail .= '; errore: ' . substr($error, 0, 150);
+    }
+    $detail .= '; oggetto: ' . $subject;
+
+    log_activity($loggedInUser ? $loggedInUser->id : null, $action, $detail);
   }

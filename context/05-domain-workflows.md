@@ -102,7 +102,10 @@ Access: sales pages are admin/pwuser (gated by `admin/index.php`); there is **no
 - **Emails**: built as inline HTML and sent via `send_mail()` (PHPMailer/SMTP). Main ones:
   order-submission confirmation (`checkout.php`) and pratica acceptance
   (`Cart.php::sendAcceptanceEmail`). UI/email copy is Italian, "tu" form, and includes a
-  "check your SPAM folder" notice.
+  "check your SPAM folder" notice. Every send is recorded in the **activity log**
+  (`user_activity_log`) by `send_mail()` itself via `log_email_activity()`: action
+  `email_sent`/`email_failed`, detail `a: <dest>; smtp: <host>[; errore: …]; oggetto: <subject>`
+  (subject last so the 500-char truncation never drops recipient/server).
 
 ## F. Email massive agli ordini (mail merge) — site_utils
 Da `admin/?page=site_utils&tab=email_orders` l'admin filtra gli ordini (stato+anno,
