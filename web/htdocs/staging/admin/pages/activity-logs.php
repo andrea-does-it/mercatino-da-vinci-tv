@@ -39,7 +39,8 @@ $logs = $actLog->getAllLogs(500, 0);
             <td><?php echo $row['email'] ? htmlspecialchars($row['email']) : '<span class="text-muted">—</span>'; ?></td>
             <td><span class="badge badge-secondary"><?php echo htmlspecialchars($row['action']); ?></span></td>
             <td class="small text-muted"><?php echo htmlspecialchars($row['detail'] ?? ''); ?></td>
-            <td class="text-nowrap"><?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($row['created_at']))); ?></td>
+            <?php /* data-order: senza timestamp DataTables ordina la data dd/mm/yyyy come stringa */ ?>
+            <td class="text-nowrap" data-order="<?php echo (int)strtotime($row['created_at']); ?>"><?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($row['created_at']))); ?></td>
         </tr>
         <?php endforeach; ?>
     </tbody>

@@ -54,6 +54,10 @@
    has image carousels/action buttons that would pollute the output). Add a UTF-8 BOM so
    Excel shows accents; the "Excel" button can stream an HTML `<table>` as
    `application/vnd.ms-excel`.
+7. **DataTables sorts `dd/mm/yyyy` dates as strings.** Type detection fails on day > 12, so
+   `order: [[col,'desc']]` puts day 30/31 of ANY month on top — a log can look "stopped
+   a week ago" right after a month change (this fooled us on the staging activity log).
+   Emit `data-order="<?php echo strtotime($dt); ?>"` on the `<td>` so sorting is chronological.
 
 ## Environment realities
 - **No test suite**; `php` is often not on PATH locally. Verify by reading code + manual
