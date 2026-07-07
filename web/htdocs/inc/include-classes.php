@@ -26,3 +26,5 @@
   require_once ROOT_PATH . 'classes/SellerRefund.php';
   require_once ROOT_PATH . 'classes/SiteSettings.php';
   require_once ROOT_PATH . 'classes/ActivityLog.php';
+  require_once ROOT_PATH . 'classes/EmailTemplate.php';
+  require_once ROOT_PATH . 'classes/OrderEmail.php';
