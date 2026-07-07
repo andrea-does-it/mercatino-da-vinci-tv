@@ -14,8 +14,12 @@
 
   // ── Determine active tab ────────────────────────────────────────────────────
   $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'email';
-  if (!in_array($activeTab, ['email', 'sql', 'settings'], true)) {
+  if (!in_array($activeTab, ['email', 'sql', 'settings', 'email_orders', 'email_templates'], true)) {
     $activeTab = 'email';
+  }
+  // I POST dei tab inclusi non portano ?tab=: deducilo dal marker del form.
+  if (isset($_POST['save_template']) || isset($_POST['delete_template'])) {
+    $activeTab = 'email_templates';
   }
 
   // ── EMAIL HANDLER ───────────────────────────────────────────────────────────
@@ -158,6 +162,12 @@
     <a class="nav-link <?php echo $activeTab === 'settings' ? 'active' : ''; ?>"
        data-toggle="tab" href="#tab-settings" role="tab">
       <i class="fas fa-cog mr-1"></i> Impostazioni
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link <?php echo $activeTab === 'email_templates' ? 'active' : ''; ?>"
+       data-toggle="tab" href="#tab-email-templates" role="tab">
+      <i class="fas fa-file-alt mr-1"></i> Template Email
     </a>
   </li>
 </ul>
@@ -452,6 +462,11 @@
       </button>
     </form>
 
+  </div>
+
+  <!-- ══ TAB: TEMPLATE EMAIL ═════════════════════════════════════════════════ -->
+  <div class="tab-pane fade <?php echo $activeTab === 'email_templates' ? 'show active' : ''; ?>" id="tab-email-templates" role="tabpanel">
+    <?php include __DIR__ . '/site_utils_email_templates.php'; ?>
   </div>
 
 </div>
