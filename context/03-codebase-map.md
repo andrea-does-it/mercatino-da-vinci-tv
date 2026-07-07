@@ -30,6 +30,7 @@ All paths are under `web/htdocs/` (mirror everything in `web/htdocs/staging/`).
 | `SiteSettings.php` | Configurable settings: pricing (`sellerDeduction`, `buyerMarkup`, `totalMarkup`) and toggles (`registrationsEnabled`, `cartEnabled`). |
 | `CSRF.php` | Token generation/validation: `validateToken`, `validateAjaxOrDie`, `getTokenForAjax`, `tokenField` (via `csrf_field()`). |
 | `Category.php`, `Shipment.php`, `Profile.php`, `SpecialTreatment.php` | Catalog categories, shipment methods, user profiles, special pricing treatments. |
+| `EmailTemplate.php`, `OrderEmail.php` | `EmailTemplateManager` (CRUD tabella `email_template`); `OrderEmailManager` (ricerca ordini per filtri, merge segnaposto, log invii in `order_email_log`). Usati dai tab "Email Ordini"/"Template Email" di site_utils. |
 | `NewsManager.php`, `DownloadManager.php`, `ActivityLog.php`, `Email.php` | News, downloads, user activity logging, email helper. |
 | `Encryption.php` | AES-256-GCM (used to encrypt IBANs). |
 | `Upgrade.php` | In-app upgrade/maintenance helpers. |
@@ -54,7 +55,10 @@ All paths are under `web/htdocs/` (mirror everything in `web/htdocs/staging/`).
 - **Deprecated old sale flow (kept but removed from menu):** `libri_da_vendere.php`,
   `calcolo_vendita.php`, `incasso_vendita.php`, `libri_venduti.php`.
 - **Other:** `dashboard.php`, `users-list.php`/`user.php`, `news-management.php`,
-  `download-management.php`, `activity-logs.php`, `site_utils.php`.
+  `download-management.php`, `activity-logs.php`. **`site_utils.php`** has five tabs:
+  Email di Test, Esecuzione SQL, Impostazioni, Email Ordini, Template Email; the last
+  two are partials `site_utils_email_orders.php` / `site_utils_email_templates.php`
+  included by `site_utils.php` (not routed pages, not in the admin whitelist).
 - Files suffixed `_old` / `- senzavolumi` / `process-order2` are legacy backups — ignore.
 
 ## APIs (`api/admin/`)
@@ -65,6 +69,7 @@ All paths are under `web/htdocs/` (mirror everything in `web/htdocs/staging/`).
 | `categories.php` | Subcategory lookups | admin |
 | `import-libri.php` | Bulk import (create products, fetch covers); update-existing mode does NOT touch images | admin |
 | `products-export.php` | CSV/Excel export of the books list (incl. image-file column) | admin/pwuser |
+| `send-order-email.php` | POST, CSRF ajax; send/preview one mail-merge email per order; logs to `order_email_log` | admin |
 
 Standalone (not under `api/`): `shop/invoices/print-invoice.php` (old pratica receipt) and
 `shop/invoices/print-sales-receipt.php` (sales-transaction PDF receipt).

@@ -103,3 +103,14 @@ Access: sales pages are admin/pwuser (gated by `admin/index.php`); there is **no
   order-submission confirmation (`checkout.php`) and pratica acceptance
   (`Cart.php::sendAcceptanceEmail`). UI/email copy is Italian, "tu" form, and includes a
   "check your SPAM folder" notice.
+
+## F. Email massive agli ordini (mail merge) — site_utils
+Da `admin/?page=site_utils&tab=email_orders` l'admin filtra gli ordini (stato+anno,
+libro contenuto, elenco pratiche incollato, o SELECT libera che restituisce id ordine),
+seleziona le righe (una email per ordine, al venditore), sceglie un template dal tab
+"Template Email" o scrive oggetto/corpo a mano con segnaposto, vede l'anteprima e invia.
+L'invio è sequenziale via AJAX (`api/admin/send-order-email.php`, una richiesta per
+ordine) con barra di progresso; ogni invio riuscito è registrato in `order_email_log`
+e la lista mostra un badge "già inviata" (avviso, non bloccante). Il merge avviene sul
+testo semplice PRIMA dell'escape (`nl2br(esc_html())` + shell HTML come la newsletter
+rimborsi), quindi i dati non possono iniettare HTML.

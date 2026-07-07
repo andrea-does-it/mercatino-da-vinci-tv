@@ -36,8 +36,10 @@ These predate the 2026 sales-transaction work but remain useful for breadth:
 `../docs/database_schema.md`, `../docs/api_documentation.md`.
 Where they conflict with this folder, **this folder wins** (it is current).
 
-## Status snapshot (2026-06)
+## Status snapshot (2026-07)
 The transaction-based sales management is live (replacing the old per-item "venduto"
 flow), the `donate_books` profile preference exists, product admin has hidden/esaurimento
 columns + CSV/Excel export + filters, and all DB migrations through `202606220001` are
-applied in production. History is on `main`.
+applied in production. History is on `main`. site_utils ha i tab "Email Ordini" (mail merge
+verso i venditori delle pratiche filtrate, log in `order_email_log`) e "Template Email";
+la migrazione `202607070001` esiste nel repo ma va applicata a mano su ogni ambiente.

@@ -58,6 +58,15 @@ Per-seller, per-year payout record used by the closing report: `user_id`, `year`
 Key/value configuration read by `SiteSettings` (pricing markups, `registrations_enabled`,
 `cart_enabled`, …).
 
+### `email_template` and `order_email_log` (Email Ordini)
+- `email_template`: `id`, `name`, `subject`, `body` (testo semplice con segnaposto
+  `{nome}`, `{num_pratica}`, `{elenco_libri}`, ...), timestamps. Gestita dal tab
+  "Template Email" di site_utils.
+- `order_email_log`: `id`, `order_id`, `template_id` (NULL se testo ad-hoc o template
+  eliminato — nessuna FK), `recipient_email`, `subject` (copia del merged), `sent_at`,
+  `sent_by` (admin). Alimenta l'avviso "già inviata" del tab "Email Ordini".
+- Migrazione: `202607070001_email_template_e_log.sql`.
+
 ### Others
 `category`, `cart`/`cart_item`, `shipment`, `news`, `download`, `user_activity_log`,
 `profile`, `special_treatment`.
