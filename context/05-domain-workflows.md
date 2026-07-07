@@ -42,6 +42,14 @@ Replaces the old "mark each book venduto" flow.
    `sales_transaction(_item).refunded_at/by/notes`, restore `order_item.status = vendere`
    (book becomes available again — register a new sale from "Nuova Vendita").
 
+**Detailed search** (`sales-items-search.php`, "Ricerca dettagliata" button in the Filtri
+card of `sales-transactions.php`): item-level search — one row per copy sold — joining
+`sales_transaction_item → order_item → orders → product` (+ seller/operator users).
+Filters on book (ISBN/titolo/autori/editore), pratica (numPratica/venditore) and
+transaction (id/metodo/date/operatore/descrizione/stato/prezzo). Backed by
+`SalesTransactionManager::searchSoldItems()` / `searchSoldItemsTotals()`; an item counts
+as refunded when either the item or its whole transaction is refunded.
+
 Access: sales pages are admin/pwuser (gated by `admin/index.php`); there is **no special
 "mercatino" user type** — sellers are `regular` and never reach these pages.
 

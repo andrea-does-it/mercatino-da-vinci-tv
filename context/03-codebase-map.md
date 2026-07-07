@@ -41,7 +41,9 @@ All paths are under `web/htdocs/` (mirror everything in `web/htdocs/staging/`).
 ## Key admin pages (`admin/pages/`)
 - **Sales (current):** `sales-transactions.php` (dashboard), `sales-transaction-new.php`
   (create sale), `sales-transaction-view.php` (detail + refunds),
-  `sales-transaction-receipt.php` (confirmation → PDF). Help: `help-sales-transactions.php`.
+  `sales-transaction-receipt.php` (confirmation → PDF), `sales-items-search.php`
+  (Ricerca dettagliata: item-level search, one row per copy sold, filters on book/
+  pratica/seller/transaction; linked from the Filtri card). Help: `help-sales-transactions.php`.
 - **Pratiche (acceptance/pickup):** `orders-list.php`, `process-order.php`,
   `libri_per_pratica.php`, `libri_per_pratica_item.php`.
 - **Seller payouts/closing:** `seller-refunds.php`, `seller-refund-view.php`,
