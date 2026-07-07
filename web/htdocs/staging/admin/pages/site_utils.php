@@ -165,6 +165,12 @@
     </a>
   </li>
   <li class="nav-item">
+    <a class="nav-link <?php echo $activeTab === 'email_orders' ? 'active' : ''; ?>"
+       data-toggle="tab" href="#tab-email-orders" role="tab">
+      <i class="fas fa-mail-bulk mr-1"></i> Email Ordini
+    </a>
+  </li>
+  <li class="nav-item">
     <a class="nav-link <?php echo $activeTab === 'email_templates' ? 'active' : ''; ?>"
        data-toggle="tab" href="#tab-email-templates" role="tab">
       <i class="fas fa-file-alt mr-1"></i> Template Email
@@ -462,6 +468,11 @@
       </button>
     </form>
 
+  </div>
+
+  <!-- ══ TAB: EMAIL ORDINI ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="tab-pane fade <?php echo $activeTab === 'email_orders' ? 'show active' : ''; ?>" id="tab-email-orders" role="tabpanel">
+    <?php include __DIR__ . '/site_utils_email_orders.php'; ?>
   </div>
 
   <!-- ══ TAB: TEMPLATE EMAIL ═════════════════════════════════════════════════ -->
