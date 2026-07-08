@@ -6,3 +6,15 @@ RewriteRule ^payment-preference$ payment-preference.php [L,QSA]
 RewriteRule ^category/([0-9]+)-([a-z0-9-]+)/?$ shop?page=products-list&id=$1&slug=$2
 RewriteRule ^product/([0-9]+)-([a-z0-9-]+)/?$ shop?page=view-product&id=$1
 
+# --- Sicurezza: blocca l'accesso web a file sensibili ---
+# File nascosti (.env, .env.example, .git, .htpasswd, ...)
+<FilesMatch "^\.">
+    Order Allow,Deny
+    Deny from All
+</FilesMatch>
+# Manifest delle dipendenze e file di backup/dump/config
+<FilesMatch "\.(bak|old|orig|save|swp|sql|log|ini|sh|dist)$|^composer\.(json|lock)$">
+    Order Allow,Deny
+    Deny from All
+</FilesMatch>
+

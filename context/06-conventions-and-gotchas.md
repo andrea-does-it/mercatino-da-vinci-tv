@@ -66,6 +66,13 @@
 - **Deploy is manual** (FTP/sync by the maintainer). Pushing ≠ deploying; touching files
   bumps mtimes so a sync re-uploads them.
 - New admin page → add its slug to `$allowedPages` in `admin/index.php` (both trees).
+- **Secrets must not be web-served.** `.env` lives in the web root, so the root `.htaccess`
+  denies dotfiles (`^\.`) plus `composer.json`/backup/dump extensions using the same
+  `Order Allow,Deny` / `Deny from All` style as `sql/` + `jobs/` (Apache runs behind nginx
+  and honours `.htaccess`). A publicly downloadable `.env` was a real incident — if you add
+  secret files, keep them outside the docroot or covered by that deny, and never rely on
+  obscurity. Rotating a leaked secret means rotating it at the source too (DB/SMTP/PayPal),
+  and rotating `ENCRYPTION_KEY` requires re-encrypting stored IBANs.
 
 ## Git workflow that's been used here
 Feature work on a branch, mirrored prod+staging per change, then fast-forward merge to
