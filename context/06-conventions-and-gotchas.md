@@ -73,6 +73,14 @@
   secret files, keep them outside the docroot or covered by that deny, and never rely on
   obscurity. Rotating a leaked secret means rotating it at the source too (DB/SMTP/PayPal),
   and rotating `ENCRYPTION_KEY` requires re-encrypting stored IBANs.
+- **Sessioni & HTTPS** (`inc/authorize.php`, entrambi i tree): il bootstrap invia gli
+  header di sicurezza (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`,
+  `Referrer-Policy`), imposta il cookie di sessione `HttpOnly` + `SameSite=Lax` (e `Secure`
+  + HSTS quando la richiesta è https), e reindirizza in https le GET/HEAD arrivate in
+  chiaro. **La rilevazione https NON si fida di `%{HTTPS}` di Apache** (dietro nginx risulta
+  spesso `off`, tanto che i redirect di `mod_dir` escono in `http://`): usa
+  `X-Forwarded-Proto` / porta 443, perciò l'enforcement va fatto in PHP, non con una regola
+  `.htaccess` su `%{HTTPS}` (che andrebbe in loop).
 
 ## Git workflow that's been used here
 Feature work on a branch, mirrored prod+staging per change, then fast-forward merge to
