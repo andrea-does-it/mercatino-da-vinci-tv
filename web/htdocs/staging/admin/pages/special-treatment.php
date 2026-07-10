@@ -4,6 +4,8 @@ if (! defined('ROOT_URL')) {
   die;
 }
 
+CSRF::validateOrDie();
+
 $stm = new SpecialTreatmentManager();
 $treatmentTypes = $stm->GetTypes();
 $st = new SpecialTreatment(0, '', '', '');
@@ -80,6 +82,7 @@ if (isset($_POST['update'])) {
 <h1><?php echo esc_html($lblAction); ?> Trattamento Speciale</h1>
 
 <form method="post" class="mt-2">
+  <?php csrf_field(); ?>
 
   <div class="form-group">
     <label for="name">Nome</label>

@@ -5,6 +5,8 @@
     die;
   }
 
+  CSRF::validateOrDie();
+
   global $loggedInUser;
   $stm = new ProfileManager();
   if (isset($_POST['delete'])) {
@@ -42,6 +44,7 @@
       <td><?php echo esc_html(count($profile->treatments_count)); ?></td>
       <td>
         <form method="post" class="inline" >
+          <?php csrf_field(); ?>
           <input type="hidden" name="id" value="<?php echo esc_html($profile->id); ?>">
           <input name="delete" onclick="return confirm('Procedere ad eliminare?');" type="submit" class="btn btn-outline-danger btn-sm" value="Elimina">
         </form>

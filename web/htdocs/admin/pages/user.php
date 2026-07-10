@@ -4,6 +4,8 @@ if (! defined('ROOT_URL')) {
   die;
 }
 
+CSRF::validateOrDie();
+
 global $alertMsg;
 $mgr = new UserManager();
 $user = new User(0, '', '', '', '');
@@ -82,6 +84,7 @@ if (isset($_POST['update'])) {
 <h1><?php echo esc_html($lblAction); ?> Utente</h1>
 
 <form method="post" class="mt-5">
+  <?php csrf_field(); ?>
   <div class="form-group">
     <label for="first_name">Nome</label>
     <input name="first_name" id="first_name" type="text" class="form-control" value="<?php echo esc_html($user->first_name); ?>">

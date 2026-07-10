@@ -4,6 +4,8 @@ if (! defined('ROOT_URL')) {
   die;
 }
 
+CSRF::validateOrDie();
+
 $cm = new CartManager();
 $cat= new CategoryManager();
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -102,6 +104,7 @@ $products = $mgr->getAll();
         <td><?php echo ($product->nascosto == 1) ? '<span class="badge badge-secondary">Nascosto</span>' : '<span class="badge badge-success">Visibile</span>'; ?></td>
         <td class="col-lg-2">
           <form method="post" class="right">
+            <?php csrf_field(); ?>
             <input type="hidden" name="id" value="<?php echo esc_html($product->id); ?>">
             <input name="delete" onclick="return confirm('Procedere ad eliminare?');" type="submit" class="btn btn-outline-danger btn-sm" value="Elimina">
           </form>

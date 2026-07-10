@@ -5,6 +5,8 @@
     die;
   }
 
+  CSRF::validateOrDie();
+
   global $loggedInUser;
   $cm = new CategoryManager();
   if (isset($_POST['delete'])) {
@@ -36,6 +38,7 @@
       <td><?php echo esc_html($category->name); ?></td>
       <td>
         <form method="post" class="inline" >
+          <?php csrf_field(); ?>
           <input type="hidden" name="id" value="<?php echo esc_html($category->id); ?>">
           <input name="delete" onclick="return confirm('Procedere ad eliminare?');" type="submit" class="btn btn-outline-danger btn-sm" value="Elimina">
         </form>

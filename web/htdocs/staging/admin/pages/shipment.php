@@ -4,6 +4,8 @@ if (! defined('ROOT_URL')) {
   die;
 }
 
+CSRF::validateOrDie();
+
 $ship = new ShipmentManager();
 $shipment = new Shipment(0, '','');
 
@@ -69,6 +71,7 @@ if (isset($_POST['add'])) {
 <h1><?php echo esc_html($lblAction); ?> Spedizione</h1>
 
 <form method="post" class="mt-2">
+  <?php csrf_field(); ?>
   <div class="form-group">
     <label for="name">Nome</label>
     <input name="name" id="name" type="text" class="form-control" value="<?php echo esc_html($shipment->name); ?>">

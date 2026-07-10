@@ -102,13 +102,31 @@ class CSRF {
         }
 
         if (!self::validateToken()) {
-            if ($redirectUrl) {
-                header('Location: ' . $redirectUrl);
+            // Destinazione di default: dashboard admin con messaggio d'errore.
+            if ($redirectUrl === null && defined('ROOT_URL')) {
+                $redirectUrl = ROOT_URL . 'admin/?msg=csrf_error';
+            }
+
+            // Se l'output non e' ancora iniziato, usa header()/http_response_code().
+            if (!headers_sent()) {
+                if ($redirectUrl) {
+                    header('Location: ' . $redirectUrl);
+                } else {
+                    http_response_code(403);
+                    echo 'CSRF token validation failed. Please refresh the page and try again.';
+                }
                 exit;
             }
 
-            http_response_code(403);
-            die('CSRF token validation failed. Please refresh the page and try again.');
+            // Output gia' iniziato (es. il controller admin e' incluso dopo header.php):
+            // redirect lato client, senza header()/http_response_code() che
+            // genererebbero un warning "headers already sent".
+            if ($redirectUrl) {
+                echo '<script>location.href=' . json_encode($redirectUrl) . ';</script>';
+            } else {
+                echo 'CSRF token validation failed. Please refresh the page and try again.';
+            }
+            exit;
         }
     }
 

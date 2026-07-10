@@ -4,6 +4,8 @@ if (! defined('ROOT_URL')) {
   die;
 }
 
+CSRF::validateOrDie();
+
 $ctm = new CategoryManager();
 $categories = $ctm->GetCategories();
 $category = new Category(0, '','', '', null);
@@ -78,6 +80,7 @@ if (isset($_POST['add'])) {
 <h1><?php echo esc_html($lblAction); ?> Categoria</h1>
 
 <form method="post" class="mt-2">
+  <?php csrf_field(); ?>
   <div class="form-group">
     <label for="name">Nome</label>
     <input name="name" id="name" type="text" class="form-control" value="<?php echo esc_html($category->name); ?>">

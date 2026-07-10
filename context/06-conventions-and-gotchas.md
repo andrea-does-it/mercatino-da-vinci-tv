@@ -26,6 +26,16 @@
   upload silently 403'd for a long time because its AJAX calls sent no `csrf_token` and had
   no error handler. Pattern to copy: `var csrfToken = '<?php echo CSRF::getTokenForAjax(); ?>';`
   then add `csrf_token: csrfToken` (or `form_data.append('csrf_token', csrfToken)`).
+- **Admin page controllers** (routed via `admin/index.php`, `include`d *after* `header.php`)
+  proteggono le POST con `CSRF::validateOrDie()` subito dopo la guardia di accesso diretto,
+  e i loro form includono `csrf_field()`. `validateOrDie()` è **output-safe**: se l'output è
+  già iniziato (com'è sempre nell'area admin, dato che l'header è già stampato) fa un
+  redirect lato client a `?msg=csrf_error`, invece di `http_response_code()`/`header()` che
+  darebbero un warning *"headers already sent"*.
+- **Trap di deploy CSRF:** un deploy *parziale* in cui l'enforcement è già online ma i form
+  aggiornati (con `csrf_field()`) non sono ancora stati sincronizzati fa fallire **ogni** POST
+  admin con `csrf_error` (il token non è nel form). Sincronizza sempre controller **e** form
+  insieme; se il sync è basato su mtime, fai `touch` dei file cambiati (vedi Realtà d'ambiente).
 
 ## Recurring bug traps (each one cost a debugging session)
 1. **Migration committed ≠ column exists.** SQL files are applied to the DB by hand per

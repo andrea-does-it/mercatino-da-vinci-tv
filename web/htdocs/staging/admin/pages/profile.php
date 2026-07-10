@@ -4,6 +4,8 @@ if (! defined('ROOT_URL')) {
   die;
 }
 
+CSRF::validateOrDie();
+
 $id = 0;
 $pm = new ProfileManager();
 $profile = new Profile(0, '');
@@ -86,6 +88,7 @@ if (isset($_POST['add']) || isset($_POST['update'])) {
 <h1><?php echo esc_html($lblAction); ?> Profilo</h1>
 
 <form method="post" class="mt-2">
+  <?php csrf_field(); ?>
 
   <div class="form-group">
     <label for="name">Nome</label>

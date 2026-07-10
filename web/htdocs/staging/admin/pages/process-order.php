@@ -4,6 +4,8 @@
     die;
   }
 
+  CSRF::validateOrDie();
+
   if (!isset($_GET['id'])){
     echo "<script>location.href='".ROOT_URL."admin/?page=orders-list&msg=not_found';</script>";
     exit;
@@ -303,6 +305,7 @@
       <td><?php echo esc_html($item['total_price']); ?> €</td>
       <td>
         <form method="post" class="right d-inline">
+          <?php csrf_field(); ?>
           <input type="hidden" name="item_id" value="<?php echo esc_html($item['order_item_id']); ?>">
           <input name="delete" type="submit" class="btn btn-outline-danger btn-sm" value="Elimina">
         </form>
@@ -310,6 +313,7 @@
           <span class="text-danger d-inline-block ml-1"><small>Non accettabile: elimina il libro.</small></span>
         <?php else : ?>
         <form method="post" class="left d-inline">
+          <?php csrf_field(); ?>
           <input type="hidden" name="item_id" value="<?php echo esc_html($item['order_item_id']); ?>">
           <input name="vendere" type="submit" class="btn btn-outline-success btn-sm" value="Accetta">
         </form>
@@ -343,6 +347,7 @@
         <td><?php echo esc_html($item['total_price']); ?> €</td>
         <td>
           <form method="post" class="d-inline">
+            <?php csrf_field(); ?>
             <input type="hidden" name="item_id" value="<?php echo esc_html($item['order_item_id']); ?>">
             <input name="ripristina" onclick="return confirm('Ripristinare il libro allo stato da accettare?');" type="submit" class="btn btn-outline-warning btn-sm" value="Ripristina">
           </form>
@@ -378,6 +383,7 @@
         <td><?php echo esc_html($item['total_price']); ?> €</td>
         <td>
           <form method="post" class="d-inline">
+            <?php csrf_field(); ?>
             <input type="hidden" name="item_id" value="<?php echo esc_html($item['order_item_id']); ?>">
             <input name="ripristina" onclick="return confirm('Ripristinare il libro allo stato da accettare?');" type="submit" class="btn btn-outline-warning btn-sm" value="Ripristina">
           </form>
@@ -393,6 +399,7 @@
 
   <div class="mt-4 mb-4">
     <form method="post" class="text-center">
+      <?php csrf_field(); ?>
       <?php if ($allItemsRejected && $allItemsProcessed) : ?>
         <button name="termina_accettazione" 
                 type="submit" 
@@ -453,6 +460,7 @@
         <td><?php echo esc_html($item['total_price']); ?> €</td>
         <td>
           <form method="post" class="d-inline">
+            <?php csrf_field(); ?>
             <input type="hidden" name="item_id" value="<?php echo esc_html($item['order_item_id']); ?>">
             <input name="ripristina" onclick="return confirm('Ripristinare il libro allo stato da accettare? Questo riaprirà la pratica per la lavorazione.');" type="submit" class="btn btn-outline-warning btn-sm" value="Ripristina">
           </form>

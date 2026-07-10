@@ -5,6 +5,8 @@
     die;
   }
 
+  CSRF::validateOrDie();
+
   global $loggedInUser;
   $ship = new ShipmentManager();
   if (isset($_POST['delete'])) {
@@ -38,6 +40,7 @@
       <td><?php if($shipment->price=="0.00"){echo "Gratuita";}else{echo esc_html($shipment->price)." €";} ?> </td>
       <td>
         <form method="post" class="inline" >
+          <?php csrf_field(); ?>
           <input type="hidden" name="id" value="<?php echo esc_html($shipment->id); ?>">
           <input name="delete" onclick="return confirm('Procedere ad eliminare?');" type="submit" class="btn btn-outline-danger btn-sm" value="Elimina">
         </form>

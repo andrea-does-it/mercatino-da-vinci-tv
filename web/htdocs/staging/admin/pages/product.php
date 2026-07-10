@@ -4,6 +4,8 @@ if (! defined('ROOT_URL')) {
   die;
 }
 
+CSRF::validateOrDie();
+
 $id = 0;
 $catMgr = new CategoryManager();
 $categories = $catMgr->GetCategoriesAndSubs();
@@ -140,6 +142,7 @@ $productSubcats = $mgr->GetProductSubcategories($id);
    //$descript= isset($product->description) ? $product->description : NULL;
 ?> 
 <form method="post" class="mt-2">
+  <?php csrf_field(); ?>
   <div class="form-group">
     <label for="name"><strong>Titolo</strong></label>
     <input name="name" id="name" type="text" class="form-control" value="<?php echo esc_html($product->name); ?>">
