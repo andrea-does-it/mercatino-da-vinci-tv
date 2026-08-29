@@ -344,6 +344,58 @@ class SellerRefundManager extends DBManager {
     }
 
     /**
+     * Estimate the refunds for a year, split by whether the seller has an IBAN
+     * on file. Read-only: computed live from the books actually sold, so it
+     * works before any seller_refund record exists.
+     *
+     * Uses the same seller set and the same amount as getSellersWithoutRefundRecord(),
+     * so the estimate matches what createRecordsForYear() would produce.
+     *
+     * @param int $year
+     * @return array ['wire' => ['sellers' => int, 'total_owed' => float],
+     *                'cash' => ['sellers' => int, 'total_owed' => float]]
+     */
+    public function getRefundEstimateByIban($year) {
+        $query = "
+            SELECT has_iban,
+                   COUNT(*) as sellers,
+                   COALESCE(SUM(total_owed), 0) as total_owed
+            FROM (
+                SELECT o.user_id,
+                       MAX(CASE WHEN u.iban IS NOT NULL AND u.iban <> '' THEN 1 ELSE 0 END) as has_iban,
+                       COALESCE(SUM(oi.single_price), 0) as total_owed
+                FROM orders o
+                INNER JOIN order_item oi ON o.id = oi.order_id
+                INNER JOIN user u ON o.user_id = u.id
+                WHERE o.numPratica > 0
+                AND oi.status = 'venduto'
+                AND YEAR(oi.updated_at) = ?
+                GROUP BY o.user_id
+                HAVING total_owed > 0
+            ) t
+            GROUP BY has_iban
+        ";
+
+        $estimate = [
+            'wire' => ['sellers' => 0, 'total_owed' => 0.00],
+            'cash' => ['sellers' => 0, 'total_owed' => 0.00]
+        ];
+
+        $results = $this->db->prepare($query, [(int)$year]);
+        if ($results) {
+            foreach ($results as $row) {
+                $key = (int)$row['has_iban'] === 1 ? 'wire' : 'cash';
+                $estimate[$key] = [
+                    'sellers' => (int)$row['sellers'],
+                    'total_owed' => (float)$row['total_owed']
+                ];
+            }
+        }
+
+        return $estimate;
+    }
+
+    /**
      * Get sellers who have sold books in a year but don't have a refund record yet
      * @param int $year
      * @return array

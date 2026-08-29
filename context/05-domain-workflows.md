@@ -65,6 +65,12 @@ Access: sales pages are admin/pwuser (gated by `admin/index.php`); there is **no
 - `seller-refund-report.php` is the **closing situation report** (sold vs unsold per seller,
   amounts owed, payment preference, and a **"Donazione"** column from `donate_unsold`).
 - `seller-refund-view.php` records payments and shows the donation preference.
+- `seller-refunds.php` also shows a read-only **"Stima Rimborsi per Modalità"** card:
+  `getRefundEstimateByIban($year)` splits the year's payout between *Bonifico* (seller has
+  `user.iban`) and *Contanti* (no IBAN). It is computed live from the sold books — same
+  seller set and amount as `getSellersWithoutRefundRecord()` — so it works **before** any
+  `seller_refund` record exists, ignores the page filters, and ignores `amount_paid`.
+  IBAN presence is tested in SQL (`iban <> ''`), so the encrypted value is never decrypted.
 - **donate_books**: a standing profile preference (set in `user/pages/privacy.php` and at
   registration) meaning "donate my unsold books instead of taking them back"; it defaults
   the per-year `donate_unsold` (admin can still override per year).

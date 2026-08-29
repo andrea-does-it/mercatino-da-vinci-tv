@@ -55,6 +55,9 @@
   // Get summary
   $summary = $sellerRefundMgr->getYearSummary($selectedYear);
 
+  // Stima rimborsi per modalità, calcolata dai libri venduti (indipendente dai record)
+  $refundEstimate = $sellerRefundMgr->getRefundEstimateByIban($selectedYear);
+
   // Get sellers without refund records
   $sellersWithoutRecords = $sellerRefundMgr->getSellersWithoutRefundRecord($selectedYear);
 
@@ -127,6 +130,54 @@
         <i class="fas fa-file-excel"></i> Report
       </a>
     </form>
+  </div>
+</div>
+
+<!-- Stima rimborsi per modalità (IBAN presente o assente) -->
+<?php
+  $estWire = $refundEstimate['wire'];
+  $estCash = $refundEstimate['cash'];
+  $estSellers = $estWire['sellers'] + $estCash['sellers'];
+  $estTotal = $estWire['total_owed'] + $estCash['total_owed'];
+?>
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="fas fa-calculator"></i> Stima Rimborsi per Modalit&agrave; - <?php echo $selectedYear; ?>
+  </div>
+  <div class="card-body">
+    <table class="table table-sm mb-2">
+      <thead class="thead-light">
+        <tr>
+          <th>Modalit&agrave;</th>
+          <th class="text-right">Venditori</th>
+          <th class="text-right">Importo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-primary"><i class="fas fa-university"></i> Bonifico</span> <small class="text-muted">IBAN presente</small></td>
+          <td class="text-right"><?php echo $estWire['sellers']; ?></td>
+          <td class="text-right">&euro; <?php echo number_format($estWire['total_owed'], 2, ',', '.'); ?></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-success"><i class="fas fa-money-bill-alt"></i> Contanti</span> <small class="text-muted">IBAN assente</small></td>
+          <td class="text-right"><?php echo $estCash['sellers']; ?></td>
+          <td class="text-right">&euro; <?php echo number_format($estCash['total_owed'], 2, ',', '.'); ?></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr class="font-weight-bold">
+          <td>Totale</td>
+          <td class="text-right"><?php echo $estSellers; ?></td>
+          <td class="text-right">&euro; <?php echo number_format($estTotal, 2, ',', '.'); ?></td>
+        </tr>
+      </tfoot>
+    </table>
+    <small class="text-muted">
+      <i class="fas fa-info-circle"></i>
+      Stima calcolata sui libri venduti nell'anno, in base alla presenza dell'IBAN nella scheda del venditore.
+      Non tiene conto dei record di rimborso n&eacute; di quanto gi&agrave; pagato, e non risente dei filtri qui sopra.
+    </small>
   </div>
 </div>
 
