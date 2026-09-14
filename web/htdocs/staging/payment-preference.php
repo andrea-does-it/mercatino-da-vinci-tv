@@ -33,8 +33,32 @@ if ($refund) {
     }
 }
 
+// Existing bank details: when an IBAN is already on file the refund can only be
+// a wire transfer, so the seller may edit the IBAN but not switch back to cash.
+// The donation, once given, cannot be taken back from this page.
+// Both locks are enforced server-side below: disabled inputs are not submitted,
+// so the posted values can never be trusted to carry them.
+$existingIban = null;
+$hasIban = false;
+$donationLocked = false;
+if ($refund) {
+    $userMgr = new UserManager();
+    $existingIban = $userMgr->getIBAN($refund->user_id);
+    $hasIban = ($existingIban !== null && !empty($existingIban['iban']));
+    $donationLocked = !empty($refund->donate_unsold);
+}
+
 // Handle form submission
 if ($refund && isset($_POST['submit_preference'])) {
+    // Captured before the save: the refund is re-read afterwards (and the CSRF
+    // branch never sets them), but the activity log below always needs them.
+    $sellerUserId = $refund->user_id;
+    $refundId = $refund->id;
+    $refundYear = $refund->year;
+    $preference = '';
+    $donateUnsold = null;
+    $ibanProvided = false;
+
     if (!CSRF::validateToken()) {
         $error = 'csrf_error';
     } else {
@@ -44,9 +68,19 @@ if ($refund && isset($_POST['submit_preference'])) {
         $donateUnsold = isset($_POST['donate_unsold']) ? 1 : 0;
         $sellerNotes = isset($_POST['seller_notes']) ? trim($_POST['seller_notes']) : null;
 
+        // An IBAN on file forces the wire transfer: the radios are disabled in the
+        // form (so they submit nothing) and a forged post must not switch to cash.
+        if ($hasIban) {
+            $preference = 'wire_transfer';
+        }
+
         // Only allow donate_unsold if user actually has unsold books
         if (!$hasUnsoldBooks) {
             $donateUnsold = null;
+        } elseif ($donationLocked) {
+            // The donation cannot be withdrawn from this page: a disabled checkbox
+            // submits nothing, which would otherwise silently reset it to 0.
+            $donateUnsold = 1;
         }
 
         if (!in_array($preference, ['cash', 'wire_transfer'])) {
@@ -55,6 +89,7 @@ if ($refund && isset($_POST['submit_preference'])) {
             // Validate IBAN and owner name for wire transfer
             $iban = isset($_POST['iban']) ? strtoupper(preg_replace('/\s+/', '', $_POST['iban'])) : '';
             $ibanOwnerName = isset($_POST['iban_owner_name']) ? trim($_POST['iban_owner_name']) : '';
+            $ibanProvided = ($iban !== '');
 
             if (empty($iban)) {
                 $error = 'iban_required';
@@ -80,9 +115,31 @@ if ($refund && isset($_POST['submit_preference'])) {
         }
     }
 
-    // Refresh refund data after save
+    // Refresh refund data (and the derived locks) after save
     if ($success) {
         $refund = $sellerRefundMgr->getByToken($token);
+        if ($refund) {
+            $existingIban = $userMgr->getIBAN($refund->user_id);
+            $hasIban = ($existingIban !== null && !empty($existingIban['iban']));
+            $donationLocked = !empty($refund->donate_unsold);
+        }
+    }
+
+    // Registro attività: la risposta del venditore arriva da questa pagina pubblica
+    // (autenticata dal token, quindi senza $loggedInUser) e va attribuita al venditore.
+    // Nel dettaglio va solo contesto NON personale: si registra se un IBAN è stato
+    // fornito, mai il suo valore (è cifrato ovunque altrove).
+    $logDetail = 'year: ' . (int)$refundYear
+        . ', refund_id: ' . (int)$refundId
+        . ', preference: ' . (in_array($preference, ['cash', 'wire_transfer'], true) ? $preference : '-')
+        . ', donation: ' . ($donateUnsold === null ? 'n/d' : (int)$donateUnsold)
+        . ', iban: ' . ($ibanProvided ? 'fornito' : 'no');
+
+    if ($success) {
+        log_activity($sellerUserId, 'payment_preference_set', $logDetail);
+    } else {
+        log_activity($sellerUserId, 'payment_preference_error',
+            $logDetail . ', error: ' . ($error !== '' ? $error : 'unknown'));
     }
 }
 
@@ -139,6 +196,24 @@ $errorMessages = [
         }
         .preference-option input[type="radio"] {
             margin-right: 10px;
+        }
+        /* Choice locked by an IBAN already on file: visible but not selectable */
+        .preference-option.option-locked {
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
+        .preference-option.option-locked:hover {
+            border-color: #dee2e6;
+            background-color: transparent;
+        }
+        .preference-option.option-locked.selected {
+            opacity: 1;
+            border-color: #007bff;
+            background-color: #e7f1ff;
+        }
+        .preference-option.option-locked.selected:hover {
+            border-color: #007bff;
+            background-color: #e7f1ff;
         }
         .iban-section {
             display: none;
@@ -222,10 +297,21 @@ $errorMessages = [
                     <form method="post" id="preferenceForm">
                         <?php csrf_field(); ?>
 
-                        <div class="preference-option <?php echo $refund->payment_preference === 'cash' ? 'selected' : ''; ?>" onclick="selectPreference('cash')">
-                            <label class="mb-0 d-flex align-items-center" style="cursor: pointer;">
+                        <?php if ($hasIban): ?>
+                            <div class="alert alert-info">
+                                <i class="fas fa-university"></i>
+                                Hai gi&agrave; registrato un IBAN, quindi il rimborso avverr&agrave; tramite
+                                <strong>bonifico bancario</strong>. Puoi aggiornare qui sotto l'IBAN e
+                                l'intestatario del conto.
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="preference-option <?php echo (!$hasIban && $refund->payment_preference === 'cash') ? 'selected' : ''; ?> <?php echo $hasIban ? 'option-locked' : ''; ?>"
+                             onclick="selectPreference('cash')">
+                            <label class="mb-0 d-flex align-items-center" style="cursor: <?php echo $hasIban ? 'not-allowed' : 'pointer'; ?>;">
                                 <input type="radio" name="payment_preference" value="cash" id="pref_cash"
-                                       <?php echo $refund->payment_preference === 'cash' ? 'checked' : ''; ?>>
+                                       <?php echo (!$hasIban && $refund->payment_preference === 'cash') ? 'checked' : ''; ?>
+                                       <?php echo $hasIban ? 'disabled' : ''; ?>>
                                 <div>
                                     <strong><i class="fas fa-money-bill-alt text-success"></i> Contanti</strong>
                                     <p class="mb-0 text-muted"><small>Ritiro presso la sede del Comitato durante gli orari di apertura</small></p>
@@ -233,10 +319,12 @@ $errorMessages = [
                             </label>
                         </div>
 
-                        <div class="preference-option <?php echo $refund->payment_preference === 'wire_transfer' ? 'selected' : ''; ?>" onclick="selectPreference('wire_transfer')">
-                            <label class="mb-0 d-flex align-items-center" style="cursor: pointer;">
+                        <div class="preference-option <?php echo ($hasIban || $refund->payment_preference === 'wire_transfer') ? 'selected' : ''; ?> <?php echo $hasIban ? 'option-locked' : ''; ?>"
+                             onclick="selectPreference('wire_transfer')">
+                            <label class="mb-0 d-flex align-items-center" style="cursor: <?php echo $hasIban ? 'not-allowed' : 'pointer'; ?>;">
                                 <input type="radio" name="payment_preference" value="wire_transfer" id="pref_wire"
-                                       <?php echo $refund->payment_preference === 'wire_transfer' ? 'checked' : ''; ?>>
+                                       <?php echo ($hasIban || $refund->payment_preference === 'wire_transfer') ? 'checked' : ''; ?>
+                                       <?php echo $hasIban ? 'disabled' : ''; ?>>
                                 <div>
                                     <strong><i class="fas fa-university text-primary"></i> Bonifico Bancario</strong>
                                     <p class="mb-0 text-muted"><small>Accredito diretto sul tuo conto corrente</small></p>
@@ -244,7 +332,7 @@ $errorMessages = [
                             </label>
                         </div>
 
-                        <div class="iban-section <?php echo $refund->payment_preference === 'wire_transfer' ? 'visible' : ''; ?>" id="ibanSection">
+                        <div class="iban-section <?php echo ($hasIban || $refund->payment_preference === 'wire_transfer') ? 'visible' : ''; ?>" id="ibanSection">
                             <h5><i class="fas fa-university"></i> Dati Bancari</h5>
                             <p class="text-muted"><small>Inserisci i dati del conto su cui ricevere il bonifico</small></p>
 
@@ -252,7 +340,7 @@ $errorMessages = [
                                 <label for="iban"><strong>IBAN *</strong></label>
                                 <input type="text" name="iban" id="iban" class="form-control"
                                        placeholder="IT60X0542811101000000123456"
-                                       value="<?php echo isset($_POST['iban']) ? esc_html($_POST['iban']) : ''; ?>"
+                                       value="<?php echo isset($_POST['iban']) ? esc_html($_POST['iban']) : esc_html($existingIban['iban'] ?? ''); ?>"
                                        maxlength="34"
                                        style="text-transform: uppercase; font-family: monospace;">
                                 <small class="form-text text-muted">L'IBAN italiano inizia con IT e contiene 27 caratteri</small>
@@ -262,7 +350,7 @@ $errorMessages = [
                                 <label for="iban_owner_name"><strong>Intestatario del Conto *</strong></label>
                                 <input type="text" name="iban_owner_name" id="iban_owner_name" class="form-control"
                                        placeholder="Nome e Cognome dell'intestatario"
-                                       value="<?php echo isset($_POST['iban_owner_name']) ? esc_html($_POST['iban_owner_name']) : esc_html($refund->iban_owner_name ?? ''); ?>">
+                                       value="<?php echo isset($_POST['iban_owner_name']) ? esc_html($_POST['iban_owner_name']) : esc_html($existingIban['iban_owner_name'] ?? $refund->iban_owner_name ?? ''); ?>">
                             </div>
                         </div>
 
@@ -271,14 +359,23 @@ $errorMessages = [
                         <div class="mt-4 p-3 border rounded" style="background-color: #f8f9fa;">
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="donate_unsold" name="donate_unsold" value="1"
-                                       <?php echo (isset($_POST['donate_unsold']) || $refund->donate_unsold) ? 'checked' : ''; ?>>
-                                <label class="custom-control-label" for="donate_unsold">
+                                       <?php echo ($donationLocked || isset($_POST['donate_unsold']) || $refund->donate_unsold) ? 'checked' : ''; ?>
+                                       <?php echo $donationLocked ? 'disabled' : ''; ?>>
+                                <label class="custom-control-label" for="donate_unsold" style="cursor: <?php echo $donationLocked ? 'not-allowed' : 'pointer'; ?>;">
                                     <strong><i class="fas fa-heart text-danger"></i> Desidero donare i libri invenduti alla Libreria</strong>
                                 </label>
                             </div>
                             <p class="text-muted mb-0 mt-2">
                                 <small>Hai attualmente <strong><?php echo $unsoldBooksCount; ?></strong> libr<?php echo $unsoldBooksCount == 1 ? 'o' : 'i'; ?> ancora in vendita. Se non vendut<?php echo $unsoldBooksCount == 1 ? 'o' : 'i'; ?> entro la fine dell'anno, <?php echo $unsoldBooksCount == 1 ? 'verrà donato' : 'verranno donati'; ?> alla Libreria invece di essere restituiti.</small>
                             </p>
+                            <?php if ($donationLocked): ?>
+                                <p class="mb-0 mt-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-lock"></i> Hai gi&agrave; confermato la donazione: da questa pagina
+                                        non &egrave; pi&ugrave; possibile annullarla. Se hai cambiato idea, contatta il Comitato.
+                                    </small>
+                                </p>
+                            <?php endif; ?>
                         </div>
                         <?php endif; ?>
 
@@ -312,8 +409,16 @@ $errorMessages = [
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function selectPreference(value) {
+            var radio = document.getElementById('pref_' + (value === 'cash' ? 'cash' : 'wire'));
+
+            // Locked choice (an IBAN is already on file): the refund can only be a
+            // wire transfer, so clicking the rows must not change anything.
+            if (!radio || radio.disabled) {
+                return;
+            }
+
             // Update radio button
-            document.getElementById('pref_' + (value === 'cash' ? 'cash' : 'wire')).checked = true;
+            radio.checked = true;
 
             // Update visual selection
             document.querySelectorAll('.preference-option').forEach(function(el) {

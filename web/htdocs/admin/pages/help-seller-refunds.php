@@ -93,6 +93,30 @@
   </div>
 </div>
 
+<!-- Section: Bookshop stock -->
+<div class="card mb-4">
+  <div class="card-header"><i class="fas fa-store"></i> Libri di propriet&agrave; del mercatino (pratica <?php echo SellerRefundManager::BOOKSHOP_PRATICA; ?>)</div>
+  <div class="card-body">
+    <p>
+      La <strong>pratica <?php echo SellerRefundManager::BOOKSHOP_PRATICA; ?></strong> raccoglie i libri
+      che appartengono al mercatino stesso, non a un genitore. Quando vengono venduti, l'incasso &egrave;
+      <strong>guadagno netto del Comitato</strong> e non deve essere restituito a nessuno.
+    </p>
+    <p>Per questo motivo, in tutta la sezione Rimborsi la pratica <?php echo SellerRefundManager::BOOKSHOP_PRATICA; ?> viene ignorata:</p>
+    <ul>
+      <li>non entra negli importi dovuti (n&eacute; alla creazione dei record, n&eacute; con <em>Ricalcola</em>)</li>
+      <li>non entra nella stima Bonifico / Contanti</li>
+      <li>non compare negli elenchi rimborsi, nella newsletter preferenze e nel report di chiusura</li>
+      <li>i suoi libri invenduti non compaiono tra i libri da restituire o da donare</li>
+    </ul>
+    <div class="alert alert-info mb-0">
+      <i class="fas fa-info-circle"></i>
+      Nelle <strong>vendite</strong> (Gestione Vendite, Ricerca dettagliata, incassi) questi libri
+      restano invece visibili e conteggiati: quei soldi sono stati incassati davvero.
+    </div>
+  </div>
+</div>
+
 <!-- Section: Create Records -->
 <div class="card mb-4">
   <div class="card-header"><i class="fas fa-plus"></i> Creazione Record di Rimborso</div>
@@ -105,12 +129,27 @@
     <ul>
       <li>L'importo dovuto calcolato dai libri effettivamente venduti</li>
       <li>Stato iniziale: <span class="badge badge-warning">In attesa</span></li>
-      <li>Preferenza di pagamento: non impostata (il venditore la sceglier&agrave; via newsletter)</li>
+      <li>
+        <strong>Preferenza di pagamento presa dal profilo</strong>:
+        <span class="badge badge-primary">Bonifico</span> se il venditore ha un IBAN nel suo profilo,
+        altrimenti <span class="badge badge-success">Contanti</span>
+      </li>
+      <li>
+        <strong>Preferenza di donazione presa dal profilo</strong>: se il venditore ha scelto di donare
+        i libri invenduti al Comitato, il record nasce gi&agrave; con la donazione attiva
+      </li>
     </ul>
-    <div class="alert alert-info mb-0">
+    <div class="alert alert-info">
       <i class="fas fa-info-circle"></i>
       La creazione &egrave; sicura: se un venditore ha gi&agrave; un record per l'anno selezionato,
       non viene duplicato.
+    </div>
+    <div class="alert alert-warning mb-0">
+      <i class="fas fa-user-check"></i>
+      Il pulsante <strong>Applica Preferenze dal Profilo (N)</strong> fa la stessa cosa sui record
+      <em>gi&agrave; esistenti</em> a cui manca ancora una preferenza. Non tocca mai una preferenza
+      che il venditore ha gi&agrave; espresso dalla pagina di risposta alla newsletter: riempie solo
+      i campi vuoti.
     </div>
   </div>
 </div>

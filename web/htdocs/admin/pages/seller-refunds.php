@@ -30,6 +30,16 @@
           $alertMsg = $count > 0 ? 'records_created' : 'no_records_to_create';
           break;
 
+        case 'apply_user_defaults':
+          // Fill the missing preferences of existing records from the user profile
+          $applied = $sellerRefundMgr->applyUserDefaultsToYear($selectedYear);
+          log_activity($loggedInUser->id, 'admin_refund_user_defaults_applied',
+            'year: ' . $selectedYear . ', pagamento: ' . $applied['payment'] . ', donazione: ' . $applied['donation']);
+          $_SESSION['defaults_payment_count'] = $applied['payment'];
+          $_SESSION['defaults_donation_count'] = $applied['donation'];
+          $alertMsg = ($applied['payment'] + $applied['donation']) > 0 ? 'defaults_applied' : 'no_defaults_to_apply';
+          break;
+
         case 'recalculate':
           // Recalculate amount owed for a seller
           if (isset($_POST['refund_id'])) {
@@ -58,16 +68,36 @@
   // Stima rimborsi per modalità, calcolata dai libri venduti (indipendente dai record)
   $refundEstimate = $sellerRefundMgr->getRefundEstimateByIban($selectedYear);
 
+  // Ricavo del Comitato: vendite della pratica 100 + ricarico sulle altre pratiche
+  $bookshopIncome = $sellerRefundMgr->getBookshopIncome($selectedYear);
+
   // Get sellers without refund records
   $sellersWithoutRecords = $sellerRefundMgr->getSellersWithoutRefundRecord($selectedYear);
+
+  // Record esistenti che possono ancora ereditare una preferenza dal profilo
+  $recordsNeedingDefaults = $sellerRefundMgr->countRecordsNeedingUserDefaults($selectedYear);
 
   // Alert messages
   $alertMessages = [
     'records_created' => ['type' => 'success', 'text' => 'Record di rimborso creati con successo.'],
     'no_records_to_create' => ['type' => 'info', 'text' => 'Nessun nuovo record da creare.'],
     'amount_recalculated' => ['type' => 'success', 'text' => 'Importo ricalcolato con successo.'],
+    'defaults_applied' => ['type' => 'success', 'text' => 'Preferenze dal profilo applicate: '
+      . (isset($_SESSION['defaults_payment_count']) ? (int)$_SESSION['defaults_payment_count'] : 0) . ' modalità di pagamento, '
+      . (isset($_SESSION['defaults_donation_count']) ? (int)$_SESSION['defaults_donation_count'] : 0) . ' preferenze di donazione.'],
+    'no_defaults_to_apply' => ['type' => 'info', 'text' => 'Nessun record da aggiornare: tutte le preferenze sono già impostate.'],
   ];
+  // Clear session counts after reading
+  unset($_SESSION['defaults_payment_count'], $_SESSION['defaults_donation_count']);
 ?>
+
+<div class="alert alert-secondary">
+  <i class="fas fa-store"></i>
+  I libri della <strong>pratica <?php echo SellerRefundManager::BOOKSHOP_PRATICA; ?></strong> sono di
+  propriet&agrave; del mercatino: il loro incasso &egrave; guadagno netto del Comitato e non viene mai
+  conteggiato nei rimborsi. Sono esclusi da importi, elenchi, newsletter e report di questa sezione
+  (restano invece nelle vendite, dove l'incasso &egrave; reale).
+</div>
 
 <h1>Gestione Rimborsi Venditori - <?php echo $selectedYear; ?>
   <a href="<?php echo ROOT_URL; ?>admin/?page=help-seller-refunds" class="btn btn-sm btn-outline-info ml-2" title="Guida">
@@ -129,6 +159,11 @@
       <a href="<?php echo ROOT_URL; ?>admin/?page=seller-refund-report&year=<?php echo $selectedYear; ?>" class="btn btn-success ml-2">
         <i class="fas fa-file-excel"></i> Report
       </a>
+
+      <a href="<?php echo ROOT_URL; ?>admin/?page=seller-orders-report&year=<?php echo $selectedYear; ?>" class="btn btn-outline-dark ml-2"
+         title="Tutte le pratiche con libri, anche senza record di rimborso o vendita registrata">
+        <i class="fas fa-boxes"></i> Riepilogo Pratiche
+      </a>
     </form>
   </div>
 </div>
@@ -181,6 +216,97 @@
   </div>
 </div>
 
+<!-- Ricavo del Comitato -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="fas fa-piggy-bank"></i> Ricavo del Comitato - <?php echo $selectedYear; ?>
+  </div>
+  <div class="card-body">
+    <table class="table table-sm mb-2">
+      <thead class="thead-light">
+        <tr>
+          <th>Voce</th>
+          <th class="text-right">Libri</th>
+          <th class="text-right">Importo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <span class="badge badge-dark"><i class="fas fa-store"></i> Pratica <?php echo SellerRefundManager::BOOKSHOP_PRATICA; ?></span>
+            <small class="text-muted">libri di propriet&agrave; del mercatino: incasso interamente del Comitato</small>
+          </td>
+          <td class="text-right"><?php echo (int)$bookshopIncome['bookshop']['books']; ?></td>
+          <td class="text-right">&euro; <?php echo number_format((float)$bookshopIncome['bookshop']['gross'], 2, ',', '.'); ?></td>
+        </tr>
+        <tr>
+          <td>
+            <span class="badge badge-info"><i class="fas fa-percent"></i> Ricarico</span>
+            <small class="text-muted">quota trattenuta (trattenuta venditore + ricarico acquirente) sui libri delle altre pratiche</small>
+          </td>
+          <td class="text-right"><?php echo (int)$bookshopIncome['overhead']['books']; ?></td>
+          <td class="text-right">&euro; <?php echo number_format((float)$bookshopIncome['overhead']['total'], 2, ',', '.'); ?></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr class="font-weight-bold">
+          <td>Totale ricavo</td>
+          <td class="text-right"><?php echo (int)$bookshopIncome['bookshop']['books'] + (int)$bookshopIncome['overhead']['books']; ?></td>
+          <td class="text-right">&euro; <?php echo number_format((float)$bookshopIncome['total'], 2, ',', '.'); ?></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <?php if (count($bookshopIncome['by_pratica']) > 0): ?>
+      <button class="btn btn-sm btn-outline-secondary mb-2" type="button" data-toggle="collapse" data-target="#incomeDetail">
+        <i class="fas fa-list"></i> Dettaglio ricarico per pratica (<?php echo count($bookshopIncome['by_pratica']); ?>)
+      </button>
+      <div class="collapse" id="incomeDetail">
+        <table class="table table-sm table-bordered mb-2">
+          <thead class="thead-light">
+            <tr>
+              <th>Pratica</th>
+              <th class="text-right">Libri venduti</th>
+              <th class="text-right">Incassato</th>
+              <th class="text-right">Ricarico al Comitato</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($bookshopIncome['by_pratica'] as $detail): ?>
+              <tr>
+                <td><?php echo (int)$detail['pratica']; ?></td>
+                <td class="text-right"><?php echo (int)$detail['books']; ?></td>
+                <td class="text-right">&euro; <?php echo number_format((float)$detail['gross'], 2, ',', '.'); ?></td>
+                <td class="text-right">&euro; <?php echo number_format((float)$detail['overhead'], 2, ',', '.'); ?></td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+
+    <?php if ((int)$bookshopIncome['unlinked']['books'] > 0): ?>
+      <div class="alert alert-warning py-2 mb-2">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong><?php echo (int)$bookshopIncome['unlinked']['books']; ?></strong> libri risultano venduti
+        nel <?php echo $selectedYear; ?> ma non sono collegati a nessuna vendita registrata
+        (quota venditore &euro; <?php echo number_format((float)$bookshopIncome['unlinked']['amount'], 2, ',', '.'); ?>).
+        <strong>Non sono conteggiati</strong> negli importi qui sopra: per loro non esiste un prezzo di
+        vendita registrato da cui ricavare il ricarico. Di solito sono libri segnati "venduto" con la
+        vecchia procedura, prima della Gestione Vendite.
+      </div>
+    <?php endif; ?>
+
+    <small class="text-muted">
+      <i class="fas fa-info-circle"></i>
+      Calcolato sulle vendite registrate nell'anno (<em>Gestione Vendite</em>), escluse quelle rimborsate.
+      Il ricarico di ogni libro &egrave; la differenza fra il prezzo effettivamente incassato e la quota del
+      venditore, quindi gli anni passati non cambiano se modifichi le impostazioni di ricarico.
+      Non risente dei filtri qui sopra.
+    </small>
+  </div>
+</div>
+
 <!-- Summary cards -->
 <?php if ($summary): ?>
 <div class="row mb-4">
@@ -217,6 +343,21 @@
     </div>
   </div>
 </div>
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card bg-dark text-white">
+      <div class="card-body text-center">
+        <h3>&euro; <?php echo number_format((float)$summary->cash_outstanding, 2, ',', '.'); ?></h3>
+        <small>
+          Contanti da Rimborsare
+          <?php if ((int)$summary->cash_outstanding_sellers > 0): ?>
+            <br><?php echo (int)$summary->cash_outstanding_sellers; ?> venditori
+          <?php endif; ?>
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
 <?php endif; ?>
 
 <!-- Action buttons -->
@@ -227,6 +368,18 @@
       <input type="hidden" name="action" value="create_records">
       <button type="submit" class="btn btn-success" onclick="return confirm('Creare <?php echo count($sellersWithoutRecords); ?> nuovi record di rimborso?');">
         <i class="fas fa-plus"></i> Crea Record per <?php echo count($sellersWithoutRecords); ?> Venditori
+      </button>
+    </form>
+  <?php endif; ?>
+
+  <?php if ($recordsNeedingDefaults > 0): ?>
+    <form method="post" class="d-inline">
+      <?php csrf_field(); ?>
+      <input type="hidden" name="action" value="apply_user_defaults">
+      <button type="submit" class="btn btn-outline-primary"
+              title="Imposta la modalità di pagamento (bonifico se c'è l'IBAN, altrimenti contanti) e la preferenza di donazione leggendole dal profilo del venditore. Le preferenze già espresse non vengono toccate."
+              onclick="return confirm('Applicare le preferenze dal profilo a <?php echo (int)$recordsNeedingDefaults; ?> record?\n\nLe preferenze già espresse dai venditori non verranno modificate.');">
+        <i class="fas fa-user-check"></i> Applica Preferenze dal Profilo (<?php echo (int)$recordsNeedingDefaults; ?>)
       </button>
     </form>
   <?php endif; ?>

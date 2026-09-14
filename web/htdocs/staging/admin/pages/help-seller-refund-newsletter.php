@@ -58,6 +58,18 @@
         <td class="bg-danger text-white text-center">Inviate Senza Risposta</td>
         <td>Venditori che hanno ricevuto l'email ma non hanno ancora indicato la preferenza (da sollecitare)</td>
       </tr>
+      <tr>
+        <td class="bg-light text-center">Senza IBAN</td>
+        <td>Venditori che non hanno un IBAN nel proprio profilo: il rimborso non pu&ograve; essere fatto per bonifico</td>
+      </tr>
+      <tr>
+        <td class="bg-light text-center">Senza Donazione</td>
+        <td>Venditori che nel profilo non hanno scelto di donare i libri invenduti</td>
+      </tr>
+      <tr>
+        <td class="bg-dark text-white text-center">Da Contattare</td>
+        <td>Venditori a cui manca <strong>almeno una</strong> delle due informazioni sopra: sono quelli a cui ha senso scrivere</td>
+      </tr>
     </table>
   </div>
 </div>
@@ -87,12 +99,45 @@
             <li><strong>Impostata</strong> &mdash; il venditore ha gi&agrave; scelto contanti o bonifico</li>
             <li><strong>Non impostata</strong> &mdash; il venditore non ha ancora risposto</li>
           </ul>
+          <small class="text-muted">
+            Attenzione: quando crei i record di rimborso, la modalit&agrave; di pagamento viene gi&agrave;
+            precompilata dal profilo (bonifico se c'&egrave; l'IBAN, altrimenti contanti), quindi questo
+            filtro trover&agrave; pochi o nessun venditore "Non impostata". Per capire chi deve ancora
+            risponderti usa i filtri IBAN / Donazione / Da contattare qui sotto.
+          </small>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>IBAN</strong></td>
+        <td>
+          <ul class="mb-0">
+            <li><strong>Con IBAN</strong> &mdash; il venditore ha l'IBAN nel profilo (rimborso per bonifico)</li>
+            <li><strong>Senza IBAN</strong> &mdash; nessun IBAN nel profilo: non ha ancora indicato come vuole essere pagato</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Donazione</strong></td>
+        <td>
+          <ul class="mb-0">
+            <li><strong>Dona</strong> &mdash; nel profilo ha scelto di donare i libri invenduti al Comitato</li>
+            <li><strong>Non dona</strong> &mdash; non ha (ancora) fatto questa scelta</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Da contattare</strong></td>
+        <td>
+          Casella di spunta: mostra solo i venditori a cui manca l'IBAN <em>oppure</em> la scelta
+          sulla donazione. &Egrave; la selezione pi&ugrave; utile per l'invio: esclude chi ti ha
+          gi&agrave; risposto su entrambi i punti.
         </td>
       </tr>
     </table>
     <p>
-      <strong>Combinazione utile:</strong> filtra per "Newsletter: Inviate" + "Preferenza: Non impostata"
-      per trovare i venditori da sollecitare.
+      <strong>Combinazione utile:</strong> spunta "Da contattare" e filtra per "Newsletter: Non inviate"
+      per ottenere esattamente l'elenco di chi deve ricevere l'email. Aggiungi "Newsletter: Inviate"
+      al posto di "Non inviate" per trovare chi va sollecitato.
     </p>
   </div>
 </div>

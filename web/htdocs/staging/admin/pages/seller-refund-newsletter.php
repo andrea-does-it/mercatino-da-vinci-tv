@@ -16,6 +16,21 @@
   // Get filters
   $newsletterFilter = isset($_GET['newsletter']) ? $_GET['newsletter'] : '';
   $preferenceFilter = isset($_GET['preference']) ? $_GET['preference'] : '';
+  // Filtri sul profilo del venditore (tabella user)
+  $ibanFilter = isset($_GET['iban']) ? $_GET['iban'] : '';
+  $donationFilter = isset($_GET['donation']) ? $_GET['donation'] : '';
+  $toContactOnly = isset($_GET['tocontact']) && $_GET['tocontact'] === '1';
+
+  // Query string dei filtri correnti, per i link che devono tornare alla stessa vista
+  $filterQuery = http_build_query([
+    'page' => 'seller-refund-newsletter',
+    'year' => $selectedYear,
+    'newsletter' => $newsletterFilter,
+    'preference' => $preferenceFilter,
+    'iban' => $ibanFilter,
+    'donation' => $donationFilter,
+    'tocontact' => $toContactOnly ? '1' : ''
+  ]);
 
   // Handle actions
   if (isset($_POST['action'])) {
@@ -55,9 +70,8 @@
             if ($emailData) {
               $emailContent = $sellerRefundMgr->generateNewsletterEmailContent($emailData);
 
-              // Convert plain text to HTML (preserve line breaks)
-              $htmlBody = nl2br(esc_html($emailContent['body']));
-              $htmlBody = "<html><head><meta charset='UTF-8'></head><body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>" . $htmlBody . "</body></html>";
+              // Testo semplice -> HTML, con il link preferenze cliccabile
+              $htmlBody = $sellerRefundMgr->buildNewsletterHtmlBody($emailContent['body']);
 
               $mailSent = send_mail($emailData->email, $emailContent['subject'], $htmlBody);
 
@@ -84,9 +98,8 @@
               if ($emailData && !$emailData->newsletter_sent) {
                 $emailContent = $sellerRefundMgr->generateNewsletterEmailContent($emailData);
 
-                // Convert plain text to HTML (preserve line breaks)
-                $htmlBody = nl2br(esc_html($emailContent['body']));
-                $htmlBody = "<html><head><meta charset='UTF-8'></head><body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>" . $htmlBody . "</body></html>";
+                // Testo semplice -> HTML, con il link preferenze cliccabile
+                $htmlBody = $sellerRefundMgr->buildNewsletterHtmlBody($emailContent['body']);
 
                 $mailSent = send_mail($emailData->email, $emailContent['subject'], $htmlBody);
 
@@ -126,6 +139,8 @@
       $emailContent = $sellerRefundMgr->generateNewsletterEmailContent($previewData);
       $previewData->email_subject = $emailContent['subject'];
       $previewData->email_body = $emailContent['body'];
+      // Stesso rendering dell'email inviata, così l'anteprima mostra il link cliccabile
+      $previewData->email_html = email_text_to_html($emailContent['body']);
       $showPreview = true;
     }
   }
@@ -138,7 +153,14 @@
   }
 
   // Get sellers for newsletter
-  $sellers = $sellerRefundMgr->getSellersForNewsletter($selectedYear, $newsletterFilter ?: null, $preferenceFilter ?: null);
+  $sellers = $sellerRefundMgr->getSellersForNewsletter(
+    $selectedYear,
+    $newsletterFilter ?: null,
+    $preferenceFilter ?: null,
+    $ibanFilter ?: null,
+    $donationFilter ?: null,
+    $toContactOnly
+  );
 
   // Get statistics
   $stats = $sellerRefundMgr->getNewsletterStats($selectedYear);
@@ -181,7 +203,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Anteprima Email per <?php echo esc_html($previewData->first_name . ' ' . $previewData->last_name); ?></h5>
-        <a href="<?php echo ROOT_URL; ?>admin/?page=seller-refund-newsletter&year=<?php echo $selectedYear; ?>&newsletter=<?php echo urlencode($newsletterFilter); ?>&preference=<?php echo urlencode($preferenceFilter); ?>" class="close">&times;</a>
+        <a href="<?php echo ROOT_URL; ?>admin/?<?php echo esc_html($filterQuery); ?>" class="close">&times;</a>
       </div>
       <div class="modal-body">
         <div class="mb-3">
@@ -191,8 +213,12 @@
           <strong>Oggetto:</strong> <?php echo esc_html($previewData->email_subject); ?>
         </div>
         <hr>
-        <div class="bg-light p-3" style="white-space: pre-wrap; font-family: monospace; font-size: 0.9rem;">
-<?php echo esc_html($previewData->email_body); ?>
+        <div class="bg-light p-3" style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+<?php
+  // Già escapato da email_text_to_html(): il testo è stato reso HTML lì,
+  // quindi qui NON va applicato un secondo escape (romperebbe i link).
+  echo $previewData->email_html;
+?>
         </div>
         <hr>
         <div class="alert alert-info mb-0">
@@ -202,7 +228,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <a href="<?php echo ROOT_URL; ?>admin/?page=seller-refund-newsletter&year=<?php echo $selectedYear; ?>&newsletter=<?php echo urlencode($newsletterFilter); ?>&preference=<?php echo urlencode($preferenceFilter); ?>" class="btn btn-secondary">Chiudi</a>
+        <a href="<?php echo ROOT_URL; ?>admin/?<?php echo esc_html($filterQuery); ?>" class="btn btn-secondary">Chiudi</a>
         <form method="post" class="d-inline">
           <?php csrf_field(); ?>
           <input type="hidden" name="action" value="mark_sent">
@@ -258,6 +284,34 @@
           <option value="set" <?php echo $preferenceFilter === 'set' ? 'selected' : ''; ?>>Impostata</option>
           <option value="not_set" <?php echo $preferenceFilter === 'not_set' ? 'selected' : ''; ?>>Non impostata</option>
         </select>
+      </div>
+
+      <div class="form-group mr-3">
+        <label for="iban" class="mr-2">IBAN:</label>
+        <select name="iban" id="iban" class="form-control" onchange="this.form.submit()">
+          <option value="">Tutti</option>
+          <option value="with" <?php echo $ibanFilter === 'with' ? 'selected' : ''; ?>>Con IBAN</option>
+          <option value="without" <?php echo $ibanFilter === 'without' ? 'selected' : ''; ?>>Senza IBAN</option>
+        </select>
+      </div>
+
+      <div class="form-group mr-3">
+        <label for="donation" class="mr-2">Donazione:</label>
+        <select name="donation" id="donation" class="form-control" onchange="this.form.submit()">
+          <option value="">Tutte</option>
+          <option value="yes" <?php echo $donationFilter === 'yes' ? 'selected' : ''; ?>>Dona</option>
+          <option value="no" <?php echo $donationFilter === 'no' ? 'selected' : ''; ?>>Non dona</option>
+        </select>
+      </div>
+
+      <div class="form-group mr-3">
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" name="tocontact" id="tocontact" value="1"
+                 <?php echo $toContactOnly ? 'checked' : ''; ?> onchange="this.form.submit()">
+          <label class="form-check-label" for="tocontact" title="Venditori senza IBAN oppure che non hanno scelto di donare i libri invenduti">
+            <strong>Da contattare</strong> (manca IBAN o donazione)
+          </label>
+        </div>
       </div>
 
       <a href="<?php echo ROOT_URL; ?>admin/?page=seller-refund-newsletter&year=<?php echo $selectedYear; ?>" class="btn btn-secondary">
@@ -319,6 +373,34 @@
     </div>
   </div>
 </div>
+
+<!-- Profilo venditore: chi non ha ancora espresso una preferenza -->
+<div class="row mb-4">
+  <div class="col-md-2">
+    <div class="card bg-light text-center">
+      <div class="card-body py-2">
+        <h4 class="mb-0"><?php echo (int)$stats->no_iban_count; ?></h4>
+        <small>Senza IBAN</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card bg-light text-center">
+      <div class="card-body py-2">
+        <h4 class="mb-0"><?php echo (int)$stats->no_donation_count; ?></h4>
+        <small>Senza Donazione</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-dark text-white text-center">
+      <div class="card-body py-2">
+        <h4 class="mb-0"><?php echo (int)$stats->to_contact_count; ?></h4>
+        <small>Da Contattare (manca IBAN o donazione)</small>
+      </div>
+    </div>
+  </div>
+</div>
 <?php endif; ?>
 
 <!-- Bulk actions -->
@@ -370,6 +452,8 @@
             <th class="text-right">Dovuto</th>
             <th>Newsletter</th>
             <th>Preferenza</th>
+            <th>IBAN</th>
+            <th>Donazione</th>
             <th>Azioni</th>
           </tr>
         </thead>
@@ -411,6 +495,20 @@
                   <span class="badge badge-primary"><i class="fas fa-university"></i> Bonifico</span>
                 <?php else: ?>
                   <span class="badge badge-secondary"><i class="fas fa-question"></i> -</span>
+                <?php endif; ?>
+              </td>
+              <td>
+                <?php if ((int)$seller->has_iban === 1): ?>
+                  <span class="badge badge-primary"><i class="fas fa-university"></i> S&igrave;</span>
+                <?php else: ?>
+                  <span class="badge badge-warning"><i class="fas fa-times"></i> No</span>
+                <?php endif; ?>
+              </td>
+              <td>
+                <?php if ((int)$seller->donate_books === 1): ?>
+                  <span class="badge badge-success"><i class="fas fa-gift"></i> S&igrave;</span>
+                <?php else: ?>
+                  <span class="badge badge-warning"><i class="fas fa-times"></i> No</span>
                 <?php endif; ?>
               </td>
               <td>
@@ -470,6 +568,7 @@
   <div class="card-body">
     <ol>
       <li><strong>Prepara la lista</strong>: Filtra per "Newsletter: Non inviate" per vedere i venditori a cui non è stata ancora inviata la comunicazione.</li>
+      <li><strong>Scrivi solo a chi serve</strong>: Spunta <strong>"Da contattare"</strong> per limitare l'elenco ai venditori che nel loro profilo non hanno l'IBAN <em>oppure</em> non hanno scelto di donare i libri invenduti: sono quelli a cui manca ancora una risposta. I filtri "IBAN" e "Donazione" ti permettono di isolare una sola delle due condizioni.</li>
       <li><strong>Anteprima</strong>: Clicca sull'icona <i class="fas fa-eye"></i> per vedere l'anteprima dell'email con il link personalizzato.</li>
       <li><strong>Invio singolo</strong>: Clicca su <i class="fas fa-paper-plane"></i> per inviare l'email direttamente al venditore.</li>
       <li><strong>Invio multiplo</strong>: Seleziona più venditori (o usa "Seleziona Non Inviati") e clicca su "Invia Email Selezionate".</li>
@@ -640,7 +739,7 @@ $(document).ready(function() {
       pageLength: 25,
       order: [[1, 'asc']],
       columnDefs: [
-        { orderable: false, targets: [0, 7] }
+        { orderable: false, targets: [0, 9] }
       ],
       language: {
         url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Italian.json'
