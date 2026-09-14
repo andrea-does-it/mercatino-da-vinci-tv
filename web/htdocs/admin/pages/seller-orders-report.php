@@ -54,27 +54,31 @@
     #ordersTable {
       font-size: var(--orders-font-size) !important;
       width: 100% !important;
-      border-collapse: collapse !important;
+      /* separate, NON collapse: vedi il commento sui bordi qui sotto */
+      border-collapse: separate !important;
+      border-spacing: 0 !important;
+      border-top: 1px solid #000 !important;
+      border-left: 1px solid #000 !important;
     }
-    /* Bordi su tutti e quattro i lati: i separatori VERTICALI fra le colonne
-       servono quanto quelli fra le righe, per leggere la riga al banco e per
-       scrivere dentro le caselle.
-       ATTENZIONE: la tabella NON usa la classe `table-bordered` proprio perché
-       Bootstrap, nel suo blocco @media print (assets/css/bootstrap.css), dichiara
-       `.table-bordered th, .table-bordered td { border: 1px solid #dee2e6 !important }`
-       e quella scorciatoia !important vinceva in stampa lasciando solo i bordi
-       orizzontali (a schermo invece i bordi si vedevano: là la regola di
-       Bootstrap non è !important). Senza quella classe non c'è più nessuna
-       regola concorrente: la griglia la definiscono solo queste righe.
-       Se qualcuno rimette `table-bordered`, i separatori verticali spariscono
-       di nuovo dal PDF. */
+    /* Griglia: `border-collapse: separate` di proposito.
+       In stampa, con `collapse`, i separatori verticali sparivano e la linea
+       orizzontale risultava INTERROTTA proprio in corrispondenza degli incroci:
+       il sintomo tipico dell'algoritmo di collapse, che agli angoli mette in
+       competizione i bordi delle celle adiacenti (e di riga, gruppo e tabella)
+       e ne fa vincere uno solo -- lì vinceva un bordo chiaro/invisibile.
+       Non è un problema di specificità: con `separate` ogni cella disegna i
+       propri bordi e non c'è nessun arbitraggio agli angoli.
+       Per non avere linee doppie: le celle disegnano solo destra e sotto, la
+       tabella chiude sopra e a sinistra (border-spacing: 0).
+       La tabella inoltre NON usa la classe `table-bordered`: nel blocco
+       @media print di Bootstrap quella classe dichiara un `border` !important
+       che rimetterebbe in gioco tutti e quattro i lati. */
     #ordersTable thead tr th,
     #ordersTable tbody tr td {
       padding: 3px 5px !important;
-      border-top: 1px solid #000 !important;
-      border-bottom: 1px solid #000 !important;
-      border-left: 1px solid #000 !important;
+      border: 0 !important;
       border-right: 1px solid #000 !important;
+      border-bottom: 1px solid #000 !important;
     }
     #ordersTable thead {
       background-color: #f0f0f0 !important;
@@ -93,19 +97,20 @@
     }
   }
 
+  /* Stessa tecnica della stampa (separate + destra/sotto), così schermo e PDF
+     non possono divergere. */
   #ordersTable {
     font-size: var(--orders-screen-font-size);
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-top: 1px solid #6c757d;
+    border-left: 1px solid #6c757d;
   }
-  /* Griglia completa anche a schermo: quello che si vede è quello che si stampa.
-     Stessa forma della regola di stampa (lati singoli + specificità alta), così
-     le due non divergono. */
   #ordersTable thead tr th,
   #ordersTable tbody tr td {
-    border-top: 1px solid #6c757d;
-    border-bottom: 1px solid #6c757d;
-    border-left: 1px solid #6c757d;
+    border: 0;
     border-right: 1px solid #6c757d;
+    border-bottom: 1px solid #6c757d;
   }
   #ordersTable th { vertical-align: middle; }
   #ordersTable td { vertical-align: top; }
