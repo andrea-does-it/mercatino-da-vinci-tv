@@ -26,11 +26,12 @@ All paths are under `web/htdocs/` (mirror everything in `web/htdocs/staging/`).
 | `Product.php` | `Product`, `ProductManager`, `ProductImage`, `ProductImageManager`. Columns include `price`, `prezzo_listino`, `nascosto`, `fl_esaurimento`, `nota_volumi`, `ISBN`. Shop queries filter `nascosto=0`. |
 | `Cart.php` | `Cart`/`CartManager`, `Order`/`OrderManager`, `PraticaManager` (the `numPratica` counter). Manages `order_item` lifecycle and `sendAcceptanceEmail()`. |
 | `SalesTransaction.php` | **New in-person sales**: `SalesTransaction`, `SalesTransactionItem`, their managers. `createTransaction()`, refunds (soft-delete), `getOperatorName()`, daily totals, payment methods. |
-| `SellerRefund.php` | End-of-mercatino seller payouts + closing report data; per-year `donate_unsold` (seeded from `user.donate_books`). |
+| `SellerRefund.php` | End-of-mercatino seller payouts + closing report data. New records inherit profile defaults: `donate_unsold` from `user.donate_books`, `payment_preference` = bonifico/contanti from `user.iban`; `applyUserDefaultsToYear()` backfills existing rows (NULL columns only). `SQL_HAS_IBAN`/`SQL_DONATES` consts hold the shared profile conditions. `BOOKSHOP_PRATICA` (=100) + `sqlIsRealSeller()` exclude the mercatino's own stock from every refund amount/list/report (sales views keep it). |
 | `SiteSettings.php` | Configurable settings: pricing (`sellerDeduction`, `buyerMarkup`, `totalMarkup`) and toggles (`registrationsEnabled`, `cartEnabled`). |
 | `CSRF.php` | Token generation/validation: `validateToken`, `validateAjaxOrDie`, `getTokenForAjax`, `tokenField` (via `csrf_field()`). |
 | `Category.php`, `Shipment.php`, `Profile.php`, `SpecialTreatment.php` | Catalog categories, shipment methods, user profiles, special pricing treatments. |
-| `EmailTemplate.php`, `OrderEmail.php` | `EmailTemplateManager` (CRUD tabella `email_template`); `OrderEmailManager` (ricerca ordini per filtri, merge segnaposto, log invii in `order_email_log`). Usati dai tab "Email Ordini"/"Template Email" di site_utils. |
+| `EmailTemplate.php`, `OrderEmail.php` | `EmailTemplateManager` (CRUD tabella `email_template`); `OrderEmailManager` (ricerca ordini per filtri, merge segnaposto, log invii in `order_email_log`, `buildHtmlBody()` → helper condiviso). Usati dai tab "Email Ordini"/"Template Email" di site_utils. |
+| `inc/functions.php` | Helper globali (`esc`, `esc_html`, `send_mail`, …) + **`email_text_to_html()` / `email_html_document()`**: testo semplice → HTML email con URL cliccabili (escape prima, link dopo). |
 | `NewsManager.php`, `DownloadManager.php`, `ActivityLog.php`, `Email.php` | News, downloads, user activity logging, email helper. |
 | `Encryption.php` | AES-256-GCM (used to encrypt IBANs). |
 | `Upgrade.php` | In-app upgrade/maintenance helpers. |
@@ -47,8 +48,15 @@ All paths are under `web/htdocs/` (mirror everything in `web/htdocs/staging/`).
   pratica/seller/transaction; linked from the Filtri card). Help: `help-sales-transactions.php`.
 - **Pratiche (acceptance/pickup):** `orders-list.php`, `process-order.php`,
   `libri_per_pratica.php`, `libri_per_pratica_item.php`.
-- **Seller payouts/closing:** `seller-refunds.php`, `seller-refund-view.php`,
-  `seller-refund-report.php`, `seller-refund-newsletter.php`.
+- **Seller payouts/closing:** `seller-refunds.php` (+ "Applica Preferenze dal Profilo"),
+  `seller-refund-view.php`, `seller-refund-report.php`, `seller-refund-newsletter.php`
+  (filters on the user profile: IBAN / Donazione / "Da contattare").
+  `seller-orders-report.php` ("Riepilogo Pratiche"): tutte le pratiche con libri, lette da
+  `order_item.status`, indipendenti da `seller_refund` e da `sales_transaction`.
+  Seller-facing counterpart: `payment-preference.php` at the web root (token link from the
+  newsletter) — IBAN on file locks the choice to bonifico, a given donation cannot be undone.
+  **Ogni nuova pagina admin va aggiunta a `$allowedPages` in `admin/index.php`** (whitelist
+  anti-LFI): se manca, il router ricade silenziosamente su `dashboard`.
 - **Catalog:** `product.php` (add/edit incl. image upload + `nascosto`/`fl_esaurimento`),
   `products-list.php` (list + columns + CSV/Excel export + quick filters),
   `category.php`, `category-list.php`, `import-libri.php` (ISBN/CSV import + covers).

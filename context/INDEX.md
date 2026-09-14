@@ -36,6 +36,30 @@ These predate the 2026 sales-transaction work but remain useful for breadth:
 `../docs/database_schema.md`, `../docs/api_documentation.md`.
 Where they conflict with this folder, **this folder wins** (it is current).
 
+## Status snapshot (2026-09)
+I rimborsi venditori ereditano le preferenze dal profilo: alla creazione dei record
+`payment_preference` = bonifico se l'utente ha l'IBAN, altrimenti contanti, e
+`donate_unsold` = `user.donate_books`; i record già esistenti si allineano con il pulsante
+"Applica Preferenze dal Profilo" (tocca solo le colonne ancora NULL). La newsletter
+preferenze (`seller-refund-newsletter`) filtra anche sul profilo (IBAN / Donazione /
+"Da contattare") per scrivere solo a chi non ha ancora risposto.
+La **pratica 100** (libri di proprietà del mercatino) è esclusa da tutta la sezione rimborsi
+— importi, elenchi, newsletter, report — perché il suo incasso è guadagno netto del Comitato;
+resta invece nelle viste vendite.
+Nella landing page `payment-preference.php` due scelte sono **a senso unico**: se l'utente ha
+già un IBAN i radio sono disabilitati (solo bonifico, IBAN/intestatario restano modificabili e
+ora precompilati) e, una volta confermata la donazione dei libri invenduti, la casella resta
+spuntata e disabilitata — si annulla **solo via UPDATE SQL**. Entrambi i blocchi sono imposti
+lato server. Il report di chiusura ha ora gli stessi filtri della newsletter (+ Stato), tre
+formati di stampa (A4, A3, **A4 Sintetico** con solo il numero di libri da rendere) e la
+scelta della dimensione del carattere. La pagina rimborsi mostra il **Ricavo del Comitato**
+(incasso pratica 100 + ricarico sulle altre pratiche, dal registro vendite) e il totale
+**Contanti da Rimborsare**. Nuova pagina **Riepilogo Pratiche** (`seller-orders-report`):
+**foglio di ritiro A3 landscape**, una riga per venditore con elenco dei libri da rendere
+(`pratica/titolo`) e colonne da firmare a mano; letto da `order_item.status`, quindi
+indipendente da record di rimborso e vendite registrate.
+**Nessuna migrazione DB** per queste modifiche.
+
 ## Status snapshot (2026-07)
 The transaction-based sales management is live (replacing the old per-item "venduto"
 flow), the `donate_books` profile preference exists, product admin has hidden/esaurimento
