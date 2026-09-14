@@ -174,14 +174,11 @@ class OrderEmailManager {
   /**
    * Testo semplice (già merged) → HTML email.
    * Merge PRIMA, poi escape: i valori inseriti non possono iniettare HTML.
+   * Gli URL http/https diventano link cliccabili (email_text_to_html()).
    * Stessa shell HTML della newsletter rimborsi venditori.
    */
   public function buildHtmlBody($plainBody) {
-    $html = nl2br(esc_html($plainBody));
-    return "<html><head><meta charset='UTF-8'></head>"
-         . "<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>"
-         . $html
-         . "</body></html>";
+    return email_html_document($plainBody);
   }
 
   public function logSend($orderId, $templateId, $recipientEmail, $subject, $sentBy) {

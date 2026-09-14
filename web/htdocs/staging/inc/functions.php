@@ -13,6 +13,54 @@
     return htmlspecialchars($str);
   }
 
+  /**
+   * Testo semplice (già merged) → corpo HTML per email.
+   *
+   * Ordine importante: merge PRIMA, escape DOPO, poi i link, poi gli a capo.
+   * I link vengono creati sul testo GIÀ escapato, quindi un URL non può
+   * rompere l'attributo href (le virgolette sono già entità) e i valori
+   * inseriti non possono iniettare HTML.
+   *
+   * @param string $plainText
+   * @return string HTML (senza shell <html>)
+   */
+  function email_text_to_html($plainText) {
+    $html = esc_html($plainText);
+
+    $html = preg_replace_callback(
+      '~https?://[^\s<]+~i',
+      function ($matches) {
+        $url = $matches[0];
+        $trailing = '';
+        // La punteggiatura finale della frase non fa parte del link.
+        // ';' è escluso di proposito: troncarlo romperebbe un '&amp;' finale.
+        while ($url !== '' && strpos('.,:!?)]}', substr($url, -1)) !== false) {
+          $trailing = substr($url, -1) . $trailing;
+          $url = substr($url, 0, -1);
+        }
+        if ($url === '') {
+          return $matches[0];
+        }
+        return '<a href="' . $url . '">' . $url . '</a>' . $trailing;
+      },
+      $html
+    );
+
+    return nl2br($html);
+  }
+
+  /**
+   * Shell HTML comune delle email del mercatino.
+   * @param string $plainText testo semplice già merged
+   * @return string documento HTML completo
+   */
+  function email_html_document($plainText) {
+    return "<html><head><meta charset='UTF-8'></head>"
+         . "<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>"
+         . email_text_to_html($plainText)
+         . "</body></html>";
+  }
+
   function shorten($str) {
     return substr($str, 0, 30) . '...';
   }
