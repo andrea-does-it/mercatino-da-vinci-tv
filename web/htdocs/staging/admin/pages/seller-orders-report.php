@@ -57,8 +57,8 @@
       /* separate, NON collapse: vedi il commento sui bordi qui sotto */
       border-collapse: separate !important;
       border-spacing: 0 !important;
-      border-top: 1px solid #000 !important;
-      border-left: 1px solid #000 !important;
+      border-top: 1pt solid #000 !important;
+      border-left: 1pt solid #000 !important;
     }
     /* Griglia: `border-collapse: separate` di proposito.
        In stampa, con `collapse`, i separatori verticali sparivano e la linea
@@ -72,13 +72,19 @@
        tabella chiude sopra e a sinistra (border-spacing: 0).
        La tabella inoltre NON usa la classe `table-bordered`: nel blocco
        @media print di Bootstrap quella classe dichiara un `border` !important
-       che rimetterebbe in gioco tutti e quattro i lati. */
+       che rimetterebbe in gioco tutti e quattro i lati.
+
+       Spessore in PUNTI, non in px: 1px vale ~0.75pt e, quando il lettore PDF
+       riscala la pagina, ogni bordo di colonna cade su un pixel frazionario e
+       il rasterizzatore lo tiene o lo scarta a seconda dell'arrotondamento --
+       da cui separatori che compaiono e spariscono cambiando lo zoom. 1pt
+       sopravvive all'arrotondamento a qualsiasi scala e in stampa. */
     #ordersTable thead tr th,
     #ordersTable tbody tr td {
       padding: 3px 5px !important;
       border: 0 !important;
-      border-right: 1px solid #000 !important;
-      border-bottom: 1px solid #000 !important;
+      border-right: 1pt solid #000 !important;
+      border-bottom: 1pt solid #000 !important;
     }
     #ordersTable thead {
       background-color: #f0f0f0 !important;
