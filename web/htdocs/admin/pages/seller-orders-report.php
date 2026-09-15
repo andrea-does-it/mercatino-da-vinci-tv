@@ -256,7 +256,7 @@
             <th class="handwritten">Nome delegato (se diverso dal venditore)</th>
             <th class="handwritten">Tipo documento di identit&agrave;</th>
             <th class="handwritten">Numero e data rilascio</th>
-            <th class="handwritten">Data ritiro libri o denaro</th>
+            <th class="handwritten">Data ritiro libri e/o denaro</th>
             <th class="handwritten">Firma</th>
           </tr>
         </thead>
