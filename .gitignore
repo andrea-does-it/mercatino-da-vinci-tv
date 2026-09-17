@@ -32,3 +32,6 @@ web/htdocs/staging/uploads/*
 # Uncomment if you prefer to install dependencies on deploy
 # vendor/
 .claude/settings.local.json
+
+# Credenziali del tool di sincronizzazione (tools/sync-watch.sh)
+tools/sync.conf

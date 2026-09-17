@@ -42,6 +42,17 @@ output (PDF/CSV/export) are *not* routed through `index.php` and live under `api
   pipeline. Bumping file mtimes (`touch`) is sometimes used so a sync picks changed files up.
 - Because of this, **committing/pushing does not deploy**, and **applying a migration file
   to git does not change any database** — both are separate manual steps on the server.
+- **Sync automatico (opzionale):** `tools/sync-watch.sh` replica il "Keep remote directory
+  up to date" di WinSCP su Mac (`fswatch` + `lftp`, via FTP/FTPS/SFTP). `--check` prova la
+  connessione in sola lettura (non carica nulla), `--once` fa un mirror dei soli file piu'
+  recenti, senza argomenti resta in ascolto e carica a ogni salvataggio. Config e credenziali in `tools/sync.conf` (non versionato).
+  Esclude sempre `inc/config.php`, `.env`, `uploads/`, `images/`, `*.log`; con
+  `--target prod` esclude anche `staging/` (che vive dentro `web/htdocs/`).
+  `--target both` sorveglia `web/htdocs/` una volta sola e instrada ogni file al server
+  giusto (i path sotto `staging/` vanno sul remoto di staging, gli altri su prod):
+  e' la modalita' che rispecchia la regola del dual-tree.
+  Le cancellazioni locali **non** vengono propagate. Vale la pena puntarlo su staging:
+  l'upload a ogni salvataggio tiene il sito in stato di deploy parziale (vedi trap CSRF in 06).
 - Mixed CRLF/LF line endings exist across the repo (git `autocrlf` noise); content parity
   matters, line-ending diffs are cosmetic.
 

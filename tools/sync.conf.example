@@ -1,0 +1,23 @@
+# tools/sync.conf — copia questo file in tools/sync.conf e compilalo.
+# ATTENZIONE: sync.conf contiene la password → e' in .gitignore, non committarlo mai.
+
+# ftp   = FTP in chiaro (password trasmessa leggibile — sconsigliato)
+# ftps  = FTP con TLS esplicito (consigliato se TopHost lo supporta)
+# sftp  = SFTP su SSH (solo se il piano hosting offre accesso SSH)
+PROTOCOL="ftps"
+
+HOST="ftp.comitatogenitoridavtv.it"
+USERNAME="..."
+PASSWORD="..."
+
+# --- Percorsi ---
+# LOCAL  = relativo alla radice del repo.
+# REMOTE = percorso sul server, come lo vedevi nel pannello destro di WinSCP.
+#          Su TopHost spesso il login FTP atterra gia' nella docroot: in quel caso
+#          PROD_REMOTE="." e STAGING_REMOTE="./staging".
+
+STAGING_LOCAL="web/htdocs/staging"
+STAGING_REMOTE="./staging"
+
+PROD_LOCAL="web/htdocs"
+PROD_REMOTE="."

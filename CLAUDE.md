@@ -23,6 +23,12 @@ The `context/` folder and this file live at the repo root and are **not** deploy
 5. **UI text in Italian, informal "tu"**. Escape with `esc()`/`esc_html()`; cast ids to int.
 6. **No test suite; `php` often not on PATH** — verify by reading + manual checks, don't
    claim "tested" when you couldn't run it.
+7. **Before changing any file under `web/htdocs/`, check whether the live-sync tool is
+   running** (`pgrep -f sync-watch.sh`, or read the hook's warning). If `tools/sync-watch.sh`
+   is listening, every save is published to the server immediately — the edit *is* a deploy.
+   A `PreToolUse` hook (`.claude/settings.json` → `tools/claude-sync-guard.sh`) surfaces this
+   automatically. With `--target prod` or `both`, **tell the user before proceeding**,
+   especially for a change spanning several files (partial-deploy CSRF trap, see context/06).
 
 ## Known bug traps (see context/06)
 Object-cast inserts + `NOT NULL` columns; checkbox value-not-`isset` (`postUnchecked` JS);

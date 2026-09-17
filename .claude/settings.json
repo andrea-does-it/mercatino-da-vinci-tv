@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/tools/claude-sync-guard.sh\" 2>/dev/null || true",
+            "timeout": 10,
+            "statusMessage": "Controllo sync-watch\u2026"
+          }
+        ]
+      }
+    ]
+  }
+}

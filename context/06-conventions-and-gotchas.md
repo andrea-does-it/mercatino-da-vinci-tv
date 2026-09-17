@@ -75,6 +75,19 @@
 - **Mixed CRLF/LF**: ignore line-ending-only diffs (`diff --strip-trailing-cr`).
 - **Deploy is manual** (FTP/sync by the maintainer). Pushing ≠ deploying; touching files
   bumps mtimes so a sync re-uploads them.
+  Su Mac c'e' `tools/sync-watch.sh` (watch+upload, vedi 02): comodo su **staging**, rischioso
+  su prod perche' ogni salvataggio e' un micro-deploy. **Trap:** `inc/config.php` e `.env`
+  sono per-ambiente e contengono `ENCRYPTION_KEY` — sovrascrivere quello di produzione rende
+  gli IBAN cifrati non piu' decifrabili. Lo script li esclude: non togliere quelle esclusioni.
+  **Trap:** normalizzare i fine-riga (es. `git checkout -- .` dopo aver impostato
+  `core.autocrlf`) tocca gli mtime di centinaia di file e provoca un ri-upload dell'intero sito.
+  **Guardia:** `tools/claude-sync-guard.sh` (hook `PreToolUse` in `.claude/settings.json`)
+  interviene quando si sta per toccare un file sotto `web/htdocs/` mentre il watcher e' attivo,
+  indicando il target (`staging` / `prod` / `both`). Tre canali:
+  (1) **notifica macOS** via `osascript` — l'unico canale verificato come visibile all'utente;
+  (2) `additionalContext` — arriva sempre a Claude, che deve avvisare l'utente (regola 7);
+  (3) `systemMessage` e, su `prod`/`both`, `permissionDecision: "ask"` — **in auto mode non
+  producono ne' testo visibile ne' prompt**, quindi non farci affidamento come unica difesa.
 - New admin page → add its slug to `$allowedPages` in `admin/index.php` (both trees).
 - **Secrets must not be web-served.** `.env` lives in the web root, so the root `.htaccess`
   denies dotfiles (`^\.`) plus `composer.json`/backup/dump extensions using the same
