@@ -271,10 +271,11 @@ file. Self-test di sola lettura: `admin/?page=sepa-selftest`.
   UPDATE`** e ricontrollano stato/importi di batch e rimborsi coinvolti — protezione contro
   doppio submit o modifiche concorrenti (es. un pagamento registrato a mano nel frattempo).
 - La forma di `ReqdExctnDt` nella 04.01 (`EXEC_DATE_NESTED` in `SepaCbiExport`, `true` →
-  `<ReqdExctnDt><Dt>…</Dt></ReqdExctnDt>`) è **confermata corretta** dalla validazione XSD
-  UniCredit di ottobre 2026 (vedi sotto). L'XSD CBI, se procurato, va in
-  `classes/xsd/CBIPaymentRequest.00.04.01.xsd`: la validazione di schema viene **saltata** (non
-  bloccata) quando il file manca.
+  `<ReqdExctnDt><Dt>…</Dt></ReqdExctnDt>`): **forma annidata indicata dalla documentazione
+  CBI 2023; non ancora verificata da un caricamento UniCredit** (la validazione XSD di
+  ottobre 2026, vedi sotto, si è fermata prima di arrivare a `ReqdExctnDt`). L'XSD CBI, se
+  procurato, va in `classes/xsd/CBIPaymentRequest.00.04.01.xsd`: la validazione di schema
+  viene **saltata** (non bloccata) quando il file manca.
 - **Esito secondo caricamento UniCredit (2026-10, validazione XSD)**: il file con le
   correzioni di cui sopra (località, Category Purpose) è stato respinto dalla validazione
   contro l'XSD ufficiale CBI con `cvc-complex-type.2.4.a` su `CtgyPurp`: nello schema 04.01
@@ -282,8 +283,11 @@ file. Self-test di sola lettura: `admin/?page=sepa-selftest`.
   opzionalmente `LclInstrm`) — va in `CdtTrfTxInf/PmtTpInf` di ogni bonifico, come conferma
   anche l'esempio ufficiale CBI SCT. Corretto spostando `CtgyPurp/Cd` a livello di
   transazione (dopo `PmtId`, prima di `Amt`); `PmtInf/PmtTpInf` ora contiene solo
-  `InstrPrty`/`SvcLvl`. Lo stesso errore XSD non ha segnalato nulla su `ReqdExctnDt`,
-  confermando che la forma annidata è corretta.
+  `InstrPrty`/`SvcLvl`. **`ReqdExctnDt` resta non verificato**: `CtgyPurp` viene prima di
+  `ReqdExctnDt` nel documento, quindi la validazione si è fermata senza dire nulla sulla
+  forma (annidata o no) di `ReqdExctnDt`; la forma annidata è indicata solo dalla
+  documentazione CBI 2023 (SCT tracciato flusso new 2023), punto aperto ancora da chiudere
+  con un caricamento UniCredit.
 - Ogni azione (generazione, pagati, scarta, dati ordinante, località beneficiario) va in
   `user_activity_log` (`admin_sepa_batch_created`/`admin_sepa_batch_paid`/
   `admin_sepa_batch_discarded`/`admin_sepa_debtor_updated`/`admin_sepa_town_updated`) con id

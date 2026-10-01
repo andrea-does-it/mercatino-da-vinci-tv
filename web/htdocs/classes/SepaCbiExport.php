@@ -17,8 +17,10 @@ class SepaCbiExport {
     /**
      * Forma di ReqdExctnDt. Nella 04.00 e' una data semplice; la 04.01 segue
      * pain.001.001.09 dove e' <ReqdExctnDt><Dt>...</Dt></ReqdExctnDt>.
-     * Confermata dalla validazione XSD UniCredit (ottobre 2026): la forma
-     * annidata e' corretta, vedi context/05-domain-workflows.md.
+     * Forma annidata indicata dalla documentazione CBI 2023; non ancora
+     * verificata da un caricamento UniCredit (la validazione XSD di ottobre
+     * 2026 si e' fermata su CtgyPurp, prima di arrivare a ReqdExctnDt). Vedi
+     * context/05-domain-workflows.md.
      */
     const EXEC_DATE_NESTED = true;
 

@@ -160,7 +160,7 @@ CBIPaymentRequest
 └─ PmtInf
    ├─ PmtInfId (= MsgId), PmtMtd = TRF, BtchBookg = true
    ├─ PmtTpInf / InstrPrty = NORM, SvcLvl/Cd = SEPA
-   ├─ ReqdExctnDt / Dt (annidato, confermato — vedi addendum XSD sotto)
+   ├─ ReqdExctnDt / Dt (annidato per doc. CBI 2023, non ancora verificato da UniCredit — vedi addendum XSD sotto)
    ├─ Dbtr / Nm + PstlAdr/Ctry
    ├─ DbtrAcct / Id/IBAN
    ├─ DbtrAgt / FinInstnId/ClrSysMmbId/MmbId = ABI (caratteri 6–10 dell'IBAN IT)
@@ -175,9 +175,11 @@ CBIPaymentRequest
 ```
 
 **Verificato sull'XSD ufficiale CBI (validazione UniCredit 2026-10, vedi addendum sotto)**:
-`ReqdExctnDt/Dt` annidato è la forma corretta della 04.01; `CtgyPurp` va in
-`CdtTrfTxInf/PmtTpInf`, non in `PmtInf/PmtTpInf`. La struttura sopra riflette questo esito;
-la classe isola questi dettagli in un solo punto.
+`CtgyPurp` va in `CdtTrfTxInf/PmtTpInf`, non in `PmtInf/PmtTpInf`. **Non verificato** da
+UniCredit: `ReqdExctnDt/Dt` annidato — la validazione si è fermata su `CtgyPurp`, che nel
+documento viene prima di `ReqdExctnDt`, quindi non dice nulla su quell'elemento; la forma
+annidata resta indicata solo dalla documentazione CBI 2023. La struttura sopra riflette
+questo esito; la classe isola questi dettagli in un solo punto.
 
 ### `classes/SepaBatch.php` — `SepaBatchManager` (DBManager)
 - `getEligibleRefunds($year)` → idonei + motivo di esclusione per i non includibili
@@ -270,9 +272,12 @@ migrazione in entrambi i `sql/`.
 2. **XSD ufficiale CBI 00.04.01** — da ottenere (CBI / UniCredit); senza XSD si salta la
    validazione di schema e restano solo i controlli applicativi.
 3. **XML di esempio esportato da UniCredit** (IBAN mascherati) — per confermare
-   `ReqdExctnDt`, `CtgyPurp`, `PstlAdr`, presenza di BIC/ABI. **Chiuso** dalla validazione
-   XSD UniCredit di ottobre 2026 (vedi secondo addendum sotto): `ReqdExctnDt/Dt` annidato
-   confermato corretto; `CtgyPurp` deve stare in `CdtTrfTxInf/PmtTpInf`, non in `PmtInf`.
+   `ReqdExctnDt`, `CtgyPurp`, `PstlAdr`, presenza di BIC/ABI. **Parzialmente chiuso** dalla
+   validazione XSD UniCredit di ottobre 2026 (vedi secondo addendum sotto): `CtgyPurp` deve
+   stare in `CdtTrfTxInf/PmtTpInf`, non in `PmtInf`. **Resta aperto**: la forma di
+   `ReqdExctnDt` (annidato o no) non è stata verificata da UniCredit — la validazione si è
+   fermata su `CtgyPurp`, che viene prima nel documento; indicazione attuale solo dalla
+   documentazione CBI 2023.
 4. Formato esatto del CUC (lunghezza) per la validazione del campo.
 
 ## Addendum 2026-10-01 — Esito primo caricamento UniCredit
@@ -328,8 +333,11 @@ Decisioni prese per il Task 10 (correzione):
   setting `sepa_category_purpose`, letto una volta per l'intera distinta). Posizione
   nell'elemento: subito dopo `PmtId`, prima di `Amt`.
   `PmtInf/PmtTpInf` ora contiene solo `InstrPrty` e `SvcLvl/Cd`.
-- **`ReqdExctnDt/Dt` annidato**: la validazione XSD non ha segnalato nulla su questo
-  elemento (l'errore si ferma a `CtgyPurp`, più avanti nell'albero) — confermato che la
-  forma annidata (`<ReqdExctnDt><Dt>…</Dt></ReqdExctnDt>`) è quella corretta per la 04.01,
-  come da documentazione CBI 2023. `EXEC_DATE_NESTED` in `SepaCbiExport` resta `true`, non
-  più "da confermare".
+- **`ReqdExctnDt/Dt` annidato**: **non verificato** da questo caricamento. L'errore XSD si
+  ferma su `CtgyPurp`, che nel documento viene **prima** di `ReqdExctnDt` (dentro
+  `PmtInf/PmtTpInf`) — la validazione non è arrivata a leggere `ReqdExctnDt`, quindi non
+  conferma né smentisce nulla su quell'elemento. La forma annidata
+  (`<ReqdExctnDt><Dt>…</Dt></ReqdExctnDt>`) resta indicata solo dalla documentazione CBI
+  2023 (SCT tracciato flusso new 2023). `EXEC_DATE_NESTED` in `SepaCbiExport` resta `true`
+  sulla base di quell'indicazione, ma **va ancora verificato** con un caricamento UniCredit
+  che superi la fase di `CtgyPurp`.
