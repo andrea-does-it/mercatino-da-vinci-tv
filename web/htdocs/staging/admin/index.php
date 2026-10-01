@@ -25,6 +25,7 @@ $allowedPages = [
     'products-list', 'profile', 'profiles-list', 'sales-items-search', 'sales-transactions',
     'sales-transaction-new', 'sales-transaction-view', 'sales-transaction-receipt', 'seller-refunds',
     'seller-refund-view', 'seller-refund-newsletter', 'seller-refund-report', 'seller-orders-report',
+    'seller-refund-sepa', 'sepa-selftest',
     'shipment', 'shipment-list',
     'site_utils', 'special-treatment', 'special-treatments-list', 'upgrade', 'user', 'users-list'
 ];
