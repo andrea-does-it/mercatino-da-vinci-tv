@@ -102,6 +102,25 @@
     catch (InvalidArgumentException $e) { $threw = true; }
     $check('buildXml rifiuta elenco vuoto', $threw);
 
+    // --- SepaBatchManager (sola lettura) ---
+    if (class_exists('SepaBatchManager')) {
+      $sbm = new SepaBatchManager();
+      $check('Migrazione applicata (tabelle sepa_batch)', $sbm->isInstalled(), 'se FAIL: applicare sql/202610010001_sepa_distinte.sql');
+      if ($sbm->isInstalled()) {
+        $p = $sbm->debtorProblems(['name' => '', 'iban' => 'IT60X0542811101000000123457', 'cuc' => '', 'country' => 'IT', 'template' => 'x']);
+        $check('debtorProblems trova 3 problemi', count($p) === 3, implode(' | ', $p));
+        $p = $sbm->debtorProblems(['name' => 'Comitato', 'iban' => 'IT60X0542811101000000123456', 'cuc' => 'ABC12345', 'country' => 'IT', 'template' => 'x']);
+        $check('debtorProblems ok', count($p) === 0, implode(' | ', $p));
+        $c = $sbm->getCandidates((int)date('Y'));
+        $check('getCandidates restituisce eligible/excluded', isset($c['eligible'], $c['excluded']));
+        $leak = false;
+        foreach (array_merge($c['eligible'], $c['excluded']) as $row) { if (isset($row->iban)) { $leak = true; } }
+        $check('getCandidates senza IBAN in chiaro', !$leak);
+      }
+    } else {
+      $check('Classe SepaBatchManager caricata', false);
+    }
+
     // --- Ambiente server ---
     $check('Estensione DOM disponibile', class_exists('DOMDocument'));
   }
