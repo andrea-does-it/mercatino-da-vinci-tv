@@ -151,7 +151,7 @@ class SellerRefundManager extends DBManager {
      * @param string $alias alias of the seller_refund table in the query
      * @return string
      */
-    private function sqlIsRealSeller($alias = 'sr') {
+    public function sqlIsRealSeller($alias = 'sr') {
         return "EXISTS (
                 SELECT 1 FROM orders bo
                 WHERE bo.user_id = {$alias}.user_id

@@ -29,3 +29,4 @@
   require_once ROOT_PATH . 'classes/EmailTemplate.php';
   require_once ROOT_PATH . 'classes/OrderEmail.php';
   require_once ROOT_PATH . 'classes/SepaCbiExport.php';
+  require_once ROOT_PATH . 'classes/SepaBatch.php';
