@@ -134,7 +134,7 @@ class SellerRefundManager extends DBManager {
 
         // The status that reaches the query is the one from this list, never the
         // submitted string, so no request data is interpolated into the SQL.
-        $allowedStatus = ['pending', 'partial', 'completed', 'cancelled'];
+        $allowedStatus = ['pending', 'partial', 'xmlsaved', 'completed', 'cancelled'];
         $statusKey = isset($filters['status']) ? array_search($filters['status'], $allowedStatus, true) : false;
         if ($statusKey !== false) {
             $conditions[] = "sr.status = '" . $allowedStatus[$statusKey] . "'";
@@ -939,6 +939,7 @@ class SellerRefundManager extends DBManager {
                 COUNT(*) as total_sellers,
                 SUM(CASE WHEN sr.status = 'pending' THEN 1 ELSE 0 END) as pending_count,
                 SUM(CASE WHEN sr.status = 'partial' THEN 1 ELSE 0 END) as partial_count,
+                SUM(CASE WHEN sr.status = 'xmlsaved' THEN 1 ELSE 0 END) as xmlsaved_count,
                 SUM(CASE WHEN sr.status = 'completed' THEN 1 ELSE 0 END) as completed_count,
                 SUM(CASE WHEN sr.payment_preference IS NULL THEN 1 ELSE 0 END) as no_preference_count,
                 SUM(CASE WHEN sr.payment_preference = 'cash' THEN 1 ELSE 0 END) as cash_preference_count,

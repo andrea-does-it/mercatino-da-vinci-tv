@@ -241,6 +241,7 @@
           <option value="">Tutti</option>
           <option value="pending" <?php echo $statusFilter === 'pending' ? 'selected' : ''; ?>>In attesa</option>
           <option value="partial" <?php echo $statusFilter === 'partial' ? 'selected' : ''; ?>>Parziale</option>
+          <option value="xmlsaved" <?php echo $statusFilter === 'xmlsaved' ? 'selected' : ''; ?>>Distinta generata</option>
           <option value="completed" <?php echo $statusFilter === 'completed' ? 'selected' : ''; ?>>Completato</option>
           <option value="cancelled" <?php echo $statusFilter === 'cancelled' ? 'selected' : ''; ?>>Annullato</option>
         </select>
