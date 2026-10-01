@@ -36,6 +36,20 @@ These predate the 2026 sales-transaction work but remain useful for breadth:
 `../docs/database_schema.md`, `../docs/api_documentation.md`.
 Where they conflict with this folder, **this folder wins** (it is current).
 
+## Status snapshot (2026-10)
+Nuova sezione **Distinte SEPA** (`seller-refund-sepa.php`, `admin/?page=seller-refund-sepa`):
+genera il file XML di bonifici multipli (SEPA CBI 04.01) per pagare in un colpo solo i
+rimborsi venditori con bonifico, e tiene lo storico di chi è stato pagato con quale file.
+Nuovo stato del rimborso `xmlsaved` ("Distinta generata"), nuove tabelle `sepa_batch` /
+`sepa_batch_item` (l'XML non viene mai salvato: solo i metadati e l'IBAN mascherato), dati
+ordinante/causale in `site_settings`. Classi `SepaCbiExport` (costruzione XML, pura) e
+`SepaBatchManager` (`classes/SepaBatch.php`); self-test di sola lettura
+`admin/?page=sepa-selftest`. **Migrazione `202610010001_sepa_distinte.sql` da applicare a
+mano su ogni ambiente** — finché non lo è, la pagina/self-test lo segnalano e il salvataggio
+di `status = 'xmlsaved'` fallisce. Dettagli: `03-codebase-map.md`, `04-database.md`,
+`05-domain-workflows.md` §C, `06-conventions-and-gotchas.md` (connessione PDO per manager,
+download da endpoint standalone, caratteri non-ASCII nei sorgenti PHP).
+
 ## Status snapshot (2026-09)
 I rimborsi venditori ereditano le preferenze dal profilo: alla creazione dei record
 `payment_preference` = bonifico se l'utente ha l'IBAN, altrimenti contanti, e

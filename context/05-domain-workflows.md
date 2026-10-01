@@ -206,6 +206,44 @@ Access: sales pages are admin/pwuser (gated by `admin/index.php`); there is **no
   `SQL_DONATES` (both assume the user table is aliased `u`) — reused by the filters, the
   stats, the creation defaults and the backfill so they cannot drift apart.
 
+### Distinte SEPA (pagamento dei rimborsi con bonifico)
+`seller-refund-sepa.php` ("Distinte SEPA", `admin/?page=seller-refund-sepa`, linkata da
+`seller-refunds.php`) genera il file XML di bonifici multipli (SEPA CBI 04.01) da caricare
+sull'home banking UniCredit del Comitato e tiene lo storico di chi è stato pagato con quale
+file. Self-test di sola lettura: `admin/?page=sepa-selftest`.
+- **Idonei**: `payment_preference = 'wire_transfer'`, stato `pending`/`partial`/`xmlsaved`,
+  residuo (`amount_owed - amount_paid`) > 0, `sqlIsRealSeller()` (pratica 100 esclusa come nel
+  resto della sezione). Esclusi con motivo: IBAN assente/non decifrabile/checksum errato,
+  paese fuori area SEPA, beneficiario mancante.
+- **Generazione** (`SepaBatchManager::createBatch()`) → i rimborsi inclusi passano a
+  `xmlsaved` ("Distinta generata"); l'XML viene restituito in download e **non è mai salvato**
+  su disco né in DB (solo IBAN mascherato in `sepa_batch_item`). **Rigenerazione** ammessa
+  anche per rimborsi già `xmlsaved` (es. per correggere un IBAN): un rimborso può comparire in
+  più batch, nuovo `MsgId` ogni volta.
+- **"Segna come pagati"** (`markBatchPaid()`) registra il pagamento (`wire_transfer`,
+  riferimento = `MsgId` della distinta) e porta lo stato a `completed` (o resta `partial` se
+  nel frattempo `amount_owed` è cresciuto). **Rifiuta con un errore** se uno dei rimborsi del
+  batch è anche in un batch **più recente e ancora `generated`**: l'operatore deve prima
+  scartare quel batch più recente, oppure segnarlo come pagato — evita di pagare qui un
+  rimborso che l'altra distinta sta per gestire a sua volta. Le righe già "superate" da un
+  batch più recente **già `paid`** vengono invece saltate silenziosamente (contate come
+  "saltati" nel messaggio di esito).
+- **"Scarta"** (`discardBatch()`) riporta a `pending`/`partial` i rimborsi ancora `xmlsaved`
+  del batch, a meno che non siano anche in un altro batch `generated`.
+- `createBatch()`, `markBatchPaid()` e `discardBatch()` lavorano dentro una transazione sulla
+  connessione PDO di `SepaBatchManager` e, appena dentro, **rilockano con `SELECT … FOR
+  UPDATE`** e ricontrollano stato/importi di batch e rimborsi coinvolti — protezione contro
+  doppio submit o modifiche concorrenti (es. un pagamento registrato a mano nel frattempo).
+- **CUC obbligatorio**: senza CUC del Comitato la generazione è bloccata (`debtorProblems()`).
+  La forma esatta di `ReqdExctnDt` nella 04.01 (`EXEC_DATE_NESTED` in `SepaCbiExport`, oggi
+  `true` → `<ReqdExctnDt><Dt>…</Dt></ReqdExctnDt>`) resta da confermare con l'XSD ufficiale o
+  un XML/caricamento di prova UniCredit. L'XSD CBI, se procurato, va in
+  `classes/xsd/CBIPaymentRequest.00.04.01.xsd`: la validazione di schema viene **saltata** (non
+  bloccata) quando il file manca.
+- Ogni azione (generazione, pagati, scarta, dati ordinante) va in `user_activity_log`
+  (`admin_sepa_batch_created`/`admin_sepa_batch_paid`/`admin_sepa_batch_discarded`/
+  `admin_sepa_debtor_updated`) con id batch/conteggi/totale, **mai un IBAN in chiaro**.
+
 ## D. Products & images
 - Catalog = adopted schoolbooks. Add/edit in `product.php`; list in `products-list.php`
   (columns incl. Note Volumi / Esaurimento / Nascosto; CSV+Excel export; quick filters).

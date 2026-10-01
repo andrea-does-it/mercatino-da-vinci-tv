@@ -11,6 +11,9 @@ current, practical summary plus the migration workflow.
   file does NOT mean the column exists on the server — this mismatch is a recurring source
   of "it works on staging but errors on production" bugs.
 - Through `202606220001` all migrations are applied in production (as of 2026-06).
+  `202610010001_sepa_distinte.sql` (distinte SEPA) è nel repo e **va applicata a mano su
+  ogni ambiente**: finché non lo è, `status = 'xmlsaved'` e le tabelle `sepa_batch*` non
+  esistono (`SepaBatchManager::isInstalled()` lo rileva e la pagina/self-test lo segnalano).
 
 ## Main tables (the ones you'll touch most)
 ### `user`
@@ -53,10 +56,30 @@ File on disk: `images/<product_id>/<image_id>.jpg` (+ `<id>_thumbnail.jpg`).
 Per-seller, per-year payout record used by the closing report: `user_id`, `year`,
 `amount_owed`, `amount_paid`, `status`, `payment_preference`, `donate_unsold`
 (seeded from `user.donate_books`), `seller_notes`, `envelope_prepared`, newsletter fields.
+`status` enum: `pending`/`partial`/**`xmlsaved`**/`completed`/`cancelled` — `xmlsaved`
+("Distinta generata", migrazione `202610010001`) significa incluso in una distinta SEPA
+ancora `generated`, non ancora pagato.
+
+### `sepa_batch` / `sepa_batch_item` (migrazione `202610010001`)
+Storico delle distinte SEPA (vedi `05-domain-workflows.md` §C). **L'XML non viene salvato**:
+solo i metadati.
+- `sepa_batch`: una riga per file generato — `year`, `msg_id` (= `PmtInfId` inviato alla
+  banca, univoco), `execution_date`, `remittance_template`, `debtor_iban_masked`, `tx_count`,
+  `total_amount`, `status` (`generated`/`paid`/`discarded`), `created_by`/`created_at`,
+  `paid_at`/`paid_by`.
+- `sepa_batch_item`: una riga per bonifico — `batch_id`, `seller_refund_id`, `amount`,
+  `end_to_end_id`, `remittance`, `beneficiary_name`, `iban_masked`. **Solo IBAN mascherato**:
+  l'IBAN in chiaro resta cifrato in `user.iban` e viene decifrato solo in memoria durante la
+  generazione, mai scritto qui né altrove.
+- Un `seller_refund` può comparire in più batch (rigenerazione / correzioni): le righe
+  storiche restano, una è "superata" se lo stesso rimborso è anche in un batch più recente
+  non scartato.
 
 ### `site_settings`
 Key/value configuration read by `SiteSettings` (pricing markups, `registrations_enabled`,
-`cart_enabled`, …).
+`cart_enabled`, …). Chiavi delle distinte SEPA: `sepa_debtor_name`, `sepa_debtor_iban`,
+`sepa_debtor_cuc`, `sepa_debtor_country` (dati ordinante, conto del Comitato), e
+`sepa_remittance_template` (causale di default, segnaposto `{anno}`/`{pratiche}`).
 
 ### `email_template` and `order_email_log` (Email Ordini)
 - `email_template`: `id`, `name`, `subject`, `body` (testo semplice con segnaposto

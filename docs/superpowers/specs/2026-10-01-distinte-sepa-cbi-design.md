@@ -129,6 +129,12 @@ cifrato in `user.iban` e viene decifrato solo in memoria durante la generazione.
   tramite due distinte.
 - Ogni azione (generazione, pagati, scarta, modifica dati ordinante) va in
   `user_activity_log` con id batch, numero bonifici e totale — **mai un IBAN in chiaro**.
+- **[2026-10-01, implementazione]** La regola "superata" è stata resa più severa di quanto
+  descritto sopra: "Segna come pagati" non si limita a *saltare* le righe di un rimborso
+  presente anche in un batch più recente, ma **rifiuta l'intera operazione con un errore**
+  se quel batch più recente è ancora `generated` (non pagato né scartato) — l'operatore deve
+  prima scartarlo o segnarlo come pagato. Vengono invece saltate, come da spec originale, solo
+  le righe superate da un batch più recente già `paid`.
 
 ## Componenti
 

@@ -34,6 +34,8 @@ All paths are under `web/htdocs/` (mirror everything in `web/htdocs/staging/`).
 | `inc/functions.php` | Helper globali (`esc`, `esc_html`, `send_mail`, …) + **`email_text_to_html()` / `email_html_document()`**: testo semplice → HTML email con URL cliccabili (escape prima, link dopo). |
 | `NewsManager.php`, `DownloadManager.php`, `ActivityLog.php`, `Email.php` | News, downloads, user activity logging, email helper. |
 | `Encryption.php` | AES-256-GCM (used to encrypt IBANs). |
+| `SepaCbiExport.php` | **Distinte SEPA — classe pura** (nessun accesso al DB): costruisce l'XML `CBIPaymentRequest.00.04.01` (`buildXml()`) con `DOMDocument` e offre gli helper `ibanIsValid()` (mod 97 + lunghezza per paese), `isSepaCountry()`, `ibanMask()`, `abiFromIban()`, `toSepaCharset()` (traslitterazione al set SEPA), `buildRemittance()` (causale con `{anno}`/`{pratiche}`, troncata a 140 caratteri su pratica intera), `nextBusinessDay()`, `validate()` (XSD CBI in `classes/xsd/`, se assente la validazione è saltata). |
+| `SepaBatch.php` | `SepaBatchManager` (DBManager): distinte SEPA dei rimborsi venditori. `getCandidates($year)` (idonei/esclusi con motivo), `getDebtorSettings()`/`saveDebtorSettings()`/`saveTemplate()` (dati ordinante e causale in `site_settings`), `createBatch()`/`markBatchPaid()`/`discardBatch()` (scrivono **sulla propria connessione PDO** `$this->db->pdo`, in transazione — non chiamare da qui metodi di scrittura di altri manager, es. `SellerRefundManager::recordPayment()`, perché finirebbero fuori transazione), `getBatchesForYear()`, `getBatchItems()`/`getBatchesForRefund()` (con flag `superseded`). Vedi `05-domain-workflows.md` §C per le regole. |
 | `Upgrade.php` | In-app upgrade/maintenance helpers. |
 | `utilities/BookLookup.php` | ISBN lookup + `downloadCover($isbn,$path)` (Libraccio: `https://www.libraccio.it/images/<isbn>_0_500_0_75.jpg`, kept only if ≥1000 bytes). |
 | `utilities/ImageUtilities.php` | `wallpaper()` (resize) + `thumbnail()` generation. |
@@ -55,6 +57,12 @@ All paths are under `web/htdocs/` (mirror everything in `web/htdocs/staging/`).
   `order_item.status`, indipendenti da `seller_refund` e da `sales_transaction`.
   Seller-facing counterpart: `payment-preference.php` at the web root (token link from the
   newsletter) — IBAN on file locks the choice to bonifico, a given donation cannot be undone.
+  `seller-refund-sepa.php` ("Distinte SEPA", linkata da `seller-refunds.php`): genera il file
+  XML dei bonifici multipli, mostra idonei/esclusi, storico distinte con "Segna come pagati"/
+  "Scarta". `sepa-selftest.php` (`admin/?page=sepa-selftest`): self-test di sola lettura delle
+  parti pure (IBAN, charset, causale, XML) + verifica che la migrazione `202610010001` sia
+  applicata. `SellerRefundManager::sqlIsRealSeller()` è ora **public** (prima privata): usata
+  anche da `SepaBatchManager::getCandidates()`.
   **Ogni nuova pagina admin va aggiunta a `$allowedPages` in `admin/index.php`** (whitelist
   anti-LFI): se manca, il router ricade silenziosamente su `dashboard`.
 - **Catalog:** `product.php` (add/edit incl. image upload + `nascosto`/`fl_esaurimento`),
@@ -79,5 +87,11 @@ All paths are under `web/htdocs/` (mirror everything in `web/htdocs/staging/`).
 | `products-export.php` | CSV/Excel export of the books list (incl. image-file column) | admin/pwuser |
 | `send-order-email.php` | POST, CSRF ajax; send/preview one mail-merge email per order; logs to `order_email_log` | admin |
 
+| `sepa-batch-download.php` | POST, CSRF; crea la distinta (`SepaBatchManager::createBatch()`) e la restituisce come download XML (`Content-Disposition: attachment`) | admin/pwuser |
+
 Standalone (not under `api/`): `shop/invoices/print-invoice.php` (old pratica receipt) and
 `shop/invoices/print-sales-receipt.php` (sales-transaction PDF receipt).
+**Trap evitata:** `admin/index.php` emette l'header/layout HTML prima di includere la pagina,
+quindi una pagina admin non può impostare `Content-Disposition`/scrivere un binario — per
+questo il download della distinta SEPA è un endpoint standalone in `api/admin/`, non parte
+di `seller-refund-sepa.php`.

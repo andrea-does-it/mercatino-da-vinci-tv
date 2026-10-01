@@ -16,6 +16,18 @@
   going to DB/output; `esc_html($x)` = `htmlspecialchars` for display. Cast ids to `(int)`.
 - **CSRF on every POST / admin AJAX** (see below).
 - Prefer existing patterns (manager classes, page-controller style) over new abstractions.
+- **Ogni `DBManager` apre la propria connessione PDO.** Una transazione che deve toccare più
+  tabelle va fatta interamente su una sola connessione (`$this->db->pdo->beginTransaction()`
+  + query dirette), **non** chiamando dentro quella transazione metodi di scrittura di un
+  altro manager (es. `SellerRefundManager::recordPayment()` da dentro `SepaBatchManager`):
+  finirebbero fuori transazione, su un'altra connessione, e un rollback non li annullerebbe.
+  `SepaBatchManager::markBatchPaid()`/`createBatch()`/`discardBatch()` reimplementano quindi
+  le query necessarie sulla propria `$this->db->pdo`.
+- **Download/binario da una pagina admin → endpoint standalone in `api/admin/`.** Il router
+  `admin/index.php` include la pagina **dopo** aver già stampato l'header/layout HTML, quindi
+  una pagina non può impostare `Content-Disposition`/header binari. Pattern: form che posta a
+  un file a sé in `api/admin/` (vedi `sepa-batch-download.php`), che fa `require_once
+  '../../inc/init.php'` e non emette nulla prima degli header.
 
 ## CSRF
 - Forms: include `csrf_field()`; handlers call `CSRF::validateToken()` (or redirect with
@@ -68,6 +80,18 @@
    `order: [[col,'desc']]` puts day 30/31 of ANY month on top — a log can look "stopped
    a week ago" right after a month change (this fooled us on the staging activity log).
    Emit `data-order="<?php echo strtotime($dt); ?>"` on the `<td>` so sorting is chronological.
+8. **Curly quotes/dashes raw in a PHP string literal can get corrupted into ASCII during
+   AI-assisted editing** (e.g. a `'` or `-` silently replaced), producing a parse error. Since
+   `classes/` is loaded on **every** page by `inc/include-classes.php`, this once took down the
+   whole staging site for about 9 minutes while `sync-watch.sh` was active (one bad class file
+   broke every request). Rule: write these characters as `"\u{XXXX}"` escapes in double-quoted
+   strings (not raw), and never save a new/edited class into `web/htdocs/staging/` before it
+   has been reviewed — a parse error there is live immediately.
+9. **PDO's `rowCount()` on an `UPDATE` counts *changed* rows, not *matched* rows.** An `UPDATE`
+   that sets a column to the value it already has returns `rowCount() === 0` even though the
+   row exists and matched the `WHERE`. Don't use it as an "exists" / "was eligible" check —
+   re-`SELECT` (ideally `FOR UPDATE` inside the same transaction, see above) if you need to
+   know whether a row was actually there.
 
 ## Environment realities
 - **No test suite**; `php` is often not on PATH locally. Verify by reading code + manual
