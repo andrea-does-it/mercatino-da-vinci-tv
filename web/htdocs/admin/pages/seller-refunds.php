@@ -164,6 +164,11 @@
          title="Tutte le pratiche con libri, anche senza record di rimborso o vendita registrata">
         <i class="fas fa-boxes"></i> Riepilogo Pratiche
       </a>
+
+      <a href="<?php echo ROOT_URL; ?>admin/?page=seller-refund-sepa&year=<?php echo $selectedYear; ?>" class="btn btn-outline-primary ml-2"
+         title="Genera il file XML dei bonifici da caricare in banca">
+        <i class="fas fa-university"></i> Distinte SEPA
+      </a>
     </form>
   </div>
 </div>
