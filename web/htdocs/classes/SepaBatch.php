@@ -225,9 +225,19 @@ class SepaBatchManager extends DBManager {
             $batchId = (int)$pdo->lastInsertId();
             $msgId = sprintf('MDV-%d-%04d-%s', $year, $batchId, date('YmdHis'));
 
+            // Rilocka e ricontrolla ogni rimborso: getCandidates() sopra non blocca,
+            // quindi qualcosa può essere cambiato (pagato a mano, importo rivisto)
+            // tra la lettura e qui.
+            $lockRefund = $pdo->prepare("SELECT status, amount_owed, amount_paid FROM seller_refund WHERE id = ? FOR UPDATE");
             $txs = [];
             $total = 0;
             foreach ($selected as $c) {
+                $lockRefund->execute([$c->id]);
+                $r = $lockRefund->fetch(PDO::FETCH_ASSOC);
+                $freshDue = $r ? round((float)$r['amount_owed'] - (float)$r['amount_paid'], 2) : null;
+                if (!$r || !in_array($r['status'], ['pending', 'partial', 'xmlsaved'], true) || abs($freshDue - $c->due) > 0.001) {
+                    throw new SepaException("Il rimborso #{$c->id} è cambiato nel frattempo (pagamento o importo). Ricarica la pagina.");
+                }
                 $praticas = $c->pratica_numbers === '' ? [] : array_map('intval', explode(',', $c->pratica_numbers));
                 $tx = [
                     'refund_id' => $c->id,
@@ -265,7 +275,9 @@ class SepaBatchManager extends DBManager {
             }
             $pdo->commit();
         } catch (Exception $e) {
-            $pdo->rollBack();
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             if ($e instanceof SepaException) {
                 throw $e;
             }
@@ -295,7 +307,15 @@ class SepaBatchManager extends DBManager {
         $pdo = $this->db->pdo;
         $pdo->beginTransaction();
         try {
-            $pdo->prepare("UPDATE sepa_batch SET status = 'discarded' WHERE id = ?")->execute([(int)$batchId]);
+            // Rilocka e ricontrolla lo stato: tra il controllo sopra e qui la
+            // distinta potrebbe essere già stata pagata o scartata da un'altra richiesta.
+            $lock = $pdo->prepare("SELECT status FROM sepa_batch WHERE id = ? FOR UPDATE");
+            $lock->execute([(int)$batchId]);
+            if ($lock->fetchColumn() !== 'generated') {
+                throw new SepaException('Si possono scartare solo le distinte generate e non ancora pagate.');
+            }
+            $pdo->prepare("UPDATE sepa_batch SET status = 'discarded' WHERE id = ? AND status = 'generated'")
+                ->execute([(int)$batchId]);
             $pdo->prepare("
                 UPDATE seller_refund sr
                    JOIN sepa_batch_item sbi ON sbi.seller_refund_id = sr.id AND sbi.batch_id = ?
@@ -308,16 +328,23 @@ class SepaBatchManager extends DBManager {
             ")->execute([(int)$batchId, (int)$batchId]);
             $pdo->commit();
         } catch (Exception $e) {
-            $pdo->rollBack();
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            if ($e instanceof SepaException) {
+                throw $e;
+            }
             error_log('SepaBatchManager::discardBatch: ' . $e->getMessage());
             throw new SepaException('Errore nello scarto della distinta: nessuna modifica è stata fatta.');
         }
     }
 
     /**
-     * Registra i pagamenti di una distinta eseguita dalla banca. Salta le
-     * righe superate (rimborso presente in una distinta più recente non
-     * scartata) e i rimborsi già completati/annullati nel frattempo.
+     * Registra i pagamenti di una distinta eseguita dalla banca. Rifiuta se
+     * uno dei suoi rimborsi è anche in una distinta più recente non ancora
+     * pagata né scartata ('generated'): va scartata, oppure pagata, prima
+     * quella. Salta invece le righe già superate da una distinta più recente
+     * ormai pagata, e i rimborsi già completati/annullati nel frattempo.
      * Stessa logica di SellerRefundManager::recordPayment(), ma sulla
      * connessione di questa transazione.
      */
@@ -336,6 +363,29 @@ class SepaBatchManager extends DBManager {
         $pdo = $this->db->pdo;
         $pdo->beginTransaction();
         try {
+            // Rilocka e ricontrolla lo stato: tra il controllo sopra e qui la
+            // distinta potrebbe essere già stata pagata o scartata da un'altra richiesta.
+            $lock = $pdo->prepare("SELECT status FROM sepa_batch WHERE id = ? FOR UPDATE");
+            $lock->execute([(int)$batchId]);
+            if ($lock->fetchColumn() !== 'generated') {
+                throw new SepaException('Si possono segnare come pagate solo le distinte generate.');
+            }
+
+            // Se uno di questi rimborsi è anche in una distinta più recente
+            // non ancora pagata, va risolta prima quella: altrimenti si
+            // rischia di pagare qui un rimborso che la distinta più recente
+            // sta per pagare (o scartare) a sua volta.
+            $newer = $this->db->prepare("
+                SELECT MIN(nb.id) AS min_id
+                  FROM sepa_batch_item sbi
+                  JOIN sepa_batch_item n ON n.seller_refund_id = sbi.seller_refund_id AND n.batch_id > sbi.batch_id
+                  JOIN sepa_batch nb ON nb.id = n.batch_id
+                 WHERE sbi.batch_id = ? AND nb.status = 'generated'", [(int)$batchId]);
+            $newerId = isset($newer[0]['min_id']) ? $newer[0]['min_id'] : null;
+            if ($newerId !== null) {
+                throw new SepaException('La distinta #' . (int)$newerId . ' più recente contiene alcuni degli stessi rimborsi: scartala prima, oppure segna come pagata quella.');
+            }
+
             $insPay = $pdo->prepare("INSERT INTO seller_refund_payment
                 (seller_refund_id, amount, payment_method, payment_date, reference, notes, operator_id)
                 VALUES (?, ?, 'wire_transfer', ?, ?, ?, ?)");
@@ -356,11 +406,16 @@ class SepaBatchManager extends DBManager {
                 $updRefund->execute([$newPaid, $paymentDate, $newStatus, $item->seller_refund_id]);
                 $paid++;
             }
-            $pdo->prepare("UPDATE sepa_batch SET status = 'paid', paid_at = NOW(), paid_by = ? WHERE id = ?")
+            $pdo->prepare("UPDATE sepa_batch SET status = 'paid', paid_at = NOW(), paid_by = ? WHERE id = ? AND status = 'generated'")
                 ->execute([(int)$operatorId, (int)$batchId]);
             $pdo->commit();
         } catch (Exception $e) {
-            $pdo->rollBack();
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            if ($e instanceof SepaException) {
+                throw $e;
+            }
             error_log('SepaBatchManager::markBatchPaid: ' . $e->getMessage());
             throw new SepaException('Errore nella registrazione dei pagamenti: nessuna modifica è stata fatta.');
         }
@@ -398,7 +453,7 @@ class SepaBatchManager extends DBManager {
                               AND nb.status <> 'discarded') AS superseded
               FROM sepa_batch_item sbi
               JOIN seller_refund sr ON sr.id = sbi.seller_refund_id
-              JOIN user u ON u.id = sr.user_id
+              LEFT JOIN user u ON u.id = sr.user_id
              WHERE sbi.batch_id = ?
              ORDER BY u.last_name, u.first_name", [(int)$batchId]);
         return array_map(function ($r) {
