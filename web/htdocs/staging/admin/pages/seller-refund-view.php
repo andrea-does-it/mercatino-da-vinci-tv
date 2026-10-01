@@ -16,6 +16,7 @@
 
   $sellerRefundMgr = new SellerRefundManager();
   $userMgr = new UserManager();
+  $sepaMgr = new SepaBatchManager();
 
   // Handle form submissions
   if (isset($_POST['action'])) {
@@ -23,6 +24,14 @@
       $alertMsg = 'csrf_error';
     } else {
       switch ($_POST['action']) {
+        case 'save_town':
+          $townTarget = $sellerRefundMgr->getById($refundId);
+          if ($townTarget) {
+            $sepaMgr->saveBeneficiaryTown($townTarget->user_id, isset($_POST['iban_town']) ? (string)$_POST['iban_town'] : '');
+            log_activity($loggedInUser->id, 'admin_sepa_town_updated', 'user_id: ' . $townTarget->user_id);
+            $alertMsg = 'town_saved';
+          }
+          break;
         case 'record_payment':
           $amount = isset($_POST['payment_amount']) ? (float)$_POST['payment_amount'] : 0;
           $method = isset($_POST['payment_method']) ? $_POST['payment_method'] : 'cash';
@@ -79,8 +88,10 @@
   $payments = $sellerRefundMgr->getPaymentHistory($refundId);
 
   // Distinte SEPA in cui compare il rimborso (vuoto se la migrazione non c'è)
-  $sepaMgr = new SepaBatchManager();
-  $sepaBatches = $sepaMgr->isInstalled() ? $sepaMgr->getBatchesForRefund($refundId) : [];
+  $sepaInstalled = $sepaMgr->isInstalled();
+  $sepaBatches = $sepaInstalled ? $sepaMgr->getBatchesForRefund($refundId) : [];
+  $sepaBeneficiaryTown = $sepaInstalled ? $sepaMgr->getBeneficiaryTown($refund->user_id) : null;
+  $sepaDefaultCreditorTown = $sepaInstalled ? $sepaMgr->getDebtorSettings()['default_creditor_town'] : '';
 
   // Calculate remaining
   $remaining = (float)$refund->amount_owed - (float)$refund->amount_paid;
@@ -92,6 +103,7 @@
     'comments_updated' => ['type' => 'success', 'text' => 'Note aggiornate con successo.'],
     'token_generated' => ['type' => 'success', 'text' => 'Link di preferenza generato con successo.'],
     'amount_recalculated' => ['type' => 'success', 'text' => 'Importo ricalcolato con successo.'],
+    'town_saved' => ['type' => 'success', 'text' => 'Località del beneficiario salvata.'],
   ];
 
   // Get landing page URL
@@ -172,6 +184,19 @@
                 </tr>
               <?php endif; ?>
             </table>
+            <?php if ($sepaInstalled): ?>
+              <form method="post" class="form-inline">
+                <?php echo csrf_field(); ?>
+                <input type="hidden" name="action" value="save_town">
+                <div class="form-group mr-2">
+                  <label for="iban_town" class="mr-2">Località beneficiario (bonifico)</label>
+                  <input type="text" class="form-control form-control-sm" id="iban_town" name="iban_town" maxlength="35"
+                         placeholder="<?php echo esc_html((string)$sepaDefaultCreditorTown); ?>"
+                         value="<?php echo esc_html((string)$sepaBeneficiaryTown); ?>">
+                </div>
+                <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fas fa-save"></i> Salva</button>
+              </form>
+            <?php endif; ?>
           <?php endif; ?>
         <?php else: ?>
           <div class="alert alert-warning">
@@ -328,6 +353,22 @@
 
     <!-- Record Payment -->
     <?php if ($remaining > 0): ?>
+    <?php
+      $sepaGeneratedBatchId = null;
+      foreach ($sepaBatches as $sb) {
+        if ($sb->status === 'generated' && ($sepaGeneratedBatchId === null || $sb->id > $sepaGeneratedBatchId)) {
+          $sepaGeneratedBatchId = (int)$sb->id;
+        }
+      }
+    ?>
+    <?php if ($sepaGeneratedBatchId !== null): ?>
+    <div class="alert alert-danger">
+      Attenzione: questo rimborso è nella distinta SEPA #<?php echo $sepaGeneratedBatchId; ?> non ancora segnata
+      come pagata. Se registri qui un pagamento, scarta prima la distinta (o rigenerala senza questo rimborso)
+      per non pagarlo due volte.
+      <a href="<?php echo ROOT_URL; ?>admin/?page=seller-refund-sepa&year=<?php echo (int)$refund->year; ?>" class="alert-link">Vai alla distinta</a>
+    </div>
+    <?php endif; ?>
     <div class="card mb-4">
       <div class="card-header bg-primary text-white">
         <i class="fas fa-plus"></i> Registra Pagamento

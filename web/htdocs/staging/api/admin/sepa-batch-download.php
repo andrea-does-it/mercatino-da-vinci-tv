@@ -23,7 +23,7 @@ CSRF::validateOrDie($pageUrl . '&msg=csrf_error');
 $mgr = new SepaBatchManager();
 try {
   if (!$mgr->isInstalled()) {
-    throw new SepaException('La migrazione 202610010001_sepa_distinte.sql non è stata applicata su questo database.');
+    throw new SepaException('Le migrazioni 202610010001_sepa_distinte.sql e 202610020001_sepa_localita.sql non sono state applicate su questo database.');
   }
   $template = isset($_POST['template']) ? (string)$_POST['template'] : '';
   $current = $mgr->getDebtorSettings();

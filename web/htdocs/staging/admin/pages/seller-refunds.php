@@ -368,7 +368,7 @@
       <div class="card-body text-center">
         <h3><?php echo (int)($summary->xmlsaved_count ?? 0); ?></h3>
         <small>
-          Distinte generate, da pagare
+          Rimborsi in distinta, da pagare
           <br><a href="<?php echo ROOT_URL; ?>admin/?page=seller-refund-sepa&year=<?php echo $selectedYear; ?>" class="text-white"><u>Vai alle distinte</u></a>
         </small>
       </div>

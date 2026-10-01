@@ -54,10 +54,10 @@
     $check('Sabato → lunedì', SepaCbiExport::nextBusinessDay(new DateTime('2026-10-03')) === '2026-10-05');
 
     // --- XML ---
-    $debtor = ['name' => 'Comitato Genitori Liceo Da Vinci', 'iban' => 'IT60X0542811101000000123456', 'cuc' => 'ABC12345', 'country' => 'IT'];
+    $debtor = ['name' => 'Comitato Genitori Liceo Da Vinci', 'iban' => 'IT60X0542811101000000123456', 'cuc' => 'ABC12345', 'country' => 'IT', 'town' => 'Treviso', 'category_purpose' => 'SUPP'];
     $txs = [
-      ['end_to_end_id' => 'MDV2026-R1-B9', 'amount' => 12.5, 'name' => 'Rossi Màrio', 'iban' => 'IT60X0542811101000000123456', 'remittance' => 'Rimb. Mercatino Da Vinci 2026 - Pratica 12'],
-      ['end_to_end_id' => 'MDV2026-R2-B9', 'amount' => 7.1, 'name' => 'Müller Hans', 'iban' => 'DE89370400440532013000', 'remittance' => 'Rimb. Mercatino Da Vinci 2026 - Pratica 45'],
+      ['end_to_end_id' => 'MDV2026-R1-B9', 'amount' => 12.5, 'name' => 'Rossi Màrio', 'iban' => 'IT60X0542811101000000123456', 'remittance' => 'Rimb. Mercatino Da Vinci 2026 - Pratica 12', 'town' => 'Treviso'],
+      ['end_to_end_id' => 'MDV2026-R2-B9', 'amount' => 7.1, 'name' => 'Müller Hans', 'iban' => 'DE89370400440532013000', 'remittance' => 'Rimb. Mercatino Da Vinci 2026 - Pratica 45', 'town' => 'München'],
     ];
     $xml = '';
     try {
@@ -89,28 +89,58 @@
       $check('Paese beneficiario da IBAN', $val('(//c:CdtTrfTxInf)[2]/c:Cdtr/c:PstlAdr/c:Ctry') === 'DE');
       $check('EndToEndId', $val('(//c:CdtTrfTxInf)[2]/c:PmtId/c:EndToEndId') === 'MDV2026-R2-B9');
       $check('Causale', $val('(//c:CdtTrfTxInf)[1]/c:RmtInf/c:Ustrd') === 'Rimb. Mercatino Da Vinci 2026 - Pratica 12');
+      $check('TwnNm ordinante', $val('//c:PmtInf/c:Dbtr/c:PstlAdr/c:TwnNm') === 'Treviso');
+      $t = $val('(//c:CdtTrfTxInf)[2]/c:Cdtr/c:PstlAdr/c:TwnNm');
+      $check('TwnNm beneficiario 2 traslitterato', $t === 'Munchen', $t);
+      $check('CtgyPurp = SUPP', $val('//c:PmtInf/c:PmtTpInf/c:CtgyPurp/c:Cd') === 'SUPP');
       $v = SepaCbiExport::validate($xml);
       $check('Validazione XSD', $v['skipped'] || count($v['errors']) === 0,
         $v['skipped'] ? 'XSD non presente: saltata' : implode(' | ', $v['errors']));
     }
     $threw = false;
-    try { SepaCbiExport::buildXml($debtor, 'X', '2026-10-02', [['end_to_end_id' => 'A', 'amount' => 5, 'name' => 'A', 'iban' => 'IT60X0542811101000000123457', 'remittance' => 'x']]); }
+    try { SepaCbiExport::buildXml($debtor, 'X', '2026-10-02', [['end_to_end_id' => 'A', 'amount' => 5, 'name' => 'A', 'iban' => 'IT60X0542811101000000123457', 'remittance' => 'x', 'town' => 'Treviso']]); }
     catch (InvalidArgumentException $e) { $threw = true; }
     $check('buildXml rifiuta IBAN non valido', $threw);
     $threw = false;
     try { SepaCbiExport::buildXml($debtor, 'X', '2026-10-02', []); }
     catch (InvalidArgumentException $e) { $threw = true; }
     $check('buildXml rifiuta elenco vuoto', $threw);
+    $threw = false;
+    try {
+      $txsBadTown = $txs;
+      $txsBadTown[0]['town'] = '   ';
+      SepaCbiExport::buildXml($debtor, 'X', '2026-10-02', $txsBadTown);
+    } catch (InvalidArgumentException $e) { $threw = true; }
+    $check('buildXml rifiuta località beneficiario vuota', $threw);
+
+    $xmlNoCuc = '';
+    try {
+      $debtorNoCuc = $debtor;
+      $debtorNoCuc['cuc'] = '';
+      $xmlNoCuc = SepaCbiExport::buildXml($debtorNoCuc, 'MDV-2026-0010-20261001120000', '2026-10-02', $txs, new DateTime('2026-10-01 12:00:00'));
+      $check('buildXml con CUC vuoto non lancia eccezioni', true);
+    } catch (Exception $e) {
+      $check('buildXml con CUC vuoto non lancia eccezioni', false, $e->getMessage());
+    }
+    if ($xmlNoCuc !== '') {
+      $domNoCuc = new DOMDocument();
+      $domNoCuc->loadXML($xmlNoCuc);
+      $xpNoCuc = new DOMXPath($domNoCuc);
+      $xpNoCuc->registerNamespace('c', SepaCbiExport::XML_NAMESPACE);
+      $check('CUC vuoto: nessun InitgPty/Id', $xpNoCuc->query('//c:GrpHdr/c:InitgPty/c:Id')->length === 0);
+    }
 
     // --- SepaBatchManager (sola lettura) ---
     if (class_exists('SepaBatchManager')) {
       $sbm = new SepaBatchManager();
-      $check('Migrazione applicata (tabelle sepa_batch)', $sbm->isInstalled(), 'se FAIL: applicare sql/202610010001_sepa_distinte.sql');
+      $check('Migrazione applicata (tabelle sepa_batch)', $sbm->isInstalled(), 'se FAIL: applicare sql/202610010001_sepa_distinte.sql e sql/202610020001_sepa_localita.sql');
       if ($sbm->isInstalled()) {
-        $p = $sbm->debtorProblems(['name' => '', 'iban' => 'IT60X0542811101000000123457', 'cuc' => '', 'country' => 'IT', 'template' => 'x']);
+        $p = $sbm->debtorProblems(['name' => '', 'iban' => 'IT60X0542811101000000123457', 'cuc' => '', 'country' => 'IT', 'town' => 'Treviso', 'default_creditor_town' => 'Treviso', 'category_purpose' => 'X', 'template' => 'x']);
         $check('debtorProblems trova 3 problemi', count($p) === 3, implode(' | ', $p));
-        $p = $sbm->debtorProblems(['name' => 'Comitato', 'iban' => 'IT60X0542811101000000123456', 'cuc' => 'ABC12345', 'country' => 'IT', 'template' => 'x']);
+        $p = $sbm->debtorProblems(['name' => 'Comitato', 'iban' => 'IT60X0542811101000000123456', 'cuc' => 'ABC12345', 'country' => 'IT', 'town' => 'Treviso', 'default_creditor_town' => 'Treviso', 'category_purpose' => 'SUPP', 'template' => 'x']);
         $check('debtorProblems ok', count($p) === 0, implode(' | ', $p));
+        $p = $sbm->debtorProblems(['name' => 'Comitato', 'iban' => 'IT60X0542811101000000123456', 'cuc' => '', 'country' => 'IT', 'town' => 'Treviso', 'default_creditor_town' => 'Treviso', 'category_purpose' => 'SUPP', 'template' => 'x']);
+        $check('debtorProblems CUC vuoto ok', count($p) === 0, implode(' | ', $p));
         $c = $sbm->getCandidates((int)date('Y'));
         $check('getCandidates restituisce eligible/excluded', isset($c['eligible'], $c['excluded']));
         $leak = false;
@@ -120,6 +150,13 @@
     } else {
       $check('Classe SepaBatchManager caricata', false);
     }
+
+    // --- Area economica europea (SEE) ---
+    $check('isEeaCountry IT', SepaCbiExport::isEeaCountry('IT'));
+    $check('isEeaCountry NO', SepaCbiExport::isEeaCountry('NO'));
+    $check('isEeaCountry CH', !SepaCbiExport::isEeaCountry('CH'));
+    $check('isEeaCountry GB', !SepaCbiExport::isEeaCountry('GB'));
+    $check('isEeaCountry SM', !SepaCbiExport::isEeaCountry('SM'));
 
     // --- Ambiente server ---
     $check('Estensione DOM disponibile', class_exists('DOMDocument'));
