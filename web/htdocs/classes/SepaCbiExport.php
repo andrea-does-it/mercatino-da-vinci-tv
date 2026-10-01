@@ -40,6 +40,17 @@ class SepaCbiExport {
         return isset(self::$sepaIbanLengths[strtoupper((string)$cc)]);
     }
 
+    /** Paesi EEA (EU27 + Islanda, Liechtenstein, Norvegia): fuori da qui serve BIC e indirizzo. */
+    private static $eeaCountries = [
+        'AT', 'BE', 'BG', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'HU',
+        'IE', 'IT', 'LT', 'LU', 'LV', 'MT', 'NL', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK',
+        'IS', 'LI', 'NO',
+    ];
+
+    public static function isEeaCountry($cc) {
+        return in_array(strtoupper((string)$cc), self::$eeaCountries, true);
+    }
+
     /**
      * Formato, lunghezza per paese (solo paesi SEPA) e controllo mod 97.
      */

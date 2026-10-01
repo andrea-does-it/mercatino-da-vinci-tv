@@ -45,8 +45,9 @@ Nuovo stato del rimborso `xmlsaved` ("Distinta generata"), nuove tabelle `sepa_b
 ordinante/causale in `site_settings`. Classi `SepaCbiExport` (costruzione XML, pura) e
 `SepaBatchManager` (`classes/SepaBatch.php`); self-test di sola lettura
 `admin/?page=sepa-selftest`. **Migrazione `202610010001_sepa_distinte.sql` da applicare a
-mano su ogni ambiente** — finché non lo è, la pagina/self-test lo segnalano e il salvataggio
-di `status = 'xmlsaved'` fallisce. Dettagli: `03-codebase-map.md`, `04-database.md`,
+mano su ogni ambiente** — finché non lo è, `SepaBatchManager::isInstalled()` lo rileva e
+pagina/endpoint/self-test si bloccano con un messaggio esplicito **prima** di scrivere
+qualunque cosa (non un salvataggio che fallisce). Dettagli: `03-codebase-map.md`, `04-database.md`,
 `05-domain-workflows.md` §C, `06-conventions-and-gotchas.md` (connessione PDO per manager,
 download da endpoint standalone, caratteri non-ASCII nei sorgenti PHP).
 

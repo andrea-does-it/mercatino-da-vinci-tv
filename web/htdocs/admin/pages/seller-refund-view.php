@@ -328,6 +328,22 @@
 
     <!-- Record Payment -->
     <?php if ($remaining > 0): ?>
+    <?php
+      $sepaGeneratedBatchId = null;
+      foreach ($sepaBatches as $sb) {
+        if ($sb->status === 'generated' && ($sepaGeneratedBatchId === null || $sb->id > $sepaGeneratedBatchId)) {
+          $sepaGeneratedBatchId = (int)$sb->id;
+        }
+      }
+    ?>
+    <?php if ($sepaGeneratedBatchId !== null): ?>
+    <div class="alert alert-danger">
+      Attenzione: questo rimborso è nella distinta SEPA #<?php echo $sepaGeneratedBatchId; ?> non ancora segnata
+      come pagata. Se registri qui un pagamento, scarta prima la distinta (o escludi il rimborso) per non pagarlo
+      due volte.
+      <a href="<?php echo ROOT_URL; ?>admin/?page=seller-refund-sepa&year=<?php echo (int)$refund->year; ?>" class="alert-link">Vai alla distinta</a>
+    </div>
+    <?php endif; ?>
     <div class="card mb-4">
       <div class="card-header bg-primary text-white">
         <i class="fas fa-plus"></i> Registra Pagamento

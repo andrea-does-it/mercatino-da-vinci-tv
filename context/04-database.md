@@ -12,8 +12,11 @@ current, practical summary plus the migration workflow.
   of "it works on staging but errors on production" bugs.
 - Through `202606220001` all migrations are applied in production (as of 2026-06).
   `202610010001_sepa_distinte.sql` (distinte SEPA) è nel repo e **va applicata a mano su
-  ogni ambiente**: finché non lo è, `status = 'xmlsaved'` e le tabelle `sepa_batch*` non
-  esistono (`SepaBatchManager::isInstalled()` lo rileva e la pagina/self-test lo segnalano).
+  ogni ambiente**: finché non lo è, `SepaBatchManager::isInstalled()` restituisce `false` e sia
+  la pagina `seller-refund-sepa.php` sia l'endpoint di generazione si **bloccano con un
+  messaggio prima di scrivere qualunque cosa** (stesso riscontro nel self-test
+  `admin/?page=sepa-selftest`) — non è un salvataggio che fallisce a metà, è un blocco esplicito
+  a monte.
 
 ## Main tables (the ones you'll touch most)
 ### `user`
@@ -57,8 +60,11 @@ Per-seller, per-year payout record used by the closing report: `user_id`, `year`
 `amount_owed`, `amount_paid`, `status`, `payment_preference`, `donate_unsold`
 (seeded from `user.donate_books`), `seller_notes`, `envelope_prepared`, newsletter fields.
 `status` enum: `pending`/`partial`/**`xmlsaved`**/`completed`/`cancelled` — `xmlsaved`
-("Distinta generata", migrazione `202610010001`) significa incluso in una distinta SEPA
-ancora `generated`, non ancora pagato.
+("Distinta generata", migrazione `202610010001`) significa **incluso in una distinta generata e
+non ancora pagata tramite distinta**. Un pagamento registrato a mano su
+`seller-refund-view.php` può comunque portarlo a `partial`/`completed` nel frattempo: in quel
+caso la pagina avvisa (riquadro rosso sopra il form "Registra Pagamento") che il rimborso è
+ancora in una distinta `generated`, per evitare di pagarlo due volte.
 
 ### `sepa_batch` / `sepa_batch_item` (migrazione `202610010001`)
 Storico delle distinte SEPA (vedi `05-domain-workflows.md` §C). **L'XML non viene salvato**:

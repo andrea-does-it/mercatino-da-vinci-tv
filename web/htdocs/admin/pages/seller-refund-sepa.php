@@ -15,10 +15,12 @@
   $installed = $sepaMgr->isInstalled();
   $errorText = '';
   $infoText = '';
+  $warningText = '';
+  $csrfFailed = false;
 
   if ($installed && isset($_POST['action'])) {
     if (!CSRF::validateToken()) {
-      $alertMsg = 'csrf_error';
+      $csrfFailed = true;
     } else {
       try {
         switch ($_POST['action']) {
@@ -40,16 +42,25 @@
           case 'mark_paid':
             $batchId = (int)($_POST['batch_id'] ?? 0);
             $res = $sepaMgr->markBatchPaid($batchId, (string)($_POST['payment_date'] ?? ''), (int)$loggedInUser->id);
+            $paidBatch = $sepaMgr->getBatch($batchId);
+            $paidBatchTotal = number_format($paidBatch ? (float)$paidBatch->total_amount : 0, 2, '.', '');
             log_activity($loggedInUser->id, 'admin_sepa_batch_paid',
-              'batch: ' . $batchId . ', pagati: ' . $res['paid'] . ', saltati: ' . $res['skipped']);
+              'batch: ' . $batchId . ', pagati: ' . $res['paid'] . ', saltati: ' . $res['skipped']
+              . ', totale: ' . $paidBatchTotal);
             $infoText = 'Distinta #' . $batchId . ' segnata come pagata: ' . $res['paid'] . ' pagamenti registrati'
               . ($res['skipped'] ? ', ' . $res['skipped'] . ' saltati (in una distinta più recente o già saldati).' : '.');
+            if (!empty($res['skipped_settled'])) {
+              $warningText = $res['skipped_settled'] . ' rimborsi erano già stati saldati a mano e vanno controllati'
+                . ' con l\'estratto conto (possibile doppio pagamento).';
+            }
             break;
 
           case 'discard':
             $batchId = (int)($_POST['batch_id'] ?? 0);
             $sepaMgr->discardBatch($batchId, (int)$loggedInUser->id);
-            log_activity($loggedInUser->id, 'admin_sepa_batch_discarded', 'batch: ' . $batchId);
+            $discardedBatch = $sepaMgr->getBatch($batchId);
+            $discardedBatchTotal = number_format($discardedBatch ? (float)$discardedBatch->total_amount : 0, 2, '.', '');
+            log_activity($loggedInUser->id, 'admin_sepa_batch_discarded', 'batch: ' . $batchId . ', totale: ' . $discardedBatchTotal);
             $infoText = 'Distinta #' . $batchId . ' scartata.';
             break;
         }
@@ -96,7 +107,7 @@
   </select>
 </form>
 
-<?php if ($alertMsg === 'csrf_error'): ?>
+<?php if ($csrfFailed): ?>
   <div class="alert alert-danger">Sessione scaduta o richiesta non valida: ricarica la pagina e riprova.</div>
 <?php endif; ?>
 <?php if ($errorText !== ''): ?>
@@ -104,6 +115,9 @@
 <?php endif; ?>
 <?php if ($infoText !== ''): ?>
   <div class="alert alert-success"><?php echo esc_html($infoText); ?></div>
+<?php endif; ?>
+<?php if ($warningText !== ''): ?>
+  <div class="alert alert-warning"><?php echo esc_html($warningText); ?></div>
 <?php endif; ?>
 
 <?php if (!$installed): ?>
@@ -194,6 +208,7 @@
           <tr>
             <td><input type="checkbox" class="refund-cb" name="refund_ids[]" value="<?php echo (int)$c->id; ?>"
                        data-amount="<?php echo number_format($c->due, 2, '.', ''); ?>"
+                       <?php echo $c->last_batch_id !== null ? 'data-in-batch="1"' : ''; ?>
                        <?php echo $c->last_batch_id === null ? 'checked' : ''; ?>></td>
             <td>
               <a href="<?php echo ROOT_URL; ?>admin/?page=seller-refund-view&id=<?php echo (int)$c->id; ?>">
@@ -220,6 +235,7 @@
         <i class="fas fa-download"></i> Genera distinta XML
       </button>
       <?php if ($debtorProblems): ?><small class="text-danger ml-2">Completa prima i dati ordinante.</small><?php endif; ?>
+      <small id="sepaDownloadHint" class="text-muted ml-2 d-none">Se il download non è partito, ricarica la pagina e controlla lo storico prima di rigenerare.</small>
     </form>
     <?php endif; ?>
   </div>
@@ -335,23 +351,36 @@
   }
 
   // Anteprima indicativa (lato server si applicano traslitterazione e taglio a 140).
+  // replaceAll via split/join: deve sostituire tutte le occorrenze, come lo
+  // str_replace() lato server (SepaCbiExport::buildRemittance).
+  function replaceAll(str, search, replacement) {
+    return str.split(search).join(replacement);
+  }
   function previews() {
     document.querySelectorAll('.remittance-preview').forEach(function (td) {
-      td.firstElementChild.textContent = tpl.value.replace('{anno}', td.dataset.year).replace('{pratiche}', td.dataset.praticas).slice(0, 140);
+      var text = replaceAll(tpl.value, '{anno}', td.dataset.year);
+      text = replaceAll(text, '{pratiche}', td.dataset.praticas);
+      td.firstElementChild.textContent = text.slice(0, 140);
     });
   }
 
   boxes.forEach(function (b) { b.addEventListener('change', refresh); });
   document.getElementById('checkAll').addEventListener('change', function () {
     var on = this.checked;
-    boxes.forEach(function (b) { b.checked = on; });
+    // I rimborsi già in una distinta si spuntano/tolgono solo uno per uno, mai da "Seleziona tutti".
+    boxes.forEach(function (b) { if (b.dataset.inBatch !== '1') { b.checked = on; } });
     refresh();
   });
   tpl.addEventListener('input', previews);
 
   // Il download non ricarica la pagina: l'endpoint imposta il cookie sepa_dl
   // quando il file è pronto, e allora ricarichiamo per mostrare stati e storico.
-  form.addEventListener('submit', function () {
+  form.addEventListener('submit', function (e) {
+    var inBatchSelected = boxes.some(function (b) { return b.checked && b.dataset.inBatch === '1'; });
+    if (inBatchSelected && !window.confirm('Alcuni rimborsi selezionati sono già in una distinta: se anche quella è stata caricata in banca verranno pagati due volte. Continuare?')) {
+      e.preventDefault();
+      return;
+    }
     var token = String(Date.now());
     document.getElementById('download_token').value = token;
     submit.disabled = true;
@@ -364,7 +393,8 @@
         window.location.href = '<?php echo $pageUrl; ?>&msg=sepa_generated';
       } else if (tries > 60) {
         clearInterval(timer);
-        submit.disabled = false;
+        var hint = document.getElementById('sepaDownloadHint');
+        if (hint) { hint.classList.remove('d-none'); }
       }
     }, 500);
   });

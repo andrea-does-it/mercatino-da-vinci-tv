@@ -158,6 +158,8 @@ class SepaBatchManager extends DBManager {
                 $reason = 'IBAN non valido o non decifrabile';
             } elseif (!SepaCbiExport::isSepaCountry(substr($iban, 0, 2))) {
                 $reason = 'IBAN di un paese fuori area SEPA';
+            } elseif (!SepaCbiExport::isEeaCountry(substr($iban, 0, 2))) {
+                $reason = 'IBAN extra-SEE (serve BIC e indirizzo): paga a mano';
             } elseif ($row->beneficiary_name === '') {
                 $reason = 'Intestatario mancante';
             }
@@ -344,9 +346,11 @@ class SepaBatchManager extends DBManager {
      * uno dei suoi rimborsi è anche in una distinta più recente non ancora
      * pagata né scartata ('generated'): va scartata, oppure pagata, prima
      * quella. Salta invece le righe già superate da una distinta più recente
-     * ormai pagata, e i rimborsi già completati/annullati nel frattempo.
-     * Stessa logica di SellerRefundManager::recordPayment(), ma sulla
-     * connessione di questa transazione.
+     * ormai pagata ('skipped'), e i rimborsi già completati/annullati nel
+     * frattempo, es. pagati a mano ('skipped_settled': l'operatore va
+     * avvisato di controllarli con l'estratto conto, possibile doppio
+     * pagamento). Stessa logica di SellerRefundManager::recordPayment(), ma
+     * sulla connessione di questa transazione.
      */
     public function markBatchPaid($batchId, $paymentDate, $operatorId) {
         $batch = $this->getBatch($batchId);
@@ -359,7 +363,8 @@ class SepaBatchManager extends DBManager {
         }
 
         $paid = 0;
-        $skipped = 0;
+        $skippedSuperseded = 0;
+        $skippedSettled = 0;
         $pdo = $this->db->pdo;
         $pdo->beginTransaction();
         try {
@@ -395,8 +400,12 @@ class SepaBatchManager extends DBManager {
             foreach ($this->getBatchItems($batchId) as $item) {
                 $getRefund->execute([$item->seller_refund_id]);
                 $r = $getRefund->fetch(PDO::FETCH_ASSOC);
-                if ($item->superseded || !$r || in_array($r['status'], ['completed', 'cancelled'], true)) {
-                    $skipped++;
+                if ($item->superseded || !$r) {
+                    $skippedSuperseded++;
+                    continue;
+                }
+                if (in_array($r['status'], ['completed', 'cancelled'], true)) {
+                    $skippedSettled++;
                     continue;
                 }
                 $insPay->execute([$item->seller_refund_id, $item->amount, $paymentDate, $batch->msg_id,
@@ -419,7 +428,7 @@ class SepaBatchManager extends DBManager {
             error_log('SepaBatchManager::markBatchPaid: ' . $e->getMessage());
             throw new SepaException('Errore nella registrazione dei pagamenti: nessuna modifica è stata fatta.');
         }
-        return ['paid' => $paid, 'skipped' => $skipped];
+        return ['paid' => $paid, 'skipped' => $skippedSuperseded + $skippedSettled, 'skipped_settled' => $skippedSettled];
     }
 
     // ---------------------------------------------------------------- storico

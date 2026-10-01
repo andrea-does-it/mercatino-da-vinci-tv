@@ -121,6 +121,13 @@
       $check('Classe SepaBatchManager caricata', false);
     }
 
+    // --- Area economica europea (SEE) ---
+    $check('isEeaCountry IT', SepaCbiExport::isEeaCountry('IT'));
+    $check('isEeaCountry NO', SepaCbiExport::isEeaCountry('NO'));
+    $check('isEeaCountry CH', !SepaCbiExport::isEeaCountry('CH'));
+    $check('isEeaCountry GB', !SepaCbiExport::isEeaCountry('GB'));
+    $check('isEeaCountry SM', !SepaCbiExport::isEeaCountry('SM'));
+
     // --- Ambiente server ---
     $check('Estensione DOM disponibile', class_exists('DOMDocument'));
   }

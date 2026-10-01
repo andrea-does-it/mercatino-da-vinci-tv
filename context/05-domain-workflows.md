@@ -213,8 +213,10 @@ sull'home banking UniCredit del Comitato e tiene lo storico di chi è stato paga
 file. Self-test di sola lettura: `admin/?page=sepa-selftest`.
 - **Idonei**: `payment_preference = 'wire_transfer'`, stato `pending`/`partial`/`xmlsaved`,
   residuo (`amount_owed - amount_paid`) > 0, `sqlIsRealSeller()` (pratica 100 esclusa come nel
-  resto della sezione). Esclusi con motivo: IBAN assente/non decifrabile/checksum errato,
-  paese fuori area SEPA, beneficiario mancante.
+  resto della sezione). Esclusi con motivo: IBAN assente/non decifrabile/checksum errato, paese
+  fuori area SEPA, IBAN SEPA ma **fuori dallo SEE** (`SepaCbiExport::isEeaCountry()`: EU27 +
+  Islanda/Liechtenstein/Norvegia — servirebbero BIC e indirizzo del beneficiario, non gestiti:
+  "paga a mano"), beneficiario mancante.
 - **Generazione** (`SepaBatchManager::createBatch()`) → i rimborsi inclusi passano a
   `xmlsaved` ("Distinta generata"); l'XML viene restituito in download e **non è mai salvato**
   su disco né in DB (solo IBAN mascherato in `sepa_batch_item`). **Rigenerazione** ammessa
@@ -227,9 +229,23 @@ file. Self-test di sola lettura: `admin/?page=sepa-selftest`.
   scartare quel batch più recente, oppure segnarlo come pagato — evita di pagare qui un
   rimborso che l'altra distinta sta per gestire a sua volta. Le righe già "superate" da un
   batch più recente **già `paid`** vengono invece saltate silenziosamente (contate come
-  "saltati" nel messaggio di esito).
+  "saltati" nel messaggio di esito). Sono saltate anche le righe il cui rimborso risulta già
+  `completed`/`cancelled` (es. pagato a mano nel frattempo): queste si contano a parte come
+  `skipped_settled` (`markBatchPaid()` restituisce `['paid', 'skipped', 'skipped_settled']`,
+  con `skipped` come totale complessivo per compatibilità), e la pagina mostra un avviso
+  giallo a parte ("N rimborsi erano già stati saldati a mano...") perché vanno controllati con
+  l'estratto conto per un possibile doppio pagamento.
+- **`seller-refund-view.php`**: se il rimborso aperto compare in una distinta ancora
+  `generated` (non pagata né scartata), il form manuale "Registra Pagamento" mostra un avviso
+  rosso (con link alla distinta più recente in quello stato) per evitare di pagarlo due volte,
+  a mano e poi via distinta o viceversa.
 - **"Scarta"** (`discardBatch()`) riporta a `pending`/`partial` i rimborsi ancora `xmlsaved`
   del batch, a meno che non siano anche in un altro batch `generated`.
+- **Selezione nella pagina "Distinte SEPA"**: "Seleziona tutti" spunta/toglie solo i rimborsi
+  mai inclusi in una distinta (`data-in-batch` assente); quelli già in una distinta vanno
+  spuntati/tolti singolarmente. Se all'invio del form uno di questi resta spuntato, il JS chiede
+  conferma prima di generare (rischio di doppio pagamento se quella distinta è già stata
+  caricata in banca).
 - `createBatch()`, `markBatchPaid()` e `discardBatch()` lavorano dentro una transazione sulla
   connessione PDO di `SepaBatchManager` e, appena dentro, **rilockano con `SELECT … FOR
   UPDATE`** e ricontrollano stato/importi di batch e rimborsi coinvolti — protezione contro
