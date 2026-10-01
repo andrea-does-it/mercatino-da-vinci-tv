@@ -271,3 +271,33 @@ migrazione in entrambi i `sql/`.
 3. **XML di esempio esportato da UniCredit** (IBAN mascherati) — per confermare
    `ReqdExctnDt`, `CtgyPurp`, `PstlAdr`, presenza di BIC/ABI.
 4. Formato esatto del CUC (lunghezza) per la validazione del campo.
+
+## Addendum 2026-10-01 — Esito primo caricamento UniCredit
+
+Il primo file reale (`distinta_sepa_2026_001.xml`) è stato caricato su UniCredit **senza
+autorizzarlo** (come da piano di verifica sopra) ed è stato **scartato**, con questi
+messaggi:
+
+```
+Informazioni di addebito --> DEBTOR_ERROR : Coppia Località/Paese mancanti
+Informazioni relative alla singola transazione --> Creditore : Coppia Località/Paese mancanti (EndToEndId: MDV2026-R6-B1)
+Header messaggio logico --> Identificativo : Per permettere il caricamento rispettando le specifiche Banca il CUC verrà sostituito   (warning only)
+Informazioni di addebito --> Iban : Il TAG Category Purpose (CtgyPurp) è assente o non valorizzato
+File scartato.
+```
+
+Decisioni prese per il Task 9 (correzioni):
+
+- **Località venditore**: una **impostazione di default** (`sepa_default_creditor_town`)
+  usata per ogni beneficiario, più un **override per singolo venditore** (`user.iban_town`,
+  migrazione `202610020001`) editabile dalla pagina di dettaglio del rimborso
+  (`seller-refund-view.php`).
+- **Category Purpose**: fisso a **`SUPP`**, salvato in un setting (`sepa_category_purpose`)
+  così da poterlo cambiare senza toccare il codice.
+- **CUC**: diventa **facoltativo** (il punto aperto 1 sopra è chiuso in questo senso — la
+  banca lo sostituisce comunque). Se compilato deve comunque essere valido (1–8
+  lettere/cifre) e viene inviato; se vuoto, `InitgPty/Id` viene omesso del tutto.
+
+Migrazione `sql/202610020001_sepa_localita.sql`: aggiunge `user.iban_town` e i tre nuovi
+settings (`sepa_debtor_town`, `sepa_default_creditor_town`, `sepa_category_purpose`).
+`SepaBatchManager::isInstalled()` ora richiede anche questa migrazione.

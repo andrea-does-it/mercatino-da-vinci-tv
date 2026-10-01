@@ -11,10 +11,12 @@ current, practical summary plus the migration workflow.
   file does NOT mean the column exists on the server — this mismatch is a recurring source
   of "it works on staging but errors on production" bugs.
 - Through `202606220001` all migrations are applied in production (as of 2026-06).
-  `202610010001_sepa_distinte.sql` (distinte SEPA) è nel repo e **va applicata a mano su
-  ogni ambiente**: finché non lo è, `SepaBatchManager::isInstalled()` restituisce `false` e sia
-  la pagina `seller-refund-sepa.php` sia l'endpoint di generazione si **bloccano con un
-  messaggio prima di scrivere qualunque cosa** (stesso riscontro nel self-test
+  `202610010001_sepa_distinte.sql` (distinte SEPA) e `202610020001_sepa_localita.sql`
+  (località e Category Purpose, richiesti da UniCredit — vedi sotto) sono nel repo e
+  **vanno applicate a mano su ogni ambiente, in ordine**: finché non lo sono entrambe,
+  `SepaBatchManager::isInstalled()` restituisce `false` e sia la pagina
+  `seller-refund-sepa.php` sia l'endpoint di generazione si **bloccano con un messaggio
+  prima di scrivere qualunque cosa** (stesso riscontro nel self-test
   `admin/?page=sepa-selftest`) — non è un salvataggio che fallisce a metà, è un blocco esplicito
   a monte.
 
@@ -24,6 +26,8 @@ Auth + profile. Key columns: `id`, `first_name`, `last_name`, `email`, `password
 `user_type` (`regular`/`admin`/`pwuser`), `profile_id`,
 GDPR: `privacy_consent`(+`_date`), `newsletter_consent`(+`_date`),
 IBAN: `iban` (AES-256-GCM encrypted), `iban_owner_name`, `iban_updated_at`,
+`iban_town` (migrazione `202610020001`, nullable: località del beneficiario per i bonifici
+SEPA; se vuota si usa il setting `sepa_default_creditor_town`),
 student: `student_first_name/last_name/class`,
 `donate_books` (TINYINT, **nullable DEFAULT 0**), `donate_books_date`.
 
@@ -66,7 +70,7 @@ non ancora pagata tramite distinta**. Un pagamento registrato a mano su
 caso la pagina avvisa (riquadro rosso sopra il form "Registra Pagamento") che il rimborso è
 ancora in una distinta `generated`, per evitare di pagarlo due volte.
 
-### `sepa_batch` / `sepa_batch_item` (migrazione `202610010001`)
+### `sepa_batch` / `sepa_batch_item` (migrazioni `202610010001` e `202610020001`)
 Storico delle distinte SEPA (vedi `05-domain-workflows.md` §C). **L'XML non viene salvato**:
 solo i metadati.
 - `sepa_batch`: una riga per file generato — `year`, `msg_id` (= `PmtInfId` inviato alla
@@ -84,8 +88,13 @@ solo i metadati.
 ### `site_settings`
 Key/value configuration read by `SiteSettings` (pricing markups, `registrations_enabled`,
 `cart_enabled`, …). Chiavi delle distinte SEPA: `sepa_debtor_name`, `sepa_debtor_iban`,
-`sepa_debtor_cuc`, `sepa_debtor_country` (dati ordinante, conto del Comitato), e
-`sepa_remittance_template` (causale di default, segnaposto `{anno}`/`{pratiche}`).
+`sepa_debtor_cuc` (facoltativo: la banca lo sostituisce comunque), `sepa_debtor_country`,
+`sepa_debtor_town` (migrazione `202610020001`, località dell'ordinante richiesta da
+UniCredit) (dati ordinante, conto del Comitato), `sepa_default_creditor_town` (migrazione
+`202610020001`, località usata per i beneficiari senza `user.iban_town`),
+`sepa_category_purpose` (migrazione `202610020001`, default `SUPP`, codice CtgyPurp
+richiesto da UniCredit), e `sepa_remittance_template` (causale di default, segnaposto
+`{anno}`/`{pratiche}`).
 
 ### `email_template` and `order_email_log` (Email Ordini)
 - `email_template`: `id`, `name`, `subject`, `body` (testo semplice con segnaposto

@@ -81,7 +81,7 @@ class SepaCbiExport {
         if (strlen($iban) < 8) {
             return str_repeat('*', strlen($iban));
         }
-        return substr($iban, 0, 4) . '…' . substr($iban, -4);
+        return substr($iban, 0, 4) . "\u{2026}" . substr($iban, -4);
     }
 
     /** Codice ABI (5 cifre) di un IBAN italiano: IT + 2 check + CIN + ABI. */
@@ -163,6 +163,15 @@ class SepaCbiExport {
         if (!self::ibanIsValid($debtorIban)) {
             throw new InvalidArgumentException("IBAN dell'ordinante non valido.");
         }
+        $debtorTown = self::toSepaCharset($debtor['town'], 35);
+        if ($debtorTown === '') {
+            throw new InvalidArgumentException("Localit\u{E0} dell'ordinante mancante.");
+        }
+        $categoryPurpose = strtoupper(trim((string)$debtor['category_purpose']));
+        if (!preg_match('/^[A-Z]{4}$/', $categoryPurpose)) {
+            throw new InvalidArgumentException('Category Purpose mancante o non valido (4 lettere).');
+        }
+        $cuc = strtoupper(trim((string)$debtor['cuc']));
 
         $totalCents = 0;
         foreach ($transactions as $i => $tx) {
@@ -173,7 +182,12 @@ class SepaCbiExport {
             if (!self::ibanIsValid($tx['iban'])) {
                 throw new InvalidArgumentException('IBAN non valido per ' . $tx['end_to_end_id'] . '.');
             }
+            $txTown = self::toSepaCharset($tx['town'], 35);
+            if ($txTown === '') {
+                throw new InvalidArgumentException("Localit\u{E0} del beneficiario mancante per " . $tx['end_to_end_id'] . '.');
+            }
             $transactions[$i]['cents'] = $cents;
+            $transactions[$i]['town'] = $txTown;
             $totalCents += $cents;
         }
         $fmt = function ($cents) { return number_format($cents / 100, 2, '.', ''); };
@@ -202,9 +216,11 @@ class SepaCbiExport {
         $el($hdr, 'CtrlSum', $fmt($totalCents));
         $initg = $el($hdr, 'InitgPty');
         $el($initg, 'Nm', self::toSepaCharset($debtor['name'], self::MAX_NAME));
-        $othr = $el($el($el($initg, 'Id'), 'OrgId'), 'Othr');
-        $el($othr, 'Id', strtoupper(trim($debtor['cuc'])));
-        $el($othr, 'Issr', 'CBI');
+        if ($cuc !== '') {
+            $othr = $el($el($el($initg, 'Id'), 'OrgId'), 'Othr');
+            $el($othr, 'Id', $cuc);
+            $el($othr, 'Issr', 'CBI');
+        }
 
         // --- Disposizione (unico addebito) ---
         $pmt = $el($root, 'PmtInf');
@@ -214,13 +230,16 @@ class SepaCbiExport {
         $tp = $el($pmt, 'PmtTpInf');
         $el($tp, 'InstrPrty', 'NORM');
         $el($el($tp, 'SvcLvl'), 'Cd', 'SEPA');
+        $el($el($tp, 'CtgyPurp'), 'Cd', $categoryPurpose);
         $exec = $el($pmt, 'ReqdExctnDt', self::EXEC_DATE_NESTED ? null : $executionDate);
         if (self::EXEC_DATE_NESTED) {
             $el($exec, 'Dt', $executionDate);
         }
         $dbtr = $el($pmt, 'Dbtr');
         $el($dbtr, 'Nm', self::toSepaCharset($debtor['name'], self::MAX_NAME));
-        $el($el($dbtr, 'PstlAdr'), 'Ctry', strtoupper($debtor['country']));
+        $dbtrAdr = $el($dbtr, 'PstlAdr');
+        $el($dbtrAdr, 'TwnNm', $debtorTown);
+        $el($dbtrAdr, 'Ctry', strtoupper($debtor['country']));
         $el($el($el($pmt, 'DbtrAcct'), 'Id'), 'IBAN', $debtorIban);
         $el($el($el($el($pmt, 'DbtrAgt'), 'FinInstnId'), 'ClrSysMmbId'), 'MmbId', self::abiFromIban($debtorIban));
         $el($pmt, 'ChrgBr', 'SLEV');
@@ -236,7 +255,9 @@ class SepaCbiExport {
             $amt->setAttribute('Ccy', 'EUR');
             $cdtr = $el($t, 'Cdtr');
             $el($cdtr, 'Nm', self::toSepaCharset($tx['name'], self::MAX_NAME));
-            $el($el($cdtr, 'PstlAdr'), 'Ctry', substr($iban, 0, 2));
+            $cdtrAdr = $el($cdtr, 'PstlAdr');
+            $el($cdtrAdr, 'TwnNm', $tx['town']);
+            $el($cdtrAdr, 'Ctry', substr($iban, 0, 2));
             $el($el($el($t, 'CdtrAcct'), 'Id'), 'IBAN', $iban);
             $el($el($t, 'RmtInf'), 'Ustrd', self::toSepaCharset($tx['remittance'], self::MAX_REMITTANCE));
         }

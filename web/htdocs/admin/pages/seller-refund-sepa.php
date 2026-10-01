@@ -30,6 +30,9 @@
               'iban' => $_POST['debtor_iban'] ?? '',
               'cuc' => $_POST['debtor_cuc'] ?? '',
               'country' => $_POST['debtor_country'] ?? 'IT',
+              'town' => $_POST['debtor_town'] ?? '',
+              'default_creditor_town' => $_POST['default_creditor_town'] ?? '',
+              'category_purpose' => $_POST['category_purpose'] ?? '',
             ]);
             if ($errors) {
               $errorText = implode(' ', $errors);
@@ -122,8 +125,9 @@
 
 <?php if (!$installed): ?>
   <div class="alert alert-warning">
-    Le tabelle delle distinte non esistono su questo database: va applicata a mano la migrazione
-    <code>sql/202610010001_sepa_distinte.sql</code>.
+    Le tabelle delle distinte non esistono su questo database (o manca la colonna della
+    località): vanno applicate a mano le migrazioni
+    <code>sql/202610010001_sepa_distinte.sql</code> e <code>sql/202610020001_sepa_localita.sql</code>.
   </div>
 <?php else: ?>
 
@@ -158,12 +162,27 @@
             <input type="text" class="form-control" id="debtor_iban" name="debtor_iban" maxlength="34" value="<?php echo esc_html($debtor['iban']); ?>">
           </div>
           <div class="form-group col-md-2">
-            <label for="debtor_cuc">CUC</label>
+            <label for="debtor_cuc">CUC (facoltativo)</label>
             <input type="text" class="form-control" id="debtor_cuc" name="debtor_cuc" maxlength="8" value="<?php echo esc_html($debtor['cuc']); ?>">
           </div>
           <div class="form-group col-md-1">
             <label for="debtor_country">Paese</label>
             <input type="text" class="form-control" id="debtor_country" name="debtor_country" maxlength="2" value="<?php echo esc_html($debtor['country']); ?>">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            <label for="debtor_town">Località</label>
+            <input type="text" class="form-control" id="debtor_town" name="debtor_town" maxlength="35" value="<?php echo esc_html($debtor['town']); ?>">
+          </div>
+          <div class="form-group col-md-6">
+            <label for="default_creditor_town">Località predefinita beneficiari</label>
+            <input type="text" class="form-control" id="default_creditor_town" name="default_creditor_town" maxlength="35" value="<?php echo esc_html($debtor['default_creditor_town']); ?>">
+            <small class="form-text text-muted">usata per i venditori senza località; puoi impostarla per singolo venditore nella pagina del rimborso</small>
+          </div>
+          <div class="form-group col-md-3">
+            <label for="category_purpose">Category Purpose</label>
+            <input type="text" class="form-control" id="category_purpose" name="category_purpose" maxlength="4" value="<?php echo esc_html($debtor['category_purpose']); ?>">
           </div>
         </div>
         <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Salva dati ordinante</button>
@@ -220,7 +239,9 @@
               <?php endif; ?>
             </td>
             <td><?php echo esc_html($c->pratica_numbers); ?></td>
-            <td><?php echo esc_html($c->beneficiary_name); ?></td>
+            <td><?php echo esc_html($c->beneficiary_name); ?>
+              <br><small class="text-muted"><?php echo esc_html($c->beneficiary_town); ?><?php echo $c->town_is_default ? ' (predefinita)' : ''; ?></small>
+            </td>
             <td><code><?php echo esc_html($c->iban_masked); ?></code></td>
             <td class="text-right"><?php echo $euro($c->due); ?></td>
             <td><span class="badge <?php echo $statusBadge[$c->status] ?? 'badge-secondary'; ?>"><?php echo $statusText[$c->status] ?? esc_html($c->status); ?></span></td>

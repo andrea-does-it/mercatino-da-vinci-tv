@@ -216,7 +216,26 @@ file. Self-test di sola lettura: `admin/?page=sepa-selftest`.
   resto della sezione). Esclusi con motivo: IBAN assente/non decifrabile/checksum errato, paese
   fuori area SEPA, IBAN SEPA ma **fuori dallo SEE** (`SepaCbiExport::isEeaCountry()`: EU27 +
   Islanda/Liechtenstein/Norvegia — servirebbero BIC e indirizzo del beneficiario, non gestiti:
-  "paga a mano"), beneficiario mancante.
+  "paga a mano"), beneficiario mancante, **località beneficiario mancante** (solo se il
+  venditore non ha né `user.iban_town` né esiste una località predefinita impostata).
+- **Esito del primo caricamento reale su UniCredit (2026-10)**: il file è stato scartato
+  (vedi addendum nello spec) perché mancava la coppia Località/Paese sia per l'ordinante sia
+  per ogni beneficiario e perché il tag `CtgyPurp` era assente; il CUC inviato è stato
+  comunque sostituito dalla banca (solo warning). Di conseguenza, dalla migrazione
+  `202610020001`:
+  - **Località ordinante**: setting `sepa_debtor_town` (campo "Località" nella pagina),
+    obbligatoria, finisce in `Dbtr/PstlAdr/TwnNm` (prima di `Ctry`).
+  - **Località beneficiario**: `user.iban_town` se presente, altrimenti il setting
+    `sepa_default_creditor_town` ("Località predefinita beneficiari"); editabile per singolo
+    venditore da `seller-refund-view.php` (`SepaBatchManager::saveBeneficiaryTown()`/
+    `getBeneficiaryTown()`); finisce in `Cdtr/PstlAdr/TwnNm` (prima di `Ctry`) di ogni bonifico.
+    Un rimborso senza alcuna delle due diventa escluso (`Località mancante`, vedi sopra).
+  - **Category Purpose**: setting `sepa_category_purpose` (default `SUPP`, 4 lettere),
+    obbligatorio, finisce in `PmtInf/PmtTpInf/CtgyPurp/Cd` (dopo `SvcLvl`, prima di
+    `ReqdExctnDt`).
+  - **CUC ora facoltativo**: la banca lo sostituisce comunque. Se valorizzato deve rispettare
+    `/^[A-Z0-9]{1,8}$/` e viene inviato in `InitgPty/Id/OrgId/Othr`; se vuoto quel blocco
+    (`Id`) è **omesso del tutto** da `InitgPty` (resta solo `Nm`).
 - **Generazione** (`SepaBatchManager::createBatch()`) → i rimborsi inclusi passano a
   `xmlsaved` ("Distinta generata"); l'XML viene restituito in download e **non è mai salvato**
   su disco né in DB (solo IBAN mascherato in `sepa_batch_item`). **Rigenerazione** ammessa
@@ -250,15 +269,15 @@ file. Self-test di sola lettura: `admin/?page=sepa-selftest`.
   connessione PDO di `SepaBatchManager` e, appena dentro, **rilockano con `SELECT … FOR
   UPDATE`** e ricontrollano stato/importi di batch e rimborsi coinvolti — protezione contro
   doppio submit o modifiche concorrenti (es. un pagamento registrato a mano nel frattempo).
-- **CUC obbligatorio**: senza CUC del Comitato la generazione è bloccata (`debtorProblems()`).
-  La forma esatta di `ReqdExctnDt` nella 04.01 (`EXEC_DATE_NESTED` in `SepaCbiExport`, oggi
+- La forma esatta di `ReqdExctnDt` nella 04.01 (`EXEC_DATE_NESTED` in `SepaCbiExport`, oggi
   `true` → `<ReqdExctnDt><Dt>…</Dt></ReqdExctnDt>`) resta da confermare con l'XSD ufficiale o
   un XML/caricamento di prova UniCredit. L'XSD CBI, se procurato, va in
   `classes/xsd/CBIPaymentRequest.00.04.01.xsd`: la validazione di schema viene **saltata** (non
   bloccata) quando il file manca.
-- Ogni azione (generazione, pagati, scarta, dati ordinante) va in `user_activity_log`
-  (`admin_sepa_batch_created`/`admin_sepa_batch_paid`/`admin_sepa_batch_discarded`/
-  `admin_sepa_debtor_updated`) con id batch/conteggi/totale, **mai un IBAN in chiaro**.
+- Ogni azione (generazione, pagati, scarta, dati ordinante, località beneficiario) va in
+  `user_activity_log` (`admin_sepa_batch_created`/`admin_sepa_batch_paid`/
+  `admin_sepa_batch_discarded`/`admin_sepa_debtor_updated`/`admin_sepa_town_updated`) con id
+  batch/conteggi/totale (o `user_id` per la località), **mai un IBAN in chiaro**.
 
 ## D. Products & images
 - Catalog = adopted schoolbooks. Add/edit in `product.php`; list in `products-list.php`

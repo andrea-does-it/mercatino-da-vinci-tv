@@ -44,10 +44,15 @@ Nuovo stato del rimborso `xmlsaved` ("Distinta generata"), nuove tabelle `sepa_b
 `sepa_batch_item` (l'XML non viene mai salvato: solo i metadati e l'IBAN mascherato), dati
 ordinante/causale in `site_settings`. Classi `SepaCbiExport` (costruzione XML, pura) e
 `SepaBatchManager` (`classes/SepaBatch.php`); self-test di sola lettura
-`admin/?page=sepa-selftest`. **Migrazione `202610010001_sepa_distinte.sql` da applicare a
-mano su ogni ambiente** — finché non lo è, `SepaBatchManager::isInstalled()` lo rileva e
+`admin/?page=sepa-selftest`. **Migrazioni `202610010001_sepa_distinte.sql` e
+`202610020001_sepa_localita.sql` da applicare a mano, in ordine, su ogni ambiente** —
+finché non lo sono entrambe, `SepaBatchManager::isInstalled()` lo rileva e
 pagina/endpoint/self-test si bloccano con un messaggio esplicito **prima** di scrivere
-qualunque cosa (non un salvataggio che fallisce). Dettagli: `03-codebase-map.md`, `04-database.md`,
+qualunque cosa (non un salvataggio che fallisce). La seconda migrazione (dopo il rifiuto del
+primo caricamento reale su UniCredit) aggiunge `user.iban_town` e i settings
+`sepa_debtor_town`/`sepa_default_creditor_town`/`sepa_category_purpose`: la banca richiede
+Località+Paese per ordinante e beneficiari e il Category Purpose, mentre il CUC è risultato
+facoltativo (la banca lo sostituisce comunque). Dettagli: `03-codebase-map.md`, `04-database.md`,
 `05-domain-workflows.md` §C, `06-conventions-and-gotchas.md` (connessione PDO per manager,
 download da endpoint standalone, caratteri non-ASCII nei sorgenti PHP).
 

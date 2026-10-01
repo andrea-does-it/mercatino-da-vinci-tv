@@ -23,10 +23,13 @@ class SepaBatchManager extends DBManager {
                           'tx_count', 'total_amount', 'status', 'created_by', 'created_at', 'paid_at', 'paid_by'];
     }
 
-    /** true se la migrazione 202610010001 è stata applicata su questo DB. */
+    /** true se le migrazioni 202610010001 e 202610020001 sono state applicate su questo DB. */
     public function isInstalled() {
         try {
-            return count($this->db->prepare("SHOW TABLES LIKE 'sepa_batch_item'")) === 1;
+            if (count($this->db->prepare("SHOW TABLES LIKE 'sepa_batch_item'")) !== 1) {
+                return false;
+            }
+            return count($this->db->prepare("SHOW COLUMNS FROM user LIKE 'iban_town'")) === 1;
         } catch (Exception $e) {
             return false;
         }
@@ -40,6 +43,9 @@ class SepaBatchManager extends DBManager {
             'iban' => (string)SiteSettings::get('sepa_debtor_iban', ''),
             'cuc' => (string)SiteSettings::get('sepa_debtor_cuc', ''),
             'country' => (string)SiteSettings::get('sepa_debtor_country', 'IT'),
+            'town' => (string)SiteSettings::get('sepa_debtor_town', ''),
+            'default_creditor_town' => (string)SiteSettings::get('sepa_default_creditor_town', ''),
+            'category_purpose' => (string)SiteSettings::get('sepa_category_purpose', 'SUPP'),
             'template' => (string)SiteSettings::get('sepa_remittance_template', self::DEFAULT_TEMPLATE),
         ];
     }
@@ -54,11 +60,22 @@ class SepaBatchManager extends DBManager {
         if (!SepaCbiExport::ibanIsValid($iban) || substr($iban, 0, 2) !== 'IT') {
             $problems[] = "L'IBAN del Comitato manca o non è un IBAN italiano valido.";
         }
-        if (!preg_match('/^[A-Z0-9]{1,8}$/', strtoupper(trim($s['cuc'])))) {
-            $problems[] = 'Manca il CUC (Codice Univoco CBI) o non è valido (fino a 8 lettere/cifre).';
+        // Il CUC è facoltativo (la banca lo sostituisce comunque): se indicato deve essere valido.
+        $cuc = strtoupper(trim((string)$s['cuc']));
+        if ($cuc !== '' && !preg_match('/^[A-Z0-9]{1,8}$/', $cuc)) {
+            $problems[] = 'Il CUC (Codice Univoco CBI), se indicato, deve avere da 1 a 8 lettere/cifre.';
         }
         if (!preg_match('/^[A-Z]{2}$/', strtoupper(trim($s['country'])))) {
             $problems[] = 'Il paese ordinante deve essere di 2 lettere (es. IT).';
+        }
+        if (trim((string)($s['town'] ?? '')) === '') {
+            $problems[] = 'Manca la località del Comitato.';
+        }
+        if (trim((string)($s['default_creditor_town'] ?? '')) === '') {
+            $problems[] = 'Manca la località predefinita dei beneficiari.';
+        }
+        if (!preg_match('/^[A-Z]{4}$/', strtoupper(trim((string)($s['category_purpose'] ?? ''))))) {
+            $problems[] = 'Il Category Purpose deve essere di 4 lettere (es. SUPP).';
         }
         return $problems;
     }
@@ -69,6 +86,9 @@ class SepaBatchManager extends DBManager {
             'iban' => SepaCbiExport::normalizeIban($data['iban'] ?? ''),
             'cuc' => strtoupper(trim((string)($data['cuc'] ?? ''))),
             'country' => strtoupper(trim((string)($data['country'] ?? 'IT'))),
+            'town' => trim((string)($data['town'] ?? '')),
+            'default_creditor_town' => trim((string)($data['default_creditor_town'] ?? '')),
+            'category_purpose' => strtoupper(trim((string)($data['category_purpose'] ?? ''))),
             'template' => 'x',
         ];
         $problems = $this->debtorProblems($s);
@@ -79,6 +99,9 @@ class SepaBatchManager extends DBManager {
         SiteSettings::set('sepa_debtor_iban', $s['iban']);
         SiteSettings::set('sepa_debtor_cuc', $s['cuc']);
         SiteSettings::set('sepa_debtor_country', $s['country']);
+        SiteSettings::set('sepa_debtor_town', $s['town']);
+        SiteSettings::set('sepa_default_creditor_town', $s['default_creditor_town']);
+        SiteSettings::set('sepa_category_purpose', $s['category_purpose']);
         return [];
     }
 
@@ -91,6 +114,25 @@ class SepaBatchManager extends DBManager {
         return [];
     }
 
+    // ---------------------------------------------------------------- località beneficiario
+
+    /** Località salvata per il bonifico del venditore (NULL se non impostata: si usa la predefinita). */
+    public function getBeneficiaryTown($userId) {
+        $rows = $this->db->prepare("SELECT iban_town FROM user WHERE id = ?", [(int)$userId]);
+        if (!$rows || $rows[0]['iban_town'] === null) {
+            return null;
+        }
+        return (string)$rows[0]['iban_town'];
+    }
+
+    /** Salva (o azzera, se vuota) la località del beneficiario; restituisce il valore salvato. */
+    public function saveBeneficiaryTown($userId, $town) {
+        $town = SepaCbiExport::toSepaCharset(trim((string)$town), 35);
+        $stored = $town !== '' ? $town : null;
+        $this->db->execute("UPDATE user SET iban_town = ? WHERE id = ?", [$stored, (int)$userId]);
+        return $stored;
+    }
+
     // ---------------------------------------------------------------- idonei
 
     /**
@@ -100,9 +142,10 @@ class SepaBatchManager extends DBManager {
      */
     public function getCandidates($year, $withIban = false) {
         $srm = new SellerRefundManager();
+        $debtor = $this->getDebtorSettings();
         $query = "
             SELECT sr.id, sr.user_id, sr.status, sr.amount_owed, sr.amount_paid,
-                   u.first_name, u.last_name, u.iban, u.iban_owner_name,
+                   u.first_name, u.last_name, u.iban, u.iban_owner_name, u.iban_town,
                    (SELECT GROUP_CONCAT(DISTINCT o.numPratica ORDER BY o.numPratica SEPARATOR ', ')
                       FROM orders o
                      WHERE o.user_id = sr.user_id AND o.numPratica > 0
@@ -134,6 +177,9 @@ class SepaBatchManager extends DBManager {
             $name = trim((string)$r['iban_owner_name']) !== ''
                 ? $r['iban_owner_name']
                 : trim($r['first_name'] . ' ' . $r['last_name']);
+            $townRaw = trim((string)$r['iban_town']);
+            $townIsDefault = $townRaw === '';
+            $beneficiaryTown = SepaCbiExport::toSepaCharset($townIsDefault ? $debtor['default_creditor_town'] : $townRaw, 35);
 
             $row = (object)[
                 'id' => (int)$r['id'],
@@ -146,6 +192,8 @@ class SepaBatchManager extends DBManager {
                 'due' => round((float)$r['amount_owed'] - (float)$r['amount_paid'], 2),
                 'pratica_numbers' => (string)$r['pratica_numbers'],
                 'beneficiary_name' => SepaCbiExport::toSepaCharset($name, SepaCbiExport::MAX_NAME),
+                'beneficiary_town' => $beneficiaryTown,
+                'town_is_default' => $townIsDefault,
                 'iban_masked' => $iban === '' ? '' : SepaCbiExport::ibanMask($iban),
                 'last_batch_id' => $r['last_batch_id'] !== null ? (int)$r['last_batch_id'] : null,
                 'last_batch_date' => $r['last_batch_id'] !== null ? ($batchDates[(int)$r['last_batch_id']] ?? null) : null,
@@ -162,6 +210,8 @@ class SepaBatchManager extends DBManager {
                 $reason = 'IBAN extra-SEE (serve BIC e indirizzo): paga a mano';
             } elseif ($row->beneficiary_name === '') {
                 $reason = 'Intestatario mancante';
+            } elseif ($row->beneficiary_town === '') {
+                $reason = 'Località mancante';
             }
 
             if ($reason !== null) {
@@ -249,6 +299,7 @@ class SepaBatchManager extends DBManager {
                     'iban' => $c->iban,
                     'iban_masked' => $c->iban_masked,
                     'remittance' => SepaCbiExport::buildRemittance($template, $year, $praticas),
+                    'town' => $c->beneficiary_town,
                 ];
                 $txs[] = $tx;
                 $total += (int)round($c->due * 100);
