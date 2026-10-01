@@ -17,7 +17,8 @@ class SepaCbiExport {
     /**
      * Forma di ReqdExctnDt. Nella 04.00 e' una data semplice; la 04.01 segue
      * pain.001.001.09 dove e' <ReqdExctnDt><Dt>...</Dt></ReqdExctnDt>.
-     * DA CONFERMARE con l'XSD ufficiale / un XML esportato da UniCredit.
+     * Confermata dalla validazione XSD UniCredit (ottobre 2026): la forma
+     * annidata e' corretta, vedi context/05-domain-workflows.md.
      */
     const EXEC_DATE_NESTED = true;
 
@@ -230,7 +231,6 @@ class SepaCbiExport {
         $tp = $el($pmt, 'PmtTpInf');
         $el($tp, 'InstrPrty', 'NORM');
         $el($el($tp, 'SvcLvl'), 'Cd', 'SEPA');
-        $el($el($tp, 'CtgyPurp'), 'Cd', $categoryPurpose);
         $exec = $el($pmt, 'ReqdExctnDt', self::EXEC_DATE_NESTED ? null : $executionDate);
         if (self::EXEC_DATE_NESTED) {
             $el($exec, 'Dt', $executionDate);
@@ -251,6 +251,7 @@ class SepaCbiExport {
             $pid = $el($t, 'PmtId');
             $el($pid, 'InstrId', $n + 1);
             $el($pid, 'EndToEndId', $tx['end_to_end_id']);
+            $el($el($el($t, 'PmtTpInf'), 'CtgyPurp'), 'Cd', $categoryPurpose);
             $amt = $el($el($t, 'Amt'), 'InstdAmt', $fmt($tx['cents']));
             $amt->setAttribute('Ccy', 'EUR');
             $cdtr = $el($t, 'Cdtr');

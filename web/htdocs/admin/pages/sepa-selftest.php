@@ -92,7 +92,16 @@
       $check('TwnNm ordinante', $val('//c:PmtInf/c:Dbtr/c:PstlAdr/c:TwnNm') === 'Treviso');
       $t = $val('(//c:CdtTrfTxInf)[2]/c:Cdtr/c:PstlAdr/c:TwnNm');
       $check('TwnNm beneficiario 2 traslitterato', $t === 'Munchen', $t);
-      $check('CtgyPurp = SUPP', $val('//c:PmtInf/c:PmtTpInf/c:CtgyPurp/c:Cd') === 'SUPP');
+      $check('CtgyPurp transazione 1 = SUPP', $val('(//c:CdtTrfTxInf)[1]/c:PmtTpInf/c:CtgyPurp/c:Cd') === 'SUPP');
+      $check('CtgyPurp transazione 2 = SUPP', $val('(//c:CdtTrfTxInf)[2]/c:PmtTpInf/c:CtgyPurp/c:Cd') === 'SUPP');
+      $check('CtgyPurp assente da PmtInf/PmtTpInf', $xp->query('//c:PmtInf/c:PmtTpInf/c:CtgyPurp')->length === 0);
+      $order = [];
+      foreach ($xp->query('(//c:CdtTrfTxInf)[1]')->item(0)->childNodes as $child) {
+        if ($child->nodeType === XML_ELEMENT_NODE) {
+          $order[] = $child->localName;
+        }
+      }
+      $check('Ordine elementi CdtTrfTxInf', $order === ['PmtId', 'PmtTpInf', 'Amt', 'Cdtr', 'CdtrAcct', 'RmtInf'], implode(', ', $order));
       $v = SepaCbiExport::validate($xml);
       $check('Validazione XSD', $v['skipped'] || count($v['errors']) === 0,
         $v['skipped'] ? 'XSD non presente: saltata' : implode(' | ', $v['errors']));

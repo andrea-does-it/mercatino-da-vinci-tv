@@ -231,8 +231,9 @@ file. Self-test di sola lettura: `admin/?page=sepa-selftest`.
     `getBeneficiaryTown()`); finisce in `Cdtr/PstlAdr/TwnNm` (prima di `Ctry`) di ogni bonifico.
     Un rimborso senza alcuna delle due diventa escluso (`Località mancante`, vedi sopra).
   - **Category Purpose**: setting `sepa_category_purpose` (default `SUPP`, 4 lettere),
-    obbligatorio, finisce in `PmtInf/PmtTpInf/CtgyPurp/Cd` (dopo `SvcLvl`, prima di
-    `ReqdExctnDt`).
+    obbligatorio, finisce in `CdtTrfTxInf/PmtTpInf/CtgyPurp/Cd` **di ogni bonifico** (subito
+    dopo `PmtId`, prima di `Amt`) — non in `PmtInf/PmtTpInf`, che contiene solo
+    `InstrPrty`/`SvcLvl` (vedi esito secondo caricamento sotto).
   - **CUC ora facoltativo**: la banca lo sostituisce comunque. Se valorizzato deve rispettare
     `/^[A-Z0-9]{1,8}$/` e viene inviato in `InitgPty/Id/OrgId/Othr`; se vuoto quel blocco
     (`Id`) è **omesso del tutto** da `InitgPty` (resta solo `Nm`).
@@ -269,11 +270,20 @@ file. Self-test di sola lettura: `admin/?page=sepa-selftest`.
   connessione PDO di `SepaBatchManager` e, appena dentro, **rilockano con `SELECT … FOR
   UPDATE`** e ricontrollano stato/importi di batch e rimborsi coinvolti — protezione contro
   doppio submit o modifiche concorrenti (es. un pagamento registrato a mano nel frattempo).
-- La forma esatta di `ReqdExctnDt` nella 04.01 (`EXEC_DATE_NESTED` in `SepaCbiExport`, oggi
-  `true` → `<ReqdExctnDt><Dt>…</Dt></ReqdExctnDt>`) resta da confermare con l'XSD ufficiale o
-  un XML/caricamento di prova UniCredit. L'XSD CBI, se procurato, va in
+- La forma di `ReqdExctnDt` nella 04.01 (`EXEC_DATE_NESTED` in `SepaCbiExport`, `true` →
+  `<ReqdExctnDt><Dt>…</Dt></ReqdExctnDt>`) è **confermata corretta** dalla validazione XSD
+  UniCredit di ottobre 2026 (vedi sotto). L'XSD CBI, se procurato, va in
   `classes/xsd/CBIPaymentRequest.00.04.01.xsd`: la validazione di schema viene **saltata** (non
   bloccata) quando il file manca.
+- **Esito secondo caricamento UniCredit (2026-10, validazione XSD)**: il file con le
+  correzioni di cui sopra (località, Category Purpose) è stato respinto dalla validazione
+  contro l'XSD ufficiale CBI con `cvc-complex-type.2.4.a` su `CtgyPurp`: nello schema 04.01
+  quel tag non è ammesso in `PmtInf/PmtTpInf` (che accetta solo `InstrPrty`/`SvcLvl`, poi
+  opzionalmente `LclInstrm`) — va in `CdtTrfTxInf/PmtTpInf` di ogni bonifico, come conferma
+  anche l'esempio ufficiale CBI SCT. Corretto spostando `CtgyPurp/Cd` a livello di
+  transazione (dopo `PmtId`, prima di `Amt`); `PmtInf/PmtTpInf` ora contiene solo
+  `InstrPrty`/`SvcLvl`. Lo stesso errore XSD non ha segnalato nulla su `ReqdExctnDt`,
+  confermando che la forma annidata è corretta.
 - Ogni azione (generazione, pagati, scarta, dati ordinante, località beneficiario) va in
   `user_activity_log` (`admin_sepa_batch_created`/`admin_sepa_batch_paid`/
   `admin_sepa_batch_discarded`/`admin_sepa_debtor_updated`/`admin_sepa_town_updated`) con id
