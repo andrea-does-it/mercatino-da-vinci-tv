@@ -135,6 +135,7 @@
           <option value="">Tutti</option>
           <option value="pending" <?php echo $statusFilter === 'pending' ? 'selected' : ''; ?>>In attesa</option>
           <option value="partial" <?php echo $statusFilter === 'partial' ? 'selected' : ''; ?>>Parziale</option>
+          <option value="xmlsaved" <?php echo $statusFilter === 'xmlsaved' ? 'selected' : ''; ?>>Distinta generata</option>
           <option value="completed" <?php echo $statusFilter === 'completed' ? 'selected' : ''; ?>>Completato</option>
         </select>
       </div>
@@ -362,6 +363,17 @@
       </div>
     </div>
   </div>
+  <div class="col-md-3">
+    <div class="card bg-primary text-white">
+      <div class="card-body text-center">
+        <h3><?php echo (int)($summary->xmlsaved_count ?? 0); ?></h3>
+        <small>
+          Distinte generate, da pagare
+          <br><a href="<?php echo ROOT_URL; ?>admin/?page=seller-refund-sepa&year=<?php echo $selectedYear; ?>" class="text-white"><u>Vai alle distinte</u></a>
+        </small>
+      </div>
+    </div>
+  </div>
 </div>
 <?php endif; ?>
 
@@ -440,12 +452,14 @@
                 $statusBadge = [
                   'pending' => 'badge-warning',
                   'partial' => 'badge-info',
+                  'xmlsaved' => 'badge-primary',
                   'completed' => 'badge-success',
                   'cancelled' => 'badge-secondary'
                 ];
                 $statusText = [
                   'pending' => 'In attesa',
                   'partial' => 'Parziale',
+                  'xmlsaved' => 'Distinta generata',
                   'completed' => 'Completato',
                   'cancelled' => 'Annullato'
                 ];

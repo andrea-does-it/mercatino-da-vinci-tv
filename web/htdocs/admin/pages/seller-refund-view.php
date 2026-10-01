@@ -78,6 +78,10 @@
   // Get payment history
   $payments = $sellerRefundMgr->getPaymentHistory($refundId);
 
+  // Distinte SEPA in cui compare il rimborso (vuoto se la migrazione non c'è)
+  $sepaMgr = new SepaBatchManager();
+  $sepaBatches = $sepaMgr->isInstalled() ? $sepaMgr->getBatchesForRefund($refundId) : [];
+
   // Calculate remaining
   $remaining = (float)$refund->amount_owed - (float)$refund->amount_paid;
 
@@ -293,12 +297,14 @@
             $statusBadge = [
               'pending' => 'badge-warning',
               'partial' => 'badge-info',
+              'xmlsaved' => 'badge-primary',
               'completed' => 'badge-success',
               'cancelled' => 'badge-secondary'
             ];
             $statusText = [
               'pending' => 'In attesa',
               'partial' => 'Parziale',
+              'xmlsaved' => 'Distinta generata',
               'completed' => 'Completato',
               'cancelled' => 'Annullato'
             ];
@@ -421,6 +427,29 @@
                 </td>
               </tr>
             <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if ($sepaBatches): ?>
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white"><i class="fas fa-university"></i> Distinte SEPA</div>
+      <div class="card-body">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Distinta</th><th>Generata</th><th>Esecuzione</th><th class="text-right">Importo</th><th>Stato</th></tr></thead>
+          <tbody>
+          <?php foreach ($sepaBatches as $sb): ?>
+            <tr class="<?php echo $sb->superseded ? 'text-muted' : ''; ?>">
+              <td><a href="<?php echo ROOT_URL; ?>admin/?page=seller-refund-sepa&year=<?php echo (int)$refund->year; ?>">#<?php echo (int)$sb->id; ?></a>
+                <?php if ($sb->superseded): ?><span class="badge badge-light">superata</span><?php endif; ?></td>
+              <td><?php echo date('d/m/Y', strtotime($sb->created_at)); ?></td>
+              <td><?php echo date('d/m/Y', strtotime($sb->execution_date)); ?></td>
+              <td class="text-right">&euro; <?php echo number_format((float)$sb->amount, 2, ',', '.'); ?></td>
+              <td><?php echo ['generated' => 'Generata', 'paid' => 'Pagata', 'discarded' => 'Scartata'][$sb->status] ?? esc_html($sb->status); ?></td>
+            </tr>
+          <?php endforeach; ?>
           </tbody>
         </table>
       </div>
