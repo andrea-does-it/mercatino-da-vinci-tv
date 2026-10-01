@@ -53,6 +53,55 @@
     $check('Giovedì → venerdì', SepaCbiExport::nextBusinessDay(new DateTime('2026-10-01')) === '2026-10-02');
     $check('Sabato → lunedì', SepaCbiExport::nextBusinessDay(new DateTime('2026-10-03')) === '2026-10-05');
 
+    // --- XML ---
+    $debtor = ['name' => 'Comitato Genitori Liceo Da Vinci', 'iban' => 'IT60X0542811101000000123456', 'cuc' => 'ABC12345', 'country' => 'IT'];
+    $txs = [
+      ['end_to_end_id' => 'MDV2026-R1-B9', 'amount' => 12.5, 'name' => 'Rossi Màrio', 'iban' => 'IT60X0542811101000000123456', 'remittance' => 'Rimb. Mercatino Da Vinci 2026 - Pratica 12'],
+      ['end_to_end_id' => 'MDV2026-R2-B9', 'amount' => 7.1, 'name' => 'Müller Hans', 'iban' => 'DE89370400440532013000', 'remittance' => 'Rimb. Mercatino Da Vinci 2026 - Pratica 45'],
+    ];
+    $xml = '';
+    try {
+      $xml = SepaCbiExport::buildXml($debtor, 'MDV-2026-0009-20261001120000', '2026-10-02', $txs, new DateTime('2026-10-01 12:00:00'));
+      $check('buildXml non lancia eccezioni', true);
+    } catch (Exception $e) {
+      $check('buildXml non lancia eccezioni', false, $e->getMessage());
+    }
+    if ($xml !== '') {
+      $dom = new DOMDocument();
+      $loaded = $dom->loadXML($xml);
+      $check('XML ben formato', $loaded);
+      $xp = new DOMXPath($dom);
+      $xp->registerNamespace('c', SepaCbiExport::XML_NAMESPACE);
+      $val = function ($path) use ($xp) { $n = $xp->query($path); return $n->length ? $n->item(0)->textContent : null; };
+      $check('Root e namespace', $dom->documentElement->localName === 'CBIPaymentRequest' && $dom->documentElement->namespaceURI === SepaCbiExport::XML_NAMESPACE);
+      $check('MsgId', $val('/c:CBIPaymentRequest/c:GrpHdr/c:MsgId') === 'MDV-2026-0009-20261001120000');
+      $check('NbOfTxs = 2', $val('/c:CBIPaymentRequest/c:GrpHdr/c:NbOfTxs') === '2');
+      $check('CtrlSum = 19.60', $val('/c:CBIPaymentRequest/c:GrpHdr/c:CtrlSum') === '19.60', (string)$val('/c:CBIPaymentRequest/c:GrpHdr/c:CtrlSum'));
+      $check('CUC in InitgPty', $val('//c:GrpHdr/c:InitgPty/c:Id/c:OrgId/c:Othr/c:Id') === 'ABC12345'
+        && $val('//c:GrpHdr/c:InitgPty/c:Id/c:OrgId/c:Othr/c:Issr') === 'CBI');
+      $check('BtchBookg true', $val('//c:PmtInf/c:BtchBookg') === 'true');
+      $check('Paese ordinante', $val('//c:PmtInf/c:Dbtr/c:PstlAdr/c:Ctry') === 'IT');
+      $check('ABI ordinante', $val('//c:PmtInf/c:DbtrAgt/c:FinInstnId/c:ClrSysMmbId/c:MmbId') === '05428');
+      $check('Data esecuzione', $val('//c:PmtInf/c:ReqdExctnDt' . (SepaCbiExport::EXEC_DATE_NESTED ? '/c:Dt' : '')) === '2026-10-02');
+      $check('Importo 1 = 12.50', $val('(//c:CdtTrfTxInf)[1]/c:Amt/c:InstdAmt') === '12.50');
+      $check('Valuta EUR', $xp->query('(//c:CdtTrfTxInf)[1]/c:Amt/c:InstdAmt[@Ccy="EUR"]')->length === 1);
+      $check('Nome beneficiario traslitterato', $val('(//c:CdtTrfTxInf)[1]/c:Cdtr/c:Nm') === 'Rossi Mario');
+      $check('Paese beneficiario da IBAN', $val('(//c:CdtTrfTxInf)[2]/c:Cdtr/c:PstlAdr/c:Ctry') === 'DE');
+      $check('EndToEndId', $val('(//c:CdtTrfTxInf)[2]/c:PmtId/c:EndToEndId') === 'MDV2026-R2-B9');
+      $check('Causale', $val('(//c:CdtTrfTxInf)[1]/c:RmtInf/c:Ustrd') === 'Rimb. Mercatino Da Vinci 2026 - Pratica 12');
+      $v = SepaCbiExport::validate($xml);
+      $check('Validazione XSD', $v['skipped'] || count($v['errors']) === 0,
+        $v['skipped'] ? 'XSD non presente: saltata' : implode(' | ', $v['errors']));
+    }
+    $threw = false;
+    try { SepaCbiExport::buildXml($debtor, 'X', '2026-10-02', [['end_to_end_id' => 'A', 'amount' => 5, 'name' => 'A', 'iban' => 'IT60X0542811101000000123457', 'remittance' => 'x']]); }
+    catch (InvalidArgumentException $e) { $threw = true; }
+    $check('buildXml rifiuta IBAN non valido', $threw);
+    $threw = false;
+    try { SepaCbiExport::buildXml($debtor, 'X', '2026-10-02', []); }
+    catch (InvalidArgumentException $e) { $threw = true; }
+    $check('buildXml rifiuta elenco vuoto', $threw);
+
     // --- Ambiente server ---
     $check('Estensione DOM disponibile', class_exists('DOMDocument'));
   }

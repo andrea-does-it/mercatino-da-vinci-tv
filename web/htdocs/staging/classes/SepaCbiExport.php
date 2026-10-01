@@ -14,6 +14,13 @@ class SepaCbiExport {
     const MAX_REMITTANCE = 140;
     const MAX_NAME = 70;
 
+    /**
+     * Forma di ReqdExctnDt. Nella 04.00 e' una data semplice; la 04.01 segue
+     * pain.001.001.09 dove e' <ReqdExctnDt><Dt>...</Dt></ReqdExctnDt>.
+     * DA CONFERMARE con l'XSD ufficiale / un XML esportato da UniCredit.
+     */
+    const EXEC_DATE_NESTED = true;
+
     /** Lunghezza IBAN per i paesi dell'area SEPA (EPC409-09). */
     private static $sepaIbanLengths = [
         'AD' => 24, 'AT' => 20, 'BE' => 16, 'BG' => 22, 'CH' => 21, 'CY' => 28,
@@ -131,5 +138,125 @@ class SepaCbiExport {
             $d->modify('+1 day');
         } while ((int)$d->format('N') >= 6);
         return $d->format('Y-m-d');
+    }
+
+    /**
+     * Costruisce il messaggio CBIPaymentRequest.00.04.01 (un solo PmtInf,
+     * addebito cumulativo). Tutti i testi passano da toSepaCharset().
+     */
+    public static function buildXml(array $debtor, $msgId, $executionDate, array $transactions, DateTimeInterface $createdAt = null) {
+        if (count($transactions) === 0) {
+            throw new InvalidArgumentException('Nessun bonifico da inserire nella distinta.');
+        }
+        $debtorIban = self::normalizeIban($debtor['iban']);
+        if (!self::ibanIsValid($debtorIban)) {
+            throw new InvalidArgumentException("IBAN dell'ordinante non valido.");
+        }
+
+        $totalCents = 0;
+        foreach ($transactions as $i => $tx) {
+            $cents = (int)round(((float)$tx['amount']) * 100);
+            if ($cents <= 0) {
+                throw new InvalidArgumentException('Importo non valido per ' . $tx['end_to_end_id'] . '.');
+            }
+            if (!self::ibanIsValid($tx['iban'])) {
+                throw new InvalidArgumentException('IBAN non valido per ' . $tx['end_to_end_id'] . '.');
+            }
+            $transactions[$i]['cents'] = $cents;
+            $totalCents += $cents;
+        }
+        $fmt = function ($cents) { return number_format($cents / 100, 2, '.', ''); };
+        $createdAt = $createdAt ?: new DateTime();
+
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $dom->formatOutput = true;
+        $ns = self::XML_NAMESPACE;
+        $el = function ($parent, $name, $text = null) use ($dom, $ns) {
+            $node = $dom->createElementNS($ns, $name);
+            if ($text !== null) {
+                $node->appendChild($dom->createTextNode((string)$text));
+            }
+            $parent->appendChild($node);
+            return $node;
+        };
+
+        $root = $dom->createElementNS($ns, 'CBIPaymentRequest');
+        $dom->appendChild($root);
+
+        // --- Testata ---
+        $hdr = $el($root, 'GrpHdr');
+        $el($hdr, 'MsgId', $msgId);
+        $el($hdr, 'CreDtTm', $createdAt->format('Y-m-d\TH:i:s'));
+        $el($hdr, 'NbOfTxs', count($transactions));
+        $el($hdr, 'CtrlSum', $fmt($totalCents));
+        $initg = $el($hdr, 'InitgPty');
+        $el($initg, 'Nm', self::toSepaCharset($debtor['name'], self::MAX_NAME));
+        $othr = $el($el($el($initg, 'Id'), 'OrgId'), 'Othr');
+        $el($othr, 'Id', strtoupper(trim($debtor['cuc'])));
+        $el($othr, 'Issr', 'CBI');
+
+        // --- Disposizione (unico addebito) ---
+        $pmt = $el($root, 'PmtInf');
+        $el($pmt, 'PmtInfId', $msgId);
+        $el($pmt, 'PmtMtd', 'TRF');
+        $el($pmt, 'BtchBookg', 'true');
+        $tp = $el($pmt, 'PmtTpInf');
+        $el($tp, 'InstrPrty', 'NORM');
+        $el($el($tp, 'SvcLvl'), 'Cd', 'SEPA');
+        $exec = $el($pmt, 'ReqdExctnDt', self::EXEC_DATE_NESTED ? null : $executionDate);
+        if (self::EXEC_DATE_NESTED) {
+            $el($exec, 'Dt', $executionDate);
+        }
+        $dbtr = $el($pmt, 'Dbtr');
+        $el($dbtr, 'Nm', self::toSepaCharset($debtor['name'], self::MAX_NAME));
+        $el($el($dbtr, 'PstlAdr'), 'Ctry', strtoupper($debtor['country']));
+        $el($el($el($pmt, 'DbtrAcct'), 'Id'), 'IBAN', $debtorIban);
+        $el($el($el($el($pmt, 'DbtrAgt'), 'FinInstnId'), 'ClrSysMmbId'), 'MmbId', self::abiFromIban($debtorIban));
+        $el($pmt, 'ChrgBr', 'SLEV');
+
+        // --- Bonifici ---
+        foreach (array_values($transactions) as $n => $tx) {
+            $iban = self::normalizeIban($tx['iban']);
+            $t = $el($pmt, 'CdtTrfTxInf');
+            $pid = $el($t, 'PmtId');
+            $el($pid, 'InstrId', $n + 1);
+            $el($pid, 'EndToEndId', $tx['end_to_end_id']);
+            $amt = $el($el($t, 'Amt'), 'InstdAmt', $fmt($tx['cents']));
+            $amt->setAttribute('Ccy', 'EUR');
+            $cdtr = $el($t, 'Cdtr');
+            $el($cdtr, 'Nm', self::toSepaCharset($tx['name'], self::MAX_NAME));
+            $el($el($cdtr, 'PstlAdr'), 'Ctry', substr($iban, 0, 2));
+            $el($el($el($t, 'CdtrAcct'), 'Id'), 'IBAN', $iban);
+            $el($el($t, 'RmtInf'), 'Ustrd', self::toSepaCharset($tx['remittance'], self::MAX_REMITTANCE));
+        }
+
+        return $dom->saveXML();
+    }
+
+    /**
+     * Valida contro l'XSD CBI se presente in classes/xsd/ (vedi README.txt).
+     * @return array ['skipped' => bool, 'errors' => string[]]
+     */
+    public static function validate($xml) {
+        $xsd = __DIR__ . '/xsd/' . self::XSD_FILE;
+        if (!is_file($xsd)) {
+            return ['skipped' => true, 'errors' => []];
+        }
+        $prev = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+        $dom = new DOMDocument();
+        $ok = $dom->loadXML($xml) && $dom->schemaValidate($xsd);
+        $errors = [];
+        if (!$ok) {
+            foreach (libxml_get_errors() as $e) {
+                $errors[] = 'riga ' . $e->line . ': ' . trim($e->message);
+            }
+            if (!$errors) {
+                $errors[] = 'XML non valido.';
+            }
+        }
+        libxml_clear_errors();
+        libxml_use_internal_errors($prev);
+        return ['skipped' => false, 'errors' => $errors];
     }
 }
