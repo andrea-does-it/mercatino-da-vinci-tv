@@ -37,7 +37,7 @@ done
 [[ -f "$CONF" ]] || { echo "ERRORE: manca $CONF — copia tools/sync.conf.example e compilalo." >&2; exit 1; }
 # shellcheck disable=SC1090
 source "$CONF"
-: "${PROTOCOL:?manca PROTOCOL in sync.conf}" "${HOST:?manca HOST}" "${USERNAME:?manca USERNAME}" "${PASSWORD:?manca PASSWORD}"
+: "${PROTOCOL:?manca PROTOCOL in sync.conf}" "${HOST:?manca HOST}" "${FTP_USER:?manca FTP_USER}" "${PASSWORD:?manca PASSWORD}"
 
 case "$TARGET" in
   staging) LOCAL_DIR="$REPO_ROOT/${STAGING_LOCAL:?}"; REMOTE_DIR="${STAGING_REMOTE:?}" ;;
@@ -96,7 +96,7 @@ run_lftp() {
   {
     printf '%s' "$SSL_SETUP"
     printf 'open %s\n' "$URL"
-    printf 'user "%s" "%s"\n' "${USERNAME//\"/\\\"}" "${PASSWORD//\"/\\\"}"
+    printf 'user "%s" "%s"\n' "${FTP_USER//\"/\\\"}" "${PASSWORD//\"/\\\"}"
     printf '%s\n' "$body"
   } > "$tmp"
   lftp -f "$tmp" || rc=$?
@@ -150,7 +150,7 @@ cls -1 --sort=name
 bye"; then
     echo "   ✓ connessione OK, cartella remota raggiungibile"
   else
-    echo "   ✗ FALLITO: controlla HOST/USERNAME/PASSWORD/PROTOCOL o il percorso remoto" >&2
+    echo "   ✗ FALLITO: controlla HOST/FTP_USER/PASSWORD/PROTOCOL o il percorso remoto" >&2
     return 1
   fi
   return 0

@@ -112,6 +112,14 @@
   (2) `additionalContext` — arriva sempre a Claude, che deve avvisare l'utente (regola 7);
   (3) `systemMessage` e, su `prod`/`both`, `permissionDecision: "ask"` — **in auto mode non
   producono ne' testo visibile ne' prompt**, quindi non farci affidamento come unica difesa.
+  **Trap (zsh + credenziali FTP, 2026-10-01):** l'utente FTP in `tools/sync.conf` si chiama
+  `FTP_USER`, non `USERNAME`: in zsh (la shell di Claude Code su Mac) `USERNAME` e' un
+  parametro speciale (l'utente macOS) e un `source tools/sync.conf` lo lascia invariato senza
+  errori. Comandi `lftp` costruiti a mano facevano quindi login con l'utente sbagliato → 530
+  ripetuti (lftp ritenta da solo) → **Seeweb blocca l'IP** per ~30 min, staging compreso.
+  Usa solo `tools/sync-watch.sh` (shebang bash), o `bash -c '…'`; mai `lftp` a mano.
+  **Trap:** `--dry-run` stampa gli URL di lftp con utente e password in chiaro: non incollarne
+  l'output in chat/log condivisi.
 - New admin page → add its slug to `$allowedPages` in `admin/index.php` (both trees).
 - **Secrets must not be web-served.** `.env` lives in the web root, so the root `.htaccess`
   denies dotfiles (`^\.`) plus `composer.json`/backup/dump extensions using the same
