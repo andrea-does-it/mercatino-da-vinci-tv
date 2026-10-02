@@ -271,9 +271,9 @@ file. Self-test di sola lettura: `admin/?page=sepa-selftest`.
   UPDATE`** e ricontrollano stato/importi di batch e rimborsi coinvolti — protezione contro
   doppio submit o modifiche concorrenti (es. un pagamento registrato a mano nel frattempo).
 - La forma di `ReqdExctnDt` nella 04.01 (`EXEC_DATE_NESTED` in `SepaCbiExport`, `true` →
-  `<ReqdExctnDt><Dt>…</Dt></ReqdExctnDt>`): **forma annidata indicata dalla documentazione
-  CBI 2023; non ancora verificata da un caricamento UniCredit** (la validazione XSD di
-  ottobre 2026, vedi sotto, si è fermata prima di arrivare a `ReqdExctnDt`). L'XSD CBI, se
+  `<ReqdExctnDt><Dt>…</Dt></ReqdExctnDt>`): forma annidata indicata dalla documentazione
+  CBI 2023 e **verificata il 2026-10-02**: il terzo caricamento UniCredit (con `CtgyPurp`
+  per transazione) ha superato la validazione del formato. L'XSD CBI, se
   procurato, va in `classes/xsd/CBIPaymentRequest.00.04.01.xsd`: la validazione di schema
   viene **saltata** (non bloccata) quando il file manca.
 - **Esito secondo caricamento UniCredit (2026-10, validazione XSD)**: il file con le

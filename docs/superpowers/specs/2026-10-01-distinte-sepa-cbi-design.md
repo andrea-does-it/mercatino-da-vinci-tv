@@ -277,7 +277,8 @@ migrazione in entrambi i `sql/`.
    stare in `CdtTrfTxInf/PmtTpInf`, non in `PmtInf`. **Resta aperto**: la forma di
    `ReqdExctnDt` (annidato o no) non è stata verificata da UniCredit — la validazione si è
    fermata su `CtgyPurp`, che viene prima nel documento; indicazione attuale solo dalla
-   documentazione CBI 2023.
+   documentazione CBI 2023. **Chiuso il 2026-10-02**: il terzo caricamento UniCredit è
+   stato accettato nel formato, quindi anche `ReqdExctnDt/Dt` annidato è corretto.
 4. Formato esatto del CUC (lunghezza) per la validazione del campo.
 
 ## Addendum 2026-10-01 — Esito primo caricamento UniCredit
@@ -341,3 +342,7 @@ Decisioni prese per il Task 10 (correzione):
   2023 (SCT tracciato flusso new 2023). `EXEC_DATE_NESTED` in `SepaCbiExport` resta `true`
   sulla base di quell'indicazione, ma **va ancora verificato** con un caricamento UniCredit
   che superi la fase di `CtgyPurp`.
+
+**Addendum 2026-10-02 — terzo caricamento UniCredit**: con `CtgyPurp` spostato in
+`CdtTrfTxInf/PmtTpInf` il file è stato accettato nel formato. Risultano quindi confermati
+anche `ReqdExctnDt/Dt` annidato, `PstlAdr` con `TwnNm` + `Ctry` e il CUC facoltativo.
