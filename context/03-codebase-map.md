@@ -22,7 +22,7 @@ All paths are under `web/htdocs/` (mirror everything in `web/htdocs/staging/`).
 | File | Purpose |
 |------|---------|
 | `DB.php` | PDO wrapper `DB` (`prepare`, `execute`, `insert_one`, `update_one`, `select_one`, `select_all`) + base `DBManager` (`get/getAll/create/update/delete` using `$this->tableName` + `$this->columns`). **`create()`/`update()` cast the whole object to an array** — see gotchas. |
-| `User.php` | `User` + `UserManager`: auth, `register()`, GDPR consent, IBAN (encrypted), `donate_books` preference, `updateDonateBooks`/`getDonateBooks`. |
+| `User.php` | `User` + `UserManager`: auth, `register()`, GDPR consent, IBAN (encrypted), `donate_books` preference, `updateDonateBooks`/`getDonateBooks`. `adminUpdate($id, $data)` (used by `admin/pages/user.php`): validates everything first, then writes only the whitelisted columns that actually changed with a dedicated parameterised UPDATE (first_name/last_name/email/user_type/profile_id/student_*/iban_owner_name/iban_town/donate_books), handling the IBAN (`saveIBAN`/`deleteIBAN`) and `donate_books`+`donate_books_date` pairing as special cases; returns `['ok','errors','changed']`. `getAdminRow($id)` reads the extra fields the `User` object doesn't expose (student_*, iban_*, donate_*, consent dates) — never password/reset_link. |
 | `Product.php` | `Product`, `ProductManager`, `ProductImage`, `ProductImageManager`. Columns include `price`, `prezzo_listino`, `nascosto`, `fl_esaurimento`, `nota_volumi`, `ISBN`. Shop queries filter `nascosto=0`. |
 | `Cart.php` | `Cart`/`CartManager`, `Order`/`OrderManager`, `PraticaManager` (the `numPratica` counter). Manages `order_item` lifecycle and `sendAcceptanceEmail()`. |
 | `SalesTransaction.php` | **New in-person sales**: `SalesTransaction`, `SalesTransactionItem`, their managers. `createTransaction()`, refunds (soft-delete), `getOperatorName()`, daily totals, payment methods. |
@@ -71,7 +71,12 @@ All paths are under `web/htdocs/` (mirror everything in `web/htdocs/staging/`).
 - **Deprecated old sale flow (kept but removed from menu):** `libri_da_vendere.php`,
   `calcolo_vendita.php`, `incasso_vendita.php`, `libri_venduti.php`.
 - **Other:** `dashboard.php`, `users-list.php`/`user.php`, `news-management.php`,
-  `download-management.php`, `activity-logs.php`. **`site_utils.php`** has five tabs:
+  `download-management.php`, `activity-logs.php`. `user.php` edits the full user record
+  (account, studente, IBAN, donazione, consensi read-only) via `UserManager::adminUpdate()`/
+  `getAdminRow()` — it used to call the inherited `DBManager::update()`, which casts the
+  whole `User` object and silently wiped student_*/consent/`donate_books` on every admin
+  save (see `context/06-conventions-and-gotchas.md` §2); fixed by the dedicated methods
+  above. **`site_utils.php`** has five tabs:
   Email di Test, Esecuzione SQL, Impostazioni, Email Ordini, Template Email; the last
   two are partials `site_utils_email_orders.php` / `site_utils_email_templates.php`
   included by `site_utils.php` (not routed pages, not in the admin whitelist).

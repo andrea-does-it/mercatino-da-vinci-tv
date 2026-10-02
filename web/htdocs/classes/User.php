@@ -374,6 +374,178 @@
         return substr($clean, 0, 4) . str_repeat('*', strlen($clean) - 8) . substr($clean, -4);
     }
 
+    // Admin: modifica completa di un utente (pagina admin/pages/user.php)
+
+    /**
+     * Riga con i campi non esposti dall'oggetto User (studente, IBAN, donazione,
+     * consensi). Non include MAI password o reset_link.
+     */
+    public function getAdminRow($userId) {
+        $rows = $this->db->prepare(
+            "SELECT student_first_name, student_last_name, student_class,
+                    iban_owner_name, iban_town, iban_updated_at,
+                    donate_books, donate_books_date,
+                    privacy_consent, privacy_consent_date,
+                    newsletter_consent, newsletter_consent_date,
+                    deletion_requested, deletion_requested_date
+             FROM {$this->tableName} WHERE id = ?",
+            [(int)$userId]
+        );
+        return $rows ? (object)$rows[0] : null;
+    }
+
+    /**
+     * Modifica completa di un utente da admin. Valida tutto prima di scrivere
+     * qualsiasi cosa, poi aggiorna solo le colonne cambiate. Non usa
+     * DBManager::update() (casta l'intero oggetto User e azzererebbe le colonne
+     * che l'oggetto non espone, es. student_*, privacy_consent, donate_books:
+     * vedi context/06-conventions-and-gotchas.md).
+     *
+     * @param int   $userId
+     * @param array $data Campi: first_name, last_name, email, user_type, profile_id,
+     *                    student_first_name, student_last_name, student_class,
+     *                    iban_owner_name, iban_town, donate_books (0/1), iban (stringa grezza).
+     * @return array ['ok' => bool, 'errors' => string[], 'changed' => string[]]
+     */
+    public function adminUpdate($userId, array $data) {
+        $userId = (int)$userId;
+        $errors = [];
+
+        $currentRows = $this->db->prepare(
+            "SELECT first_name, last_name, email, user_type, profile_id,
+                    student_first_name, student_last_name, student_class,
+                    iban_owner_name, iban_town, donate_books
+             FROM {$this->tableName} WHERE id = ?",
+            [$userId]
+        );
+        if (!$currentRows) {
+            return ['ok' => false, 'errors' => ['Utente non trovato.'], 'changed' => []];
+        }
+        $current = $currentRows[0];
+
+        $first_name = trim((string)($data['first_name'] ?? ''));
+        $last_name  = trim((string)($data['last_name'] ?? ''));
+        $email      = trim((string)($data['email'] ?? ''));
+        $user_type  = trim((string)($data['user_type'] ?? ''));
+
+        if ($first_name === '') {
+            $errors[] = 'Il nome è obbligatorio.';
+        }
+        if ($last_name === '') {
+            $errors[] = 'Il cognome è obbligatorio.';
+        }
+        if ($email === '') {
+            $errors[] = "L'email è obbligatoria.";
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Email non valida.';
+        } else {
+            $dupe = $this->db->prepare(
+                "SELECT id FROM {$this->tableName} WHERE email = ? AND id <> ?",
+                [$email, $userId]
+            );
+            if ($dupe) {
+                $errors[] = 'Email già usata da un altro utente.';
+            }
+        }
+        if ($user_type === '') {
+            $errors[] = 'Il tipo utente è obbligatorio.';
+        } elseif (!in_array($user_type, ['regular', 'admin', 'pwuser'], true)) {
+            $errors[] = 'Tipo utente non valido.';
+        }
+
+        $profileRaw = trim((string)($data['profile_id'] ?? ''));
+        $profile_id = ($profileRaw === '' || $profileRaw === '0') ? null : (int)$profileRaw;
+
+        $student_class = trim((string)($data['student_class'] ?? ''));
+        if (strlen($student_class) > 3) {
+            $errors[] = 'La classe può avere al massimo 3 caratteri.';
+        }
+        $student_first_name = trim((string)($data['student_first_name'] ?? ''));
+        $student_last_name  = trim((string)($data['student_last_name'] ?? ''));
+        $iban_owner_name    = trim((string)($data['iban_owner_name'] ?? ''));
+        $iban_town          = trim((string)($data['iban_town'] ?? ''));
+
+        $donate_books = !empty($data['donate_books']) ? 1 : 0;
+
+        // IBAN: confronto sul valore normalizzato rispetto a quello salvato (decifrato).
+        $ibanAction = null; // null = invariato, 'save' = nuovo IBAN valido, 'clear' = rimozione
+        $ibanToSave = '';
+        if (array_key_exists('iban', $data)) {
+            $normalizedNew = SepaCbiExport::normalizeIban((string)$data['iban']);
+            $currentIbanInfo = $this->getIBAN($userId);
+            $normalizedCurrent = $currentIbanInfo ? SepaCbiExport::normalizeIban($currentIbanInfo['iban']) : '';
+            if ($normalizedNew !== $normalizedCurrent) {
+                if ($normalizedNew === '') {
+                    $ibanAction = 'clear';
+                } elseif (SepaCbiExport::ibanIsValid($normalizedNew)) {
+                    $ibanAction = 'save';
+                    $ibanToSave = $normalizedNew;
+                } else {
+                    $errors[] = 'IBAN non valido.';
+                }
+            }
+        }
+
+        // Si valida tutto prima di scrivere: se c'e' un errore non si salva nulla.
+        if ($errors) {
+            return ['ok' => false, 'errors' => $errors, 'changed' => []];
+        }
+
+        // Colonne "semplici": un solo UPDATE parametrizzato, solo per quelle cambiate.
+        // iban_owner_name resta fuori da qui se l'IBAN cambia: in quel caso la scrivono
+        // saveIBAN()/deleteIBAN() insieme a iban e iban_updated_at.
+        $candidates = [
+            'first_name' => $first_name,
+            'last_name' => $last_name,
+            'email' => $email,
+            'user_type' => $user_type,
+            'profile_id' => $profile_id,
+            'student_first_name' => $student_first_name !== '' ? $student_first_name : null,
+            'student_last_name' => $student_last_name !== '' ? $student_last_name : null,
+            'student_class' => $student_class !== '' ? strtoupper($student_class) : null,
+            'iban_town' => $iban_town !== '' ? $iban_town : null,
+        ];
+        if ($ibanAction === null) {
+            $candidates['iban_owner_name'] = $iban_owner_name !== '' ? $iban_owner_name : null;
+        }
+
+        $changed = [];
+        $setCols = [];
+        foreach ($candidates as $col => $value) {
+            $curVal = $current[$col];
+            $curStr = $curVal === null ? '' : (string)$curVal;
+            $newStr = $value === null ? '' : (string)$value;
+            if ($curStr !== $newStr) {
+                $changed[] = $col;
+                $setCols[$col] = $value;
+            }
+        }
+        if ($setCols) {
+            $this->db->update_one($this->tableName, $setCols, $userId);
+        }
+
+        // donate_books: la colonna e la sua data vanno aggiornate insieme.
+        if ($donate_books !== (int)$current['donate_books']) {
+            $this->db->execute(
+                "UPDATE {$this->tableName} SET donate_books = ?, donate_books_date = " .
+                ($donate_books === 1 ? 'NOW()' : 'NULL') . " WHERE id = ?",
+                [$donate_books, $userId]
+            );
+            $changed[] = 'donate_books';
+        }
+
+        // IBAN: riusa le operazioni dedicate esistenti (cifratura / azzeramento completo).
+        if ($ibanAction === 'save') {
+            $this->saveIBAN($userId, $ibanToSave, $iban_owner_name !== '' ? $iban_owner_name : null);
+            $changed[] = 'iban';
+        } elseif ($ibanAction === 'clear') {
+            $this->deleteIBAN($userId);
+            $changed[] = 'iban';
+        }
+
+        return ['ok' => true, 'errors' => [], 'changed' => $changed];
+    }
+
     // GDPR Account Deletion
     public function requestAccountDeletion($userId) {
         // Mark account for deletion (soft delete)
