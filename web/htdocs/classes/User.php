@@ -376,52 +376,95 @@
 
     // Admin: modifica completa di un utente (pagina admin/pages/user.php)
 
+    /** @var bool|null Cache di processo: esiste la colonna iban_town (migrazione 202610020001)? */
+    private static $ibanTownColumnExists = null;
+
+    /** true se la colonna iban_town esiste su questo DB. Cache statica: una sola query per request. */
+    private function hasIbanTownColumn() {
+        if (self::$ibanTownColumnExists === null) {
+            try {
+                self::$ibanTownColumnExists = count($this->db->prepare(
+                    "SHOW COLUMNS FROM {$this->tableName} LIKE 'iban_town'"
+                )) === 1;
+            } catch (Exception $e) {
+                self::$ibanTownColumnExists = false;
+            }
+        }
+        return self::$ibanTownColumnExists;
+    }
+
+    /** Wrapper pubblico: admin/pages/user.php lo usa per nascondere il campo "Localita' beneficiario". */
+    public function supportsIbanTown() {
+        return $this->hasIbanTownColumn();
+    }
+
     /**
      * Riga con i campi non esposti dall'oggetto User (studente, IBAN, donazione,
-     * consensi). Non include MAI password o reset_link.
+     * consensi). Non include MAI password o reset_link. iban_town e' incluso solo se
+     * la colonna esiste (altrimenti la SELECT fallirebbe sui DB senza la migrazione
+     * 202610020001).
      */
     public function getAdminRow($userId) {
+        $cols = "student_first_name, student_last_name, student_class,
+                 iban_owner_name, iban_updated_at,
+                 donate_books, donate_books_date,
+                 privacy_consent, privacy_consent_date,
+                 newsletter_consent, newsletter_consent_date,
+                 deletion_requested, deletion_requested_date";
+        if ($this->hasIbanTownColumn()) {
+            $cols .= ", iban_town";
+        }
         $rows = $this->db->prepare(
-            "SELECT student_first_name, student_last_name, student_class,
-                    iban_owner_name, iban_town, iban_updated_at,
-                    donate_books, donate_books_date,
-                    privacy_consent, privacy_consent_date,
-                    newsletter_consent, newsletter_consent_date,
-                    deletion_requested, deletion_requested_date
-             FROM {$this->tableName} WHERE id = ?",
+            "SELECT {$cols} FROM {$this->tableName} WHERE id = ?",
             [(int)$userId]
         );
         return $rows ? (object)$rows[0] : null;
     }
 
     /**
-     * Modifica completa di un utente da admin. Valida tutto prima di scrivere
-     * qualsiasi cosa, poi aggiorna solo le colonne cambiate. Non usa
-     * DBManager::update() (casta l'intero oggetto User e azzererebbe le colonne
-     * che l'oggetto non espone, es. student_*, privacy_consent, donate_books:
-     * vedi context/06-conventions-and-gotchas.md).
-     *
-     * @param int   $userId
-     * @param array $data Campi: first_name, last_name, email, user_type, profile_id,
-     *                    student_first_name, student_last_name, student_class,
-     *                    iban_owner_name, iban_town, donate_books (0/1), iban (stringa grezza).
-     * @return array ['ok' => bool, 'errors' => string[], 'changed' => string[]]
+     * Confronta l'IBAN postato (grezzo) con quello salvato (decifrato) e stabilisce
+     * cosa fare: non scrive nulla. Usato sia da validateAdminData() (solo per
+     * l'eventuale errore) sia da adminUpdate() (anche per il valore da cifrare).
+     * $currentUserId = 0 vuol dire "nessun utente esistente ancora" (creazione):
+     * in quel caso un IBAN non vuoto e' sempre "nuovo".
+     * @return array [string|null $action ('save'|'clear'|null), string $normalizedValue, string|null $error]
      */
-    public function adminUpdate($userId, array $data) {
-        $userId = (int)$userId;
-        $errors = [];
-
-        $currentRows = $this->db->prepare(
-            "SELECT first_name, last_name, email, user_type, profile_id,
-                    student_first_name, student_last_name, student_class,
-                    iban_owner_name, iban_town, donate_books
-             FROM {$this->tableName} WHERE id = ?",
-            [$userId]
-        );
-        if (!$currentRows) {
-            return ['ok' => false, 'errors' => ['Utente non trovato.'], 'changed' => []];
+    private function determineIbanAction(array $data, $currentUserId) {
+        if (!array_key_exists('iban', $data)) {
+            return [null, '', null];
         }
-        $current = $currentRows[0];
+        $normalizedNew = SepaCbiExport::normalizeIban((string)$data['iban']);
+        $normalizedCurrent = '';
+        if ((int)$currentUserId > 0) {
+            $currentIbanInfo = $this->getIBAN($currentUserId);
+            $normalizedCurrent = $currentIbanInfo ? SepaCbiExport::normalizeIban($currentIbanInfo['iban']) : '';
+        }
+        if ($normalizedNew === $normalizedCurrent) {
+            return [null, '', null];
+        }
+        if ($normalizedNew === '') {
+            return ['clear', '', null];
+        }
+        if (!SepaCbiExport::ibanIsValid($normalizedNew)) {
+            return [null, '', 'IBAN non valido.'];
+        }
+        if (!Encryption::isConfigured()) {
+            return [null, '', "Cifratura IBAN non configurata: impossibile salvare l'IBAN."];
+        }
+        return ['save', $normalizedNew, null];
+    }
+
+    /**
+     * Validazione condivisa fra adminUpdate() e la creazione da admin
+     * (admin/pages/user.php, prima di chiamare createUser()): solo errori, nessuna
+     * scrittura. $excludeId e' l'utente da escludere dal controllo di unicita'
+     * dell'email (0 = nessuno, cioe' nuovo utente: controlla su tutti) ed e' anche
+     * l'utente di cui leggere l'IBAN attuale (0 = nessuno ancora).
+     * @return string[] errori in italiano, vuoto se tutto ok
+     */
+    public function validateAdminData(array $data, $excludeId = 0) {
+        $excludeId = (int)$excludeId;
+        $errors = [];
 
         $first_name = trim((string)($data['first_name'] ?? ''));
         $last_name  = trim((string)($data['last_name'] ?? ''));
@@ -441,7 +484,7 @@
         } else {
             $dupe = $this->db->prepare(
                 "SELECT id FROM {$this->tableName} WHERE email = ? AND id <> ?",
-                [$email, $userId]
+                [$email, $excludeId]
             );
             if ($dupe) {
                 $errors[] = 'Email già usata da un altro utente.';
@@ -453,13 +496,66 @@
             $errors[] = 'Tipo utente non valido.';
         }
 
+        $student_class = trim((string)($data['student_class'] ?? ''));
+        if (mb_strlen($student_class) > 3) {
+            $errors[] = 'La classe può avere al massimo 3 caratteri.';
+        }
+
+        list(, , $ibanError) = $this->determineIbanAction($data, $excludeId);
+        if ($ibanError !== null) {
+            $errors[] = $ibanError;
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Modifica completa di un utente da admin. Valida tutto prima di scrivere
+     * qualsiasi cosa (validateAdminData()), cifra un eventuale nuovo IBAN PRIMA di
+     * aprire la transazione (cosi' un fallimento di cifratura non scrive nulla), poi
+     * scrive in un'unica transazione su $this->db->pdo: le colonne "semplici"
+     * cambiate, donate_books (+data) e l'IBAN. Non usa DBManager::update() (casta
+     * l'intero oggetto User e azzererebbe le colonne che l'oggetto non espone, es.
+     * student_*, privacy_consent, donate_books: vedi context/06-conventions-and-gotchas.md).
+     *
+     * @param int   $userId
+     * @param array $data Campi: first_name, last_name, email, user_type, profile_id,
+     *                    student_first_name, student_last_name, student_class,
+     *                    iban_owner_name, iban_town, donate_books (0/1), iban (stringa grezza).
+     * @return array ['ok' => bool, 'errors' => string[], 'changed' => string[]]
+     */
+    public function adminUpdate($userId, array $data) {
+        $userId = (int)$userId;
+
+        $cols = "first_name, last_name, email, user_type, profile_id,
+                 student_first_name, student_last_name, student_class,
+                 iban_owner_name, donate_books";
+        if ($this->hasIbanTownColumn()) {
+            $cols .= ", iban_town";
+        }
+        $currentRows = $this->db->prepare(
+            "SELECT {$cols} FROM {$this->tableName} WHERE id = ?",
+            [$userId]
+        );
+        if (!$currentRows) {
+            return ['ok' => false, 'errors' => ['Utente non trovato.'], 'changed' => []];
+        }
+        $current = $currentRows[0];
+
+        $errors = $this->validateAdminData($data, $userId);
+        if ($errors) {
+            return ['ok' => false, 'errors' => $errors, 'changed' => []];
+        }
+
+        $first_name = trim((string)($data['first_name'] ?? ''));
+        $last_name  = trim((string)($data['last_name'] ?? ''));
+        $email      = trim((string)($data['email'] ?? ''));
+        $user_type  = trim((string)($data['user_type'] ?? ''));
+
         $profileRaw = trim((string)($data['profile_id'] ?? ''));
         $profile_id = ($profileRaw === '' || $profileRaw === '0') ? null : (int)$profileRaw;
 
         $student_class = trim((string)($data['student_class'] ?? ''));
-        if (strlen($student_class) > 3) {
-            $errors[] = 'La classe può avere al massimo 3 caratteri.';
-        }
         $student_first_name = trim((string)($data['student_first_name'] ?? ''));
         $student_last_name  = trim((string)($data['student_last_name'] ?? ''));
         $iban_owner_name    = trim((string)($data['iban_owner_name'] ?? ''));
@@ -467,33 +563,28 @@
 
         $donate_books = !empty($data['donate_books']) ? 1 : 0;
 
-        // IBAN: confronto sul valore normalizzato rispetto a quello salvato (decifrato).
-        $ibanAction = null; // null = invariato, 'save' = nuovo IBAN valido, 'clear' = rimozione
-        $ibanToSave = '';
-        if (array_key_exists('iban', $data)) {
-            $normalizedNew = SepaCbiExport::normalizeIban((string)$data['iban']);
-            $currentIbanInfo = $this->getIBAN($userId);
-            $normalizedCurrent = $currentIbanInfo ? SepaCbiExport::normalizeIban($currentIbanInfo['iban']) : '';
-            if ($normalizedNew !== $normalizedCurrent) {
-                if ($normalizedNew === '') {
-                    $ibanAction = 'clear';
-                } elseif (SepaCbiExport::ibanIsValid($normalizedNew)) {
-                    $ibanAction = 'save';
-                    $ibanToSave = $normalizedNew;
-                } else {
-                    $errors[] = 'IBAN non valido.';
-                }
+        // Ricalcola l'azione IBAN: validateAdminData sopra ha gia' escluso l'errore,
+        // ma qui serve anche il valore normalizzato da cifrare.
+        list($ibanAction, $ibanToSave, $ibanError) = $this->determineIbanAction($data, $userId);
+        if ($ibanError !== null) {
+            // Difesa in profondita': non dovrebbe succedere, validateAdminData l'avrebbe
+            // gia' intercettato sopra.
+            return ['ok' => false, 'errors' => [$ibanError], 'changed' => []];
+        }
+
+        // Cifratura PRIMA della transazione: se fallisce, non si scrive nulla (ne'
+        // l'IBAN ne' gli altri campi di questo stesso salvataggio).
+        $encryptedIban = null;
+        if ($ibanAction === 'save') {
+            $encryptedIban = Encryption::encrypt($ibanToSave);
+            if ($encryptedIban === false) {
+                return ['ok' => false, 'errors' => ["Errore nella cifratura dell'IBAN."], 'changed' => []];
             }
         }
 
-        // Si valida tutto prima di scrivere: se c'e' un errore non si salva nulla.
-        if ($errors) {
-            return ['ok' => false, 'errors' => $errors, 'changed' => []];
-        }
-
         // Colonne "semplici": un solo UPDATE parametrizzato, solo per quelle cambiate.
-        // iban_owner_name resta fuori da qui se l'IBAN cambia: in quel caso la scrivono
-        // saveIBAN()/deleteIBAN() insieme a iban e iban_updated_at.
+        // iban_owner_name resta fuori da qui se l'IBAN cambia: in quel caso lo si
+        // scrive insieme a iban e iban_updated_at, piu' sotto, nella stessa transazione.
         $candidates = [
             'first_name' => $first_name,
             'last_name' => $last_name,
@@ -503,8 +594,10 @@
             'student_first_name' => $student_first_name !== '' ? $student_first_name : null,
             'student_last_name' => $student_last_name !== '' ? $student_last_name : null,
             'student_class' => $student_class !== '' ? strtoupper($student_class) : null,
-            'iban_town' => $iban_town !== '' ? $iban_town : null,
         ];
+        if ($this->hasIbanTownColumn()) {
+            $candidates['iban_town'] = $iban_town !== '' ? $iban_town : null;
+        }
         if ($ibanAction === null) {
             $candidates['iban_owner_name'] = $iban_owner_name !== '' ? $iban_owner_name : null;
         }
@@ -512,7 +605,7 @@
         $changed = [];
         $setCols = [];
         foreach ($candidates as $col => $value) {
-            $curVal = $current[$col];
+            $curVal = array_key_exists($col, $current) ? $current[$col] : null;
             $curStr = $curVal === null ? '' : (string)$curVal;
             $newStr = $value === null ? '' : (string)$value;
             if ($curStr !== $newStr) {
@@ -520,27 +613,51 @@
                 $setCols[$col] = $value;
             }
         }
-        if ($setCols) {
-            $this->db->update_one($this->tableName, $setCols, $userId);
-        }
 
-        // donate_books: la colonna e la sua data vanno aggiornate insieme.
-        if ($donate_books !== (int)$current['donate_books']) {
-            $this->db->execute(
-                "UPDATE {$this->tableName} SET donate_books = ?, donate_books_date = " .
-                ($donate_books === 1 ? 'NOW()' : 'NULL') . " WHERE id = ?",
-                [$donate_books, $userId]
-            );
+        $donateBooksChanged = $donate_books !== (int)$current['donate_books'];
+        if ($donateBooksChanged) {
             $changed[] = 'donate_books';
         }
+        if ($ibanAction !== null) {
+            $changed[] = 'iban';
+        }
 
-        // IBAN: riusa le operazioni dedicate esistenti (cifratura / azzeramento completo).
-        if ($ibanAction === 'save') {
-            $this->saveIBAN($userId, $ibanToSave, $iban_owner_name !== '' ? $iban_owner_name : null);
-            $changed[] = 'iban';
-        } elseif ($ibanAction === 'clear') {
-            $this->deleteIBAN($userId);
-            $changed[] = 'iban';
+        if (!$setCols && !$donateBooksChanged && $ibanAction === null) {
+            // Nulla e' cambiato: nessuna transazione da aprire.
+            return ['ok' => true, 'errors' => [], 'changed' => []];
+        }
+
+        $pdo = $this->db->pdo;
+        $pdo->beginTransaction();
+        try {
+            if ($setCols) {
+                $this->db->update_one($this->tableName, $setCols, $userId);
+            }
+            if ($donateBooksChanged) {
+                $this->db->execute(
+                    "UPDATE {$this->tableName} SET donate_books = ?, donate_books_date = " .
+                    ($donate_books === 1 ? 'NOW()' : 'NULL') . " WHERE id = ?",
+                    [$donate_books, $userId]
+                );
+            }
+            if ($ibanAction === 'save') {
+                $this->db->execute(
+                    "UPDATE {$this->tableName} SET iban = ?, iban_owner_name = ?, iban_updated_at = NOW() WHERE id = ?",
+                    [$encryptedIban, $iban_owner_name !== '' ? $iban_owner_name : null, $userId]
+                );
+            } elseif ($ibanAction === 'clear') {
+                $this->db->execute(
+                    "UPDATE {$this->tableName} SET iban = NULL, iban_owner_name = NULL, iban_updated_at = NULL WHERE id = ?",
+                    [$userId]
+                );
+            }
+            $pdo->commit();
+        } catch (Exception $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log('UserManager::adminUpdate: ' . $e->getMessage());
+            return ['ok' => false, 'errors' => ['Errore nel salvataggio: nessuna modifica è stata fatta.'], 'changed' => []];
         }
 
         return ['ok' => true, 'errors' => [], 'changed' => $changed];

@@ -13,16 +13,21 @@ $profiles = $pm->getAll();
 
 $errors = [];
 
+// La colonna iban_town (migrazione 202610020001) potrebbe non esistere ancora su
+// questo DB: in quel caso il campo "Localita' beneficiario" va nascosto, non la
+// SELECT fallirebbe con "Unknown column" e la pagina andrebbe in errore fatale.
+$supportsIbanTown = $mgr->supportsIbanTown();
+
 $lblAction = 'Aggiungi';
 $submit = 'add';
 
-// Formato leggibile (o "—") per le date di sola lettura della scheda.
+// Formato leggibile (o un trattino lungo) per le date di sola lettura della scheda.
 function admin_user_fmt_date($value) {
   if ($value === null || $value === '') {
-    return '—';
+    return "\u{2014}";
   }
   $ts = strtotime($value);
-  return $ts ? date('d/m/Y H:i', $ts) : '—';
+  return $ts ? date('d/m/Y H:i', $ts) : "\u{2014}";
 }
 
 // Campi di sola lettura non presenti nel form (consensi, date): sempre letti dal DB,
@@ -117,7 +122,9 @@ if (isset($_GET['id'])) {
     $formData['student_class'] = $adminRow->student_class;
     $formData['iban'] = $ibanInfo ? $mgr->formatIBAN($ibanInfo['iban']) : '';
     $formData['iban_owner_name'] = $adminRow->iban_owner_name;
-    $formData['iban_town'] = $adminRow->iban_town;
+    if ($supportsIbanTown) {
+      $formData['iban_town'] = $adminRow->iban_town;
+    }
     $formData['iban_updated_at'] = $adminRow->iban_updated_at;
     $formData['donate_books'] = (int)$adminRow->donate_books;
     $formData['donate_books_date'] = $adminRow->donate_books_date;
@@ -135,37 +142,40 @@ if (isset($_GET['id'])) {
 // Submit add
 if (isset($_POST['add'])) {
 
-  $postedFirstName = trim($_POST['first_name'] ?? '');
-  $postedLastName  = trim($_POST['last_name'] ?? '');
-  $postedEmail     = trim($_POST['email'] ?? '');
-  $postedUserType  = trim($_POST['user_type'] ?? '');
-  $postedProfileId = trim($_POST['profile_id'] ?? '');
+  $addData = [
+    'first_name' => trim($_POST['first_name'] ?? ''),
+    'last_name' => trim($_POST['last_name'] ?? ''),
+    'email' => trim($_POST['email'] ?? ''),
+    'user_type' => trim($_POST['user_type'] ?? ''),
+    'profile_id' => trim($_POST['profile_id'] ?? ''),
+    'student_first_name' => trim($_POST['student_first_name'] ?? ''),
+    'student_last_name' => trim($_POST['student_last_name'] ?? ''),
+    'student_class' => trim($_POST['student_class'] ?? ''),
+    'iban_owner_name' => trim($_POST['iban_owner_name'] ?? ''),
+    'iban_town' => trim($_POST['iban_town'] ?? ''),
+    'donate_books' => isset($_POST['donate_books']) ? (int)$_POST['donate_books'] : 0,
+    'iban' => $_POST['iban'] ?? '',
+  ];
 
-  if ($postedFirstName != '' && $postedLastName != '' && $postedEmail != '' && $postedUserType != '') {
+  // Stessa validazione di adminUpdate() (campi obbligatori, email, tipo utente,
+  // classe, IBAN/cifratura), eseguita PRIMA di creare l'utente: cosi' un IBAN
+  // invalido o un'email duplicata non creano comunque l'account.
+  $addErrors = $mgr->validateAdminData($addData, 0);
+
+  if ($addErrors) {
+    $errors = $addErrors;
+    $formData = array_merge($formData, $addData);
+  } else {
 
     $newUserId = $mgr->createUser(
-      new User(0, $postedFirstName, $postedLastName, $postedEmail, $postedUserType, (int)$postedProfileId),
+      new User(0, $addData['first_name'], $addData['last_name'], $addData['email'], $addData['user_type'], (int)$addData['profile_id']),
       null
     );
 
     if ($newUserId > 0) {
       log_activity($loggedInUser->id, 'admin_user_created', 'user_id: ' . $newUserId);
 
-      $extraData = [
-        'first_name' => $postedFirstName,
-        'last_name' => $postedLastName,
-        'email' => $postedEmail,
-        'user_type' => $postedUserType,
-        'profile_id' => $postedProfileId,
-        'student_first_name' => trim($_POST['student_first_name'] ?? ''),
-        'student_last_name' => trim($_POST['student_last_name'] ?? ''),
-        'student_class' => trim($_POST['student_class'] ?? ''),
-        'iban_owner_name' => trim($_POST['iban_owner_name'] ?? ''),
-        'iban_town' => trim($_POST['iban_town'] ?? ''),
-        'donate_books' => isset($_POST['donate_books']) ? (int)$_POST['donate_books'] : 0,
-        'iban' => $_POST['iban'] ?? '',
-      ];
-      $extraResult = $mgr->adminUpdate($newUserId, $extraData);
+      $extraResult = $mgr->adminUpdate($newUserId, $addData);
 
       if ($extraResult['ok']) {
         echo "<script>location.href='".ROOT_URL."admin/?page=users-list&msg=created';</script>";
@@ -177,24 +187,13 @@ if (isset($_POST['add'])) {
       $errors = array_merge(["L'utente è stato creato, ma alcuni dati aggiuntivi non sono stati salvati:"], $extraResult['errors']);
       $lblAction = 'Modifica';
       $submit = 'update';
-      $formData = array_merge($formData, $extraData);
+      $formData = array_merge($formData, $addData);
       $formData['id'] = $newUserId;
       $formData = array_merge($formData, admin_user_readonly_fields($mgr, $newUserId));
     } else {
       $errors[] = "Si è verificato un errore durante la creazione dell'utente.";
-      $formData['first_name'] = $postedFirstName;
-      $formData['last_name'] = $postedLastName;
-      $formData['email'] = $postedEmail;
-      $formData['user_type'] = $postedUserType;
-      $formData['profile_id'] = $postedProfileId;
+      $formData = array_merge($formData, $addData);
     }
-  } else {
-    $errors[] = 'Compilare i campi obbligatori.';
-    $formData['first_name'] = $postedFirstName;
-    $formData['last_name'] = $postedLastName;
-    $formData['email'] = $postedEmail;
-    $formData['user_type'] = $postedUserType;
-    $formData['profile_id'] = $postedProfileId;
   }
 }
 
@@ -229,7 +228,8 @@ if (isset($_POST['update'])) {
     $result = $mgr->adminUpdate($postedId, $updateData);
 
     if ($result['ok']) {
-      log_activity($loggedInUser->id, 'admin_user_updated', 'user_id: ' . $postedId . ', campi: ' . implode(', ', $result['changed']));
+      $campi = $result['changed'] ? implode(', ', $result['changed']) : 'nessuna modifica';
+      log_activity($loggedInUser->id, 'admin_user_updated', 'user_id: ' . $postedId . ', campi: ' . $campi);
       echo "<script>location.href='".ROOT_URL."admin/?page=users-list&msg=updated';</script>";
       exit;
     }
@@ -329,10 +329,12 @@ if (isset($_POST['update'])) {
         <label for="iban_owner_name">Intestatario IBAN</label>
         <input name="iban_owner_name" id="iban_owner_name" type="text" maxlength="100" class="form-control" value="<?php echo esc_html((string)$formData['iban_owner_name']); ?>">
       </div>
+      <?php if ($supportsIbanTown) : ?>
       <div class="form-group">
         <label for="iban_town">Località beneficiario</label>
         <input name="iban_town" id="iban_town" type="text" maxlength="35" class="form-control" placeholder="<?php echo esc_html($ibanTownPlaceholder); ?>" value="<?php echo esc_html((string)$formData['iban_town']); ?>">
       </div>
+      <?php endif; ?>
       <div class="form-group">
         <label for="iban_updated_at">Ultimo aggiornamento IBAN</label>
         <input id="iban_updated_at" type="text" class="form-control" value="<?php echo esc_html(admin_user_fmt_date($formData['iban_updated_at'])); ?>" readonly>
